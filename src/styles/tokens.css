@@ -1,0 +1,20 @@
+:root {
+  /* COLORS */
+  --bg-app: #ecf6f1;
+  --bg-surface: #ffffff;
+  --bg-soft: #e8f5ef;
+  --bg-hover: #dff0e8;
+
+  --primary: #2f7d5a;
+  --primary-dark: #256b4c;
+
+  --text-main: #1f2937;
+  --text-muted: #6b7280;
+
+  /* RADIUS */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+
+  /* SHADOW */
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
