@@ -1,31 +1,26 @@
-import { cn } from "../../library/cn";
+type ButtonProps = {
+  children: React.ReactNode;
+  variant?: "primary" | "secondary" | "danger";
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-type ButtonVariant = "primary" | "secondary" | "danger";
+const base =
+  "px-4 py-2 rounded-md text-sm font-medium transition disabled:opacity-50";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-}
-
-const variants: Record<ButtonVariant, string> = {
-  primary: "bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white",
-  secondary:
-    "bg-[var(--bg-soft)] hover:bg-[var(--bg-hover)] text-[var(--primary)]",
-  danger: "bg-[#ef4444] hover:bg-red-600 text-white",
+const variants = {
+  primary: "bg-indigo-600 text-white hover:bg-indigo-700",
+  secondary: "bg-slate-200 text-slate-800 hover:bg-slate-300",
+  danger: "bg-red-600 text-white hover:bg-red-700",
 };
 
-export function Button({
+export default function Button({
+  children,
   variant = "primary",
-  className,
+  className = "",
   ...props
 }: ButtonProps) {
   return (
-    <button
-      className={cn(
-        "px-4 py-2 rounded-lg font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50",
-        variants[variant],
-        className
-      )}
-      {...props}
-    />
+    <button {...props} className={`${base} ${variants[variant]} ${className}`}>
+      {children}
+    </button>
   );
 }
