@@ -1,12 +1,12 @@
-import { Card } from "../../components/atoms/Card";
-import Button from "../../components/atoms/Button";
+import { Card } from "../../design-system/atoms/Card";
+import Button from "../../design-system/atoms/Button";
 
 const tables = [
   { id: 1, status: "Available" },
   { id: 2, status: "Occupied" },
 ];
 
-export const WaiterTables = () => {
+export default function TablesPage() {
   return (
     <div className="p-6 grid grid-cols-2 gap-4">
       {tables.map((table) => (
@@ -22,4 +22,4 @@ export const WaiterTables = () => {
       ))}
     </div>
   );
-};
+}
