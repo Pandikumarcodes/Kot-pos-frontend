@@ -1,5 +1,5 @@
-import { Card } from "../../design-system/atoms/Card";
-import Button from "../../design-system/atoms/Button";
+import { Card } from "../../design-system/atoms/Card/Card";
+import { Button } from "../../design-system/atoms/Button/Button";
 
 const tables = [
   { id: 1, status: "Available" },

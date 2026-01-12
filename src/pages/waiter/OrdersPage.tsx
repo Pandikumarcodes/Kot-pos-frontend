@@ -1,6 +1,6 @@
-import { Card } from "../../design-system/atoms/Card";
-import Button from "../../design-system/atoms/Button";
-import { Input } from "../../design-system/atoms/Input";
+import { Card } from "../../design-system/atoms/Card/Card";
+import { Button } from "../../design-system/atoms/Button/Button";
+import { Input } from "../../design-system/atoms/Input/Input";
 
 export default function OrderPage() {
   return (

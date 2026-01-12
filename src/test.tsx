@@ -1,4 +1,4 @@
-import Button from "./design-system/atoms/Button";
+import Button from "./design-system/atoms/Button/Button";
 
 export default function TestTailwind() {
   return (
