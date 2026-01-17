@@ -1,4 +1,5 @@
-import { useState } from "react";
+// import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -10,6 +11,7 @@ import {
   ChefHat,
   CreditCard,
   User,
+  Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -28,7 +30,7 @@ interface NavItemProps {
 }
 
 const NAV_LINKS: NavLink[] = [
-  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Menu", to: "/menu", icon: UtensilsCrossed },
   { label: "Tables", to: "/waiter/tables", icon: LayoutDashboard },
   { label: "POS", to: "/pos", icon: ShoppingCart },
@@ -38,7 +40,8 @@ const NAV_LINKS: NavLink[] = [
   { label: "Customers", to: "/customers", icon: Users },
   { label: "Staff", to: "/staff", icon: User },
   { label: "Payments", to: "/payments", icon: DollarSign },
-  { label: "Reports", to: "/reports", icon: BarChart3 },
+  { label: "Reports", to: "/admin/reports", icon: BarChart3 },
+  { label: "Settings", to: "/settings", icon: Settings },
 ];
 
 const NavItem = ({
@@ -48,30 +51,35 @@ const NavItem = ({
   isActive,
   onClick,
 }: NavItemProps) => (
-  <a
-    href={to}
-    onClick={(e) => {
-      e.preventDefault();
-      onClick(to);
-    }}
-    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
+  <button
+    onClick={() => onClick(to)}
+    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
       isActive
-        ? "bg-blue-500 text-white font-medium"
-        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+        ? "bg-kot-primary text-white font-medium"
+        : "text-kot-text hover:bg-kot-light hover:text-kot-darker"
     }`}
   >
     <Icon size={20} className="shrink-0" />
     <span>{label}</span>
-  </a>
+  </button>
 );
 
 export default function Sidebar() {
-  const [activePath, setActivePath] = useState("/dashboard");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activePath = location.pathname;
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
   return (
-    <aside className="w-64 min-h-screen bg-gray-50 border-r border-gray-200">
+    <aside className="w-64 min-h-screen bg-kot-header border-r border-kot-chart">
       <div className="p-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">KOT POS</h1>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-kot-darker">KOT POS</h1>
+          <p className="text-sm text-kot-text mt-1">Restaurant Management</p>
+        </div>
 
         <nav className="space-y-1">
           {NAV_LINKS.map(({ label, to, icon }) => (
@@ -81,7 +89,7 @@ export default function Sidebar() {
               to={to}
               icon={icon}
               isActive={activePath === to}
-              onClick={setActivePath}
+              onClick={handleNavigation}
             />
           ))}
         </nav>
