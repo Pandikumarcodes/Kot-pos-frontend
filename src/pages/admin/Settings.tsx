@@ -1,4 +1,3 @@
-// src/pages/SettingsPage/SettingsPage.tsx
 import { useState } from "react";
 import Header from "../../design-system/organisms/Header";
 import {

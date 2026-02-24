@@ -55,7 +55,7 @@ const NavItem = ({
     onClick={() => onClick(to)}
     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
       isActive
-        ? "bg-kot-primary text-white font-medium"
+        ? "bg-kot-sidebar text-kot-darker font-medium shadow-kot"
         : "text-kot-text hover:bg-kot-light hover:text-kot-darker"
     }`}
   >
