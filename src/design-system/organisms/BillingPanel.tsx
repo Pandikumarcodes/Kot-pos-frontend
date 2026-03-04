@@ -49,12 +49,11 @@ export default function BillingPanel({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [amountReceived, setAmountReceived] = useState<string>("");
 
-  // Calculations
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const discountAmount = (subtotal * discountPercent) / 100;
   const taxableAmount = subtotal - discountAmount;
-  const cgst = taxableAmount * 0.025; // 2.5%
-  const sgst = taxableAmount * 0.025; // 2.5%
+  const cgst = taxableAmount * 0.025;
+  const sgst = taxableAmount * 0.025;
   const totalTax = cgst + sgst;
   const grandTotal = taxableAmount + totalTax;
 
@@ -63,12 +62,11 @@ export default function BillingPanel({
     receivedAmount > grandTotal ? receivedAmount - grandTotal : 0;
 
   const handleDiscountChange = (delta: number) => {
-    const newDiscount = Math.max(0, Math.min(100, discountPercent + delta));
-    setDiscountPercent(newDiscount);
+    setDiscountPercent(Math.max(0, Math.min(100, discountPercent + delta)));
   };
 
   const handleGenerateBill = () => {
-    const paymentDetails: PaymentDetails = {
+    onGenerateBill?.({
       subtotal,
       discount: discountAmount,
       tax: totalTax,
@@ -76,8 +74,7 @@ export default function BillingPanel({
       method: paymentMethod,
       amountReceived: receivedAmount || undefined,
       change: changeAmount || undefined,
-    };
-    onGenerateBill?.(paymentDetails);
+    });
   };
 
   const paymentMethods = [
@@ -89,19 +86,19 @@ export default function BillingPanel({
 
   return (
     <div
-      className={`flex flex-col h-full bg-white border border-gray-200 rounded-lg shadow-lg ${className}`}
+      className={`flex flex-col h-full bg-kot-white border border-kot-chart rounded-lg shadow-kot-lg ${className}`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
+      <div className="p-4 border-b border-kot-chart bg-gradient-to-r from-kot-dark to-kot-darker rounded-t-lg">
         <div className="flex items-center justify-between text-white">
           <div>
             <h2 className="text-xl font-bold">Generate Bill</h2>
-            <p className="text-sm text-blue-100">Invoice #{billNumber}</p>
+            <p className="text-sm text-kot-stats">Invoice #{billNumber}</p>
           </div>
-          <Receipt size={32} className="text-blue-200" />
+          <Receipt size={32} className="text-kot-light" />
         </div>
         {tableNumber && (
-          <div className="mt-2 text-sm text-blue-100">
+          <div className="mt-2 text-sm text-kot-stats">
             Table:{" "}
             <span className="font-semibold text-white">{tableNumber}</span>
           </div>
@@ -109,28 +106,28 @@ export default function BillingPanel({
       </div>
 
       {/* Items List */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">
+      <div className="flex-1 overflow-y-auto p-4 bg-kot-primary">
+        <h3 className="text-sm font-semibold text-kot-darker mb-3 uppercase tracking-wide">
           Order Items
         </h3>
         <div className="space-y-2">
           {items.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-kot-text">
               <p>No items to bill</p>
             </div>
           ) : (
             items.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between py-2 px-3 bg-white rounded border border-gray-200"
+                className="flex items-center justify-between py-2 px-3 bg-kot-white rounded border border-kot-chart"
               >
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{item.name}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-kot-darker">{item.name}</p>
+                  <p className="text-sm text-kot-text">
                     ₹{item.price} × {item.quantity}
                   </p>
                 </div>
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-kot-darker">
                   ₹{item.total}
                 </span>
               </div>
@@ -140,47 +137,47 @@ export default function BillingPanel({
       </div>
 
       {/* Discount Section */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="p-4 border-t border-kot-chart bg-kot-white">
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <label className="text-sm font-semibold text-kot-darker flex items-center gap-2">
             <Percent size={16} />
             Discount
           </label>
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleDiscountChange(-5)}
-              className="w-7 h-7 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200"
+              className="w-7 h-7 flex items-center justify-center bg-kot-light rounded hover:bg-kot-stats transition-colors"
             >
-              <Minus size={14} />
+              <Minus size={14} className="text-kot-darker" />
             </button>
             <input
               type="number"
               value={discountPercent}
               onChange={(e) =>
                 setDiscountPercent(
-                  Math.max(0, Math.min(100, parseFloat(e.target.value) || 0))
+                  Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)),
                 )
               }
-              className="w-16 text-center border border-gray-300 rounded px-2 py-1 font-semibold"
+              className="w-16 text-center border border-kot-chart rounded px-2 py-1 font-semibold text-kot-darker focus:outline-none focus:ring-2 focus:ring-kot-dark"
               min="0"
               max="100"
             />
-            <span className="text-sm text-gray-600">%</span>
+            <span className="text-sm text-kot-text">%</span>
             <button
               onClick={() => handleDiscountChange(5)}
-              className="w-7 h-7 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200"
+              className="w-7 h-7 flex items-center justify-center bg-kot-light rounded hover:bg-kot-stats transition-colors"
             >
-              <Plus size={14} />
+              <Plus size={14} className="text-kot-darker" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Bill Summary */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-2">
+      <div className="p-4 border-t border-kot-chart bg-kot-light space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">Subtotal</span>
-          <span className="font-medium text-gray-900">
+          <span className="text-kot-text">Subtotal</span>
+          <span className="font-medium text-kot-darker">
             ₹{subtotal.toFixed(2)}
           </span>
         </div>
@@ -193,24 +190,28 @@ export default function BillingPanel({
         )}
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">CGST (2.5%)</span>
-          <span className="font-medium text-gray-900">₹{cgst.toFixed(2)}</span>
+          <span className="text-kot-text">CGST (2.5%)</span>
+          <span className="font-medium text-kot-darker">
+            ₹{cgst.toFixed(2)}
+          </span>
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">SGST (2.5%)</span>
-          <span className="font-medium text-gray-900">₹{sgst.toFixed(2)}</span>
+          <span className="text-kot-text">SGST (2.5%)</span>
+          <span className="font-medium text-kot-darker">
+            ₹{sgst.toFixed(2)}
+          </span>
         </div>
 
-        <div className="flex items-center justify-between text-lg font-bold pt-2 border-t border-gray-300">
-          <span className="text-gray-900">Grand Total</span>
-          <span className="text-blue-600">₹{grandTotal.toFixed(2)}</span>
+        <div className="flex items-center justify-between text-lg font-bold pt-2 border-t border-kot-chart">
+          <span className="text-kot-darker">Grand Total</span>
+          <span className="text-kot-dark">₹{grandTotal.toFixed(2)}</span>
         </div>
       </div>
 
       {/* Payment Method */}
-      <div className="p-4 border-t border-gray-200 bg-white">
-        <label className="text-sm font-semibold text-gray-700 mb-2 block">
+      <div className="p-4 border-t border-kot-chart bg-kot-white">
+        <label className="text-sm font-semibold text-kot-darker mb-2 block">
           Payment Method
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -222,8 +223,8 @@ export default function BillingPanel({
                 onClick={() => setPaymentMethod(method.value)}
                 className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border-2 font-medium transition-all ${
                   paymentMethod === method.value
-                    ? "border-blue-600 bg-blue-50 text-blue-700"
-                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    ? "border-kot-dark bg-kot-light text-kot-darker"
+                    : "border-kot-chart bg-kot-white text-kot-text hover:border-kot-stats"
                 }`}
               >
                 <Icon size={18} />
@@ -236,9 +237,9 @@ export default function BillingPanel({
 
       {/* Cash Payment Details */}
       {paymentMethod === "cash" && (
-        <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-3">
+        <div className="p-4 border-t border-kot-chart bg-kot-light space-y-3">
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1 block">
+            <label className="text-sm font-semibold text-kot-darker mb-1 block">
               Amount Received
             </label>
             <input
@@ -246,13 +247,13 @@ export default function BillingPanel({
               value={amountReceived}
               onChange={(e) => setAmountReceived(e.target.value)}
               placeholder="0.00"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-kot-chart rounded-lg text-lg font-semibold text-kot-darker focus:outline-none focus:ring-2 focus:ring-kot-dark bg-kot-white"
             />
           </div>
 
           {receivedAmount > 0 && (
             <div className="flex items-center justify-between text-lg">
-              <span className="font-semibold text-gray-700">
+              <span className="font-semibold text-kot-darker">
                 Change to Return
               </span>
               <span className="font-bold text-green-600">
@@ -264,32 +265,22 @@ export default function BillingPanel({
       )}
 
       {/* Action Buttons */}
-      <div className="p-4 border-t border-gray-200 bg-white space-y-2">
+      <div className="p-4 border-t border-kot-chart bg-kot-white space-y-2">
         <button
           onClick={handleGenerateBill}
           disabled={items.length === 0}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          className="w-full bg-kot-dark hover:bg-kot-darker disabled:bg-kot-chart disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
         >
           Generate Bill
         </button>
         <button
           onClick={onPrintBill}
           disabled={items.length === 0}
-          className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed border-2 border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors"
+          className="w-full bg-kot-white hover:bg-kot-light disabled:bg-kot-light disabled:cursor-not-allowed border-2 border-kot-chart text-kot-darker font-semibold py-3 px-4 rounded-lg transition-colors"
         >
           Print Bill
         </button>
       </div>
     </div>
   );
-}
-
-{
-  /* <BillingPanel
-  billNumber="INV-001"
-  tableNumber="5"
-  items={billItems}
-  onGenerateBill={(payment) => handleGenerateBill(payment)}
-  onPrintBill={() => handlePrintBill()}
-/> */
 }

@@ -82,9 +82,7 @@ export const MenuItemCard = ({
             </p>
           )}
 
-          <p className="text-lg font-bold text-kot-primary">
-            ₹{price.toFixed(2)}
-          </p>
+          <p className="text-lg font-bold text-kot-dark">₹{price.toFixed(2)}</p>
         </div>
 
         {/* Actions */}

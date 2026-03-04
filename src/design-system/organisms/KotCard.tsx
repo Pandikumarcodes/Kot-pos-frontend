@@ -35,7 +35,6 @@ export default function KOTCard({
   showActions = true,
   className = "",
 }: KOTCardProps) {
-  // Status configuration
   const getStatusConfig = (status: KOTStatus) => {
     switch (status) {
       case "pending":
@@ -54,8 +53,8 @@ export default function KOTCard({
         };
       case "ready":
         return {
-          color: "border-blue-400 bg-blue-50",
-          badge: "bg-blue-100 text-blue-700",
+          color: "border-kot-dark bg-kot-light",
+          badge: "bg-kot-stats text-kot-darker",
           text: "Ready",
           icon: CheckCircle,
         };
@@ -79,16 +78,14 @@ export default function KOTCard({
   const statusConfig = getStatusConfig(kot.status);
   const StatusIcon = statusConfig.icon;
 
-  // Priority badge
   const getPriorityBadge = () => {
     if (!kot.priority || kot.priority === "normal") return null;
-
     return (
       <span
         className={`text-xs font-bold px-2 py-1 rounded ${
           kot.priority === "high"
             ? "bg-red-500 text-white"
-            : "bg-gray-400 text-white"
+            : "bg-kot-text text-white"
         }`}
       >
         {kot.priority.toUpperCase()}
@@ -96,32 +93,27 @@ export default function KOTCard({
     );
   };
 
-  // Calculate elapsed time
   const getElapsedTime = () => {
     const orderDate = new Date(kot.orderTime);
     const now = new Date();
     const diffMs = now.getTime() - orderDate.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-
-    if (diffMins < 60) {
-      return `${diffMins} min ago`;
-    } else {
-      const hours = Math.floor(diffMins / 60);
-      const mins = diffMins % 60;
-      return `${hours}h ${mins}m ago`;
-    }
+    if (diffMins < 60) return `${diffMins} min ago`;
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return `${hours}h ${mins}m ago`;
   };
 
   return (
     <div
-      className={`border-2 rounded-lg ${statusConfig.color} shadow-md hover:shadow-lg transition-shadow ${className}`}
+      className={`border-2 rounded-lg ${statusConfig.color} shadow-kot hover:shadow-kot-lg transition-shadow ${className}`}
       onClick={() => onViewDetails?.(kot)}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-300 bg-white bg-opacity-50">
+      <div className="p-4 border-b border-kot-chart bg-kot-white/50">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
-            <h3 className="text-xl font-bold text-gray-900">
+            <h3 className="text-xl font-bold text-kot-darker">
               KOT #{kot.kotNumber}
             </h3>
             {getPriorityBadge()}
@@ -136,15 +128,15 @@ export default function KOTCard({
 
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-4">
-            <span className="font-semibold text-gray-700">
-              Table: <span className="text-blue-600">{kot.tableNumber}</span>
+            <span className="font-semibold text-kot-darker">
+              Table: <span className="text-kot-dark">{kot.tableNumber}</span>
             </span>
-            <span className="flex items-center gap-1 text-gray-600">
+            <span className="flex items-center gap-1 text-kot-text">
               <User size={14} />
               {kot.waiter}
             </span>
           </div>
-          <span className="flex items-center gap-1 text-gray-600">
+          <span className="flex items-center gap-1 text-kot-text">
             <Clock size={14} />
             {getElapsedTime()}
           </span>
@@ -156,14 +148,14 @@ export default function KOTCard({
         {kot.items.map((item) => (
           <div
             key={item.id}
-            className="flex items-start justify-between py-2 border-b border-gray-200 last:border-0"
+            className="flex items-start justify-between py-2 border-b border-kot-chart last:border-0"
           >
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-gray-900 text-lg">
+                <span className="font-semibold text-kot-darker text-lg">
                   {item.quantity}x
                 </span>
-                <span className="text-gray-900 font-medium">{item.name}</span>
+                <span className="text-kot-darker font-medium">{item.name}</span>
               </div>
               {item.note && (
                 <p className="text-sm text-orange-600 italic mt-1 ml-8">
@@ -176,7 +168,7 @@ export default function KOTCard({
       </div>
 
       {/* Footer - Time */}
-      <div className="px-4 py-3 bg-gray-100 bg-opacity-50 border-t border-gray-300 text-xs text-gray-600">
+      <div className="px-4 py-3 bg-kot-light/50 border-t border-kot-chart text-xs text-kot-text">
         Order Time:{" "}
         {new Date(kot.orderTime).toLocaleTimeString("en-IN", {
           hour: "2-digit",
@@ -188,7 +180,7 @@ export default function KOTCard({
       {showActions &&
         kot.status !== "completed" &&
         kot.status !== "cancelled" && (
-          <div className="p-4 border-t border-gray-300 bg-white bg-opacity-50 flex gap-2">
+          <div className="p-4 border-t border-kot-chart bg-kot-white/50 flex gap-2">
             {kot.status === "pending" && (
               <>
                 <button
@@ -196,7 +188,7 @@ export default function KOTCard({
                     e.stopPropagation();
                     onStatusChange?.(kot.id, "preparing");
                   }}
-                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                 >
                   Start Preparing
                 </button>
@@ -205,25 +197,23 @@ export default function KOTCard({
                     e.stopPropagation();
                     onStatusChange?.(kot.id, "cancelled");
                   }}
-                  className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                  className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
               </>
             )}
-
             {kot.status === "preparing" && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onStatusChange?.(kot.id, "ready");
                 }}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                className="flex-1 bg-kot-dark hover:bg-kot-darker text-white font-semibold py-2 px-4 rounded-lg transition-colors"
               >
                 Mark as Ready
               </button>
             )}
-
             {kot.status === "ready" && (
               <button
                 onClick={(e) => {
@@ -239,13 +229,4 @@ export default function KOTCard({
         )}
     </div>
   );
-}
-
-{
-  /* <KOTCard
-  kot={kotData}
-  onStatusChange={(id, status) => handleStatusChange(id, status)}
-  onViewDetails={(kot) => handleViewDetails(kot)}
-  showActions={true}
-/> */
 }

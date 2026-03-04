@@ -27,27 +27,24 @@ export default function TableGrid({
   const [filterStatus, setFilterStatus] = useState<TableStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Filter by status
   const filteredByStatus =
     filterStatus === "all"
       ? tables
       : tables.filter((table) => table.status === filterStatus);
 
-  // Filter by search
   const filteredTables = searchQuery
     ? filteredByStatus.filter((table) =>
-        table.number.toLowerCase().includes(searchQuery.toLowerCase())
+        table.number.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : filteredByStatus;
 
-  // Count by status
   const statusCounts = {
     available: tables.filter((t) => t.status === "available").length,
     occupied: tables.filter((t) => t.status === "occupied").length,
     reserved: tables.filter((t) => t.status === "reserved").length,
   };
 
-  // Status colors
+  // Keep semantic status colors for table cards — intentional UX
   const getStatusStyles = (status: TableStatus) => {
     switch (status) {
       case "available":
@@ -77,13 +74,13 @@ export default function TableGrid({
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 bg-white">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-4">Tables</h1>
+      <div className="p-6 border-b border-kot-chart bg-kot-white">
+        <h1 className="text-2xl font-semibold text-kot-darker mb-4">Tables</h1>
 
         {/* Search Bar */}
         <div className="relative mb-4">
           <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-kot-text"
             size={20}
           />
           <input
@@ -91,7 +88,7 @@ export default function TableGrid({
             placeholder="Search table number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 border border-kot-chart rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark focus:border-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50"
           />
         </div>
 
@@ -101,8 +98,8 @@ export default function TableGrid({
             onClick={() => setFilterStatus("all")}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               filterStatus === "all"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-kot-dark text-white"
+                : "bg-kot-light text-kot-text hover:bg-kot-stats hover:text-kot-darker"
             }`}
           >
             All ({tables.length})
@@ -112,7 +109,7 @@ export default function TableGrid({
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               filterStatus === "available"
                 ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-kot-light text-kot-text hover:bg-kot-stats hover:text-kot-darker"
             }`}
           >
             Available ({statusCounts.available})
@@ -122,7 +119,7 @@ export default function TableGrid({
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               filterStatus === "occupied"
                 ? "bg-red-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-kot-light text-kot-text hover:bg-kot-stats hover:text-kot-darker"
             }`}
           >
             Occupied ({statusCounts.occupied})
@@ -132,7 +129,7 @@ export default function TableGrid({
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               filterStatus === "reserved"
                 ? "bg-purple-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-kot-light text-kot-text hover:bg-kot-stats hover:text-kot-darker"
             }`}
           >
             Reserved ({statusCounts.reserved})
@@ -141,10 +138,10 @@ export default function TableGrid({
       </div>
 
       {/* Tables Grid */}
-      <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-6 bg-kot-primary">
         {filteredTables.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
-            <Search size={48} className="mb-3 text-gray-300" />
+          <div className="flex flex-col items-center justify-center h-full text-kot-text">
+            <Search size={48} className="mb-3 text-kot-chart" />
             <p className="text-lg font-medium">No tables found</p>
             <p className="text-sm mt-1">Try adjusting your filters</p>
           </div>
@@ -156,9 +153,8 @@ export default function TableGrid({
                 <button
                   key={table.id}
                   onClick={() => onSelectTable?.(table)}
-                  className={`${styles.bg} ${styles.border} border-2 rounded-xl p-4 hover:shadow-lg transition-all transform hover:scale-105 cursor-pointer text-left`}
+                  className={`${styles.bg} ${styles.border} border-2 rounded-xl p-4 hover:shadow-kot-lg transition-all transform hover:scale-105 cursor-pointer text-left`}
                 >
-                  {/* Table Number */}
                   <div className="flex items-center justify-between mb-3">
                     <span className={`text-2xl font-bold ${styles.text}`}>
                       {table.number}
@@ -170,15 +166,13 @@ export default function TableGrid({
                     </span>
                   </div>
 
-                  {/* Seats */}
                   <div className="flex items-center gap-2 mb-2">
-                    <Users size={16} className="text-gray-500" />
-                    <span className="text-sm text-gray-600">
+                    <Users size={16} className="text-kot-text" />
+                    <span className="text-sm text-kot-text">
                       {table.seats} seats
                     </span>
                   </div>
 
-                  {/* Occupied Details */}
                   {table.status === "occupied" && (
                     <>
                       {table.guests && (
@@ -193,25 +187,24 @@ export default function TableGrid({
                       )}
                       {table.orderTime && (
                         <div className="flex items-center gap-2 mb-2">
-                          <Clock size={16} className="text-gray-500" />
-                          <span className="text-sm text-gray-600">
+                          <Clock size={16} className="text-kot-text" />
+                          <span className="text-sm text-kot-text">
                             {table.orderTime}
                           </span>
                         </div>
                       )}
                       {table.waiter && (
-                        <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-300">
+                        <div className="text-xs text-kot-text mt-2 pt-2 border-t border-kot-chart">
                           Waiter: {table.waiter}
                         </div>
                       )}
                     </>
                   )}
 
-                  {/* Reserved Details */}
                   {table.status === "reserved" && table.orderTime && (
                     <div className="flex items-center gap-2">
-                      <Clock size={16} className="text-gray-500" />
-                      <span className="text-sm text-gray-600">
+                      <Clock size={16} className="text-kot-text" />
+                      <span className="text-sm text-kot-text">
                         Reserved at {table.orderTime}
                       </span>
                     </div>
@@ -224,11 +217,11 @@ export default function TableGrid({
       </div>
 
       {/* Footer - Stats */}
-      <div className="px-6 py-4 border-t border-gray-200 bg-white">
+      <div className="px-6 py-4 border-t border-kot-chart bg-kot-white">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-kot-text">
             Showing{" "}
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-kot-darker">
               {filteredTables.length}
             </span>{" "}
             tables
@@ -249,8 +242,3 @@ export default function TableGrid({
     </div>
   );
 }
-
-/* <TableGrid
-  tables={tablesData}
-  onSelectTable={(table) => handleSelectTable(table)}
-/> */

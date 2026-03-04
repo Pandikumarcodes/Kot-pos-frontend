@@ -27,29 +27,27 @@ export default function MenuGrid({
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Filter items by category
   const filteredByCategory =
     selectedCategory === "All"
       ? items
       : items.filter((item) => item.category === selectedCategory);
 
-  // Filter by search query
   const filteredItems = searchQuery
     ? filteredByCategory.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : filteredByCategory;
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 bg-white">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-4">Menu</h1>
+      <div className="p-6 border-b border-kot-chart bg-kot-white">
+        <h1 className="text-2xl font-semibold text-kot-darker mb-4">Menu</h1>
 
         {/* Search Bar */}
         <div className="relative mb-4">
           <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-kot-text"
             size={20}
           />
           <input
@@ -57,7 +55,7 @@ export default function MenuGrid({
             placeholder="Search menu items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 border border-kot-chart rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark focus:border-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50"
           />
         </div>
 
@@ -69,8 +67,8 @@ export default function MenuGrid({
               onClick={() => setSelectedCategory(category)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 selectedCategory === category
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-kot-dark text-white"
+                  : "bg-kot-light text-kot-text hover:bg-kot-stats hover:text-kot-darker"
               }`}
             >
               {category}
@@ -80,10 +78,10 @@ export default function MenuGrid({
       </div>
 
       {/* Menu Items Grid */}
-      <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-6 bg-kot-primary">
         {filteredItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
-            <Search size={48} className="mb-3 text-gray-300" />
+          <div className="flex flex-col items-center justify-center h-full text-kot-text">
+            <Search size={48} className="mb-3 text-kot-chart" />
             <p className="text-lg font-medium">No items found</p>
             <p className="text-sm mt-1">Try adjusting your search or filters</p>
           </div>
@@ -92,11 +90,11 @@ export default function MenuGrid({
             {filteredItems.map((item) => (
               <div
                 key={item.id}
-                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow ${
+                className={`bg-kot-white rounded-lg shadow-kot border border-kot-chart p-4 hover:shadow-kot-lg transition-shadow ${
                   !item.isAvailable ? "opacity-60" : ""
                 }`}
               >
-                {/* Item Image (placeholder) */}
+                {/* Item Image */}
                 {item.image ? (
                   <img
                     src={item.image}
@@ -104,15 +102,17 @@ export default function MenuGrid({
                     className="w-full h-32 object-cover rounded-lg mb-3"
                   />
                 ) : (
-                  <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                    <span className="text-gray-400 text-sm">No image</span>
+                  <div className="w-full h-32 bg-gradient-to-br from-kot-light to-kot-stats rounded-lg mb-3 flex items-center justify-center">
+                    <span className="text-kot-text text-sm">No image</span>
                   </div>
                 )}
 
                 {/* Item Details */}
                 <div className="flex-1 mb-3">
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                    <h3 className="font-semibold text-kot-darker">
+                      {item.name}
+                    </h3>
                     {!item.isAvailable && (
                       <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
                         Out
@@ -121,21 +121,17 @@ export default function MenuGrid({
                   </div>
 
                   {item.description && (
-                    <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+                    <p className="text-sm text-kot-text mb-2 line-clamp-2">
                       {item.description}
                     </p>
                   )}
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">
-                      {item.category}
-                    </span>
-                  </div>
+                  <span className="text-sm text-kot-text">{item.category}</span>
                 </div>
 
                 {/* Price and Add Button */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <span className="text-lg font-bold text-gray-900">
+                <div className="flex items-center justify-between pt-3 border-t border-kot-chart">
+                  <span className="text-lg font-bold text-kot-darker">
                     ₹{item.price}
                   </span>
                   <button
@@ -143,8 +139,8 @@ export default function MenuGrid({
                     disabled={!item.isAvailable}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
                       item.isAvailable
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        ? "bg-kot-dark hover:bg-kot-darker text-white"
+                        : "bg-kot-chart text-kot-text cursor-not-allowed"
                     }`}
                   >
                     <Plus size={16} />
@@ -159,10 +155,10 @@ export default function MenuGrid({
 
       {/* Results Count */}
       {filteredItems.length > 0 && (
-        <div className="px-6 py-3 border-t border-gray-200 bg-white">
-          <p className="text-sm text-gray-500">
+        <div className="px-6 py-3 border-t border-kot-chart bg-kot-white">
+          <p className="text-sm text-kot-text">
             Showing{" "}
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-kot-darker">
               {filteredItems.length}
             </span>{" "}
             items
@@ -173,10 +169,3 @@ export default function MenuGrid({
     </div>
   );
 }
-
-/* 
-<MenuGrid
-  items={menuItems}
-  categories={["All", "Starters", "Main Course", "Breads", "Desserts"]}
-  onAddToOrder={(item) => handleAddToOrder(item)}
-/> */

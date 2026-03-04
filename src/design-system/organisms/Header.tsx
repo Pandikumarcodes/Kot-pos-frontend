@@ -14,7 +14,7 @@ export interface HeaderProps {
 }
 
 export const Header = ({
-  title = "Dashboard",
+  title = "Restaurant POS",
   subtitle,
   userName,
   userRole,

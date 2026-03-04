@@ -1,155 +1,203 @@
-// src/pages/LoginPage.tsx
-import { useState } from "react";
-import { Button } from "../../design-system/atoms/Button/Button";
+// src/pages/auth/LoginPage.tsx
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
-  const [showMessage, setShowMessage] = useState("");
-
-  const handleSignIn = () => {
-    setShowMessage("Navigating to Sign In page...");
-    setTimeout(() => setShowMessage(""), 2000);
-    // Add your navigation logic here
-    // Example: navigate('/signin');
-  };
-
-  const handleSignUp = () => {
-    setShowMessage("Navigating to Sign Up page...");
-    setTimeout(() => setShowMessage(""), 2000);
-    // Add your navigation logic here
-    // Example: navigate('/signup');
-  };
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-kot-primary via-kot-header to-kot-stats flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Logo/Brand Section */}
-        <div className="text-center mb-8">
-          <div className="inline-block p-4 bg-white rounded-full shadow-kot-lg mb-4">
-            <svg
-              className="w-12 h-12 text-kot-dark"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+    <div className="min-h-screen flex bg-kot-primary">
+      {/* ── Left Banner ── */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-14 bg-kot-stats">
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
+            <span className="text-white font-bold text-sm">K</span>
           </div>
-          <h1 className="text-4xl font-bold text-kot-darker mb-2">
-            Welcome to KOT
-          </h1>
-          <p className="text-kot-text text-lg">Keep On Track with your goals</p>
+          <span className="font-bold text-xl text-kot-darker">KOT POS</span>
         </div>
 
-        {/* Status Message */}
-        {showMessage && (
-          <div className="mb-4 p-4 bg-white rounded-lg shadow-kot text-center text-kot-dark font-medium">
-            {showMessage}
-          </div>
-        )}
-
-        {/* Action Cards */}
-        <div className="space-y-4">
-          {/* Sign In Card */}
-          <div className="bg-white rounded-2xl shadow-kot-lg p-8 hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-start mb-4">
-              <div className="p-3 bg-kot-primary rounded-lg mr-4">
-                <svg
-                  className="w-6 h-6 text-kot-dark"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                  />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-semibold text-kot-darker mb-2">
-                  Sign In
-                </h2>
-                <p className="text-kot-text">
-                  Already have an account? Sign in to continue your journey.
-                </p>
-              </div>
+        {/* Center content */}
+        <div className="flex-1 flex flex-col justify-center items-center text-center px-8">
+          <div className="relative mb-10">
+            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto bg-kot-light shadow-kot-lg">
+              <svg
+                className="w-12 h-12"
+                fill="none"
+                stroke="#4A5F52"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
             </div>
-            <Button onClick={handleSignIn}>Sign In to Your Account</Button>
+            {/* Floating badge top */}
+            <div className="absolute -top-3 -right-8 bg-kot-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-kot">
+              <div className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-xs font-medium text-kot-darker">
+                Live Orders
+              </span>
+            </div>
+            {/* Floating badge bottom */}
+            <div className="absolute -bottom-3 -left-8 bg-kot-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-kot">
+              <span className="text-xs">👨‍🍳</span>
+              <span className="text-xs font-medium text-kot-darker">
+                Kitchen Ready
+              </span>
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-bold mb-3 leading-tight text-kot-darker">
+            Manage your restaurant
+            <br />
+            from one place
+          </h2>
+          <p className="text-sm leading-relaxed max-w-xs text-kot-text">
+            Orders, tables, billing and kitchen display — all connected in real
+            time.
+          </p>
+        </div>
+
+        {/* Role pills */}
+        <div>
+          <p className="text-xs mb-3 font-medium uppercase tracking-widest text-kot-text">
+            Station Access
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {["⚙️ Admin", "💳 Cashier", "🍽️ Waiter", "👨‍🍳 Chef"].map((r) => (
+              <span
+                key={r}
+                className="bg-kot-white text-xs px-3 py-1.5 rounded-full font-medium text-kot-dark shadow-kot"
+              >
+                {r}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right Panel ── */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-10 lg:hidden">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
+              <span className="text-white font-bold text-sm">K</span>
+            </div>
+            <span className="font-bold text-lg text-kot-darker">KOT POS</span>
+          </div>
+
+          {/* Heading */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2 text-kot-darker">
+              Welcome back
+            </h1>
+            <p className="text-sm text-kot-text">
+              Choose an option to access your station.
+            </p>
+          </div>
+
+          {/* Sign In Card */}
+          <div
+            onClick={() => navigate("/signin")}
+            className="group bg-kot-white rounded-2xl p-6 mb-3 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-kot-light">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="#4A5F52"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-kot-darker">
+                    Sign In
+                  </p>
+                  <p className="text-xs mt-0.5 text-kot-text">
+                    Access your account
+                  </p>
+                </div>
+              </div>
+              <svg
+                className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                fill="none"
+                stroke="#C1D9CD"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
           </div>
 
           {/* Sign Up Card */}
-          <div className="bg-white rounded-2xl shadow-kot-lg p-8 hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-start mb-4">
-              <div className="p-3 bg-kot-stats rounded-lg mr-4">
-                <svg
-                  className="w-6 h-6 text-kot-dark"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                  />
-                </svg>
+          <div
+            onClick={() => navigate("/signup")}
+            className="group bg-kot-white rounded-2xl p-6 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-kot-stats">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="#4A5F52"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-kot-darker">
+                    Create Account
+                  </p>
+                  <p className="text-xs mt-0.5 text-kot-text">
+                    New staff registration
+                  </p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-semibold text-kot-darker mb-2">
-                  Sign Up
-                </h2>
-                <p className="text-kot-text">
-                  New here? Create an account and start tracking today.
-                </p>
-              </div>
+              <svg
+                className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                fill="none"
+                stroke="#C1D9CD"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
             </div>
-            <Button variant="secondary" onClick={handleSignUp}>
-              Create New Account
-            </Button>
           </div>
-        </div>
 
-        {/* Features Section */}
-        <div className="mt-8 bg-white bg-opacity-60 rounded-xl p-6">
-          <h3 className="text-center text-sm font-semibold text-kot-darker mb-4">
-            Why Choose KOT?
-          </h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl mb-1">📊</div>
-              <p className="text-xs text-kot-text">Track Progress</p>
-            </div>
-            <div>
-              <div className="text-2xl mb-1">🎯</div>
-              <p className="text-xs text-kot-text">Set Goals</p>
-            </div>
-            <div>
-              <div className="text-2xl mb-1">✨</div>
-              <p className="text-xs text-kot-text">Stay Motivated</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-8 text-sm text-kot-text">
-          <p>© 2024 KOT. All rights reserved.</p>
-          <div className="mt-2 space-x-4">
-            <button className="hover:text-kot-dark transition-colors">
-              Privacy Policy
-            </button>
-            <span>•</span>
-            <button className="hover:text-kot-dark transition-colors">
-              Terms of Service
-            </button>
-          </div>
+          {/* Footer */}
+          <p className="text-center text-xs mt-8 text-kot-text">
+            © 2026 KOT POS · All rights reserved
+          </p>
         </div>
       </div>
     </div>

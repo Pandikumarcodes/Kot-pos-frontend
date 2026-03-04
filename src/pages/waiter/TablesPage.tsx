@@ -1,138 +1,561 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import TableGrid from "../../design-system/organisms/TableGrid";
+import { Plus, Trash2, X } from "lucide-react";
+import { useAppSelector } from "../../Store/hooks";
+import {
+  getTablesApi,
+  createTableApi,
+  deleteTableApi,
+  allocateTableApi,
+} from "../../services/waiterApi/Table.api";
+import type { Table, TableStatus } from "../../services/waiterApi/Table.api";
 
-type TableStatus = "available" | "occupied" | "reserved";
+const STATUS_CONFIG: Record<
+  TableStatus,
+  {
+    bg: string;
+    text: string;
+    border: string;
+    label: string;
+    dot: string;
+  }
+> = {
+  available: {
+    bg: "bg-kot-stats",
+    text: "text-kot-darker",
+    border: "border-kot-dark",
+    label: "Available",
+    dot: "bg-kot-dark",
+  },
+  occupied: {
+    bg: "bg-yellow-100",
+    text: "text-yellow-800",
+    border: "border-yellow-400",
+    label: "Occupied",
+    dot: "bg-yellow-400",
+  },
+  billing: {
+    bg: "bg-red-100",
+    text: "text-red-800",
+    border: "border-red-400",
+    label: "Billing",
+    dot: "bg-red-500",
+  },
+  reserved: {
+    bg: "bg-blue-100",
+    text: "text-blue-800",
+    border: "border-blue-400",
+    label: "Reserved",
+    dot: "bg-blue-400",
+  },
+  cleaning: {
+    bg: "bg-purple-100",
+    text: "text-purple-800",
+    border: "border-purple-400",
+    label: "Cleaning",
+    dot: "bg-purple-400",
+  },
+};
 
-interface Table {
-  id: string;
-  number: string;
-  seats: number;
-  status: TableStatus;
-  orderTime?: string;
-  guests?: number;
-  waiter?: string;
+const ALL_FILTERS = [
+  "all",
+  "available",
+  "occupied",
+  "billing",
+  "reserved",
+] as const;
+
+function formatDuration(isoStart: string): string {
+  const diff = Math.floor((Date.now() - new Date(isoStart).getTime()) / 1000);
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
-
-// Mock data - replace with API call
-const MOCK_TABLES: Table[] = [
-  { id: "1", number: "T-01", seats: 4, status: "available" },
-  {
-    id: "2",
-    number: "T-02",
-    seats: 2,
-    status: "occupied",
-    orderTime: "12:30 PM",
-    guests: 2,
-    waiter: "Raj",
-  },
-  {
-    id: "3",
-    number: "T-03",
-    seats: 6,
-    status: "reserved",
-    orderTime: "2:00 PM",
-  },
-  { id: "4", number: "T-04", seats: 4, status: "available" },
-  {
-    id: "5",
-    number: "T-05",
-    seats: 2,
-    status: "occupied",
-    orderTime: "1:15 PM",
-    guests: 1,
-    waiter: "Priya",
-  },
-  { id: "6", number: "T-06", seats: 8, status: "available" },
-  {
-    id: "7",
-    number: "T-07",
-    seats: 4,
-    status: "occupied",
-    orderTime: "11:45 AM",
-    guests: 4,
-    waiter: "Amit",
-  },
-  { id: "8", number: "T-08", seats: 2, status: "available" },
-  {
-    id: "9",
-    number: "T-09",
-    seats: 4,
-    status: "reserved",
-    orderTime: "3:00 PM",
-  },
-  { id: "10", number: "T-10", seats: 6, status: "available" },
-  {
-    id: "11",
-    number: "T-11",
-    seats: 4,
-    status: "occupied",
-    orderTime: "12:00 PM",
-    guests: 3,
-    waiter: "Sita",
-  },
-  { id: "12", number: "T-12", seats: 2, status: "available" },
-];
 
 export default function TablesPage() {
   const navigate = useNavigate();
+
+  // ── Role check ──
+  const { user } = useAppSelector((state) => state.auth);
+  const isAdmin = user?.role === "admin";
+
   const [tables, setTables] = useState<Table[]>([]);
+  const [filter, setFilter] = useState<(typeof ALL_FILTERS)[number]>("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch tables on mount
-  useEffect(() => {
-    // TODO: Replace with actual API call
-    // fetchTables().then(data => setTables(data));
+  // Admin: Add Table modal
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ tableNumber: "", capacity: "" });
 
-    // Simulate API call
-    setTimeout(() => {
-      setTables(MOCK_TABLES);
+  // Waiter: Allocate modal
+  const [showAllocateModal, setShowAllocateModal] = useState(false);
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [allocateForm, setAllocateForm] = useState({ name: "", phone: "" });
+
+  const fetchTables = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { data } = await getTablesApi();
+      setTables(data.tables);
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(e?.response?.data?.error || "Failed to load tables");
+    } finally {
       setLoading(false);
-    }, 500);
-  }, []);
-
-  // Handle table selection
-  const handleSelectTable = (table: Table) => {
-    if (table.status === "available") {
-      // Navigate to order page for new order
-      navigate(`/waiter/order/${table.id}`);
-    } else if (table.status === "occupied") {
-      // Navigate to existing order
-      navigate(`/waiter/order/${table.id}`);
-    } else if (table.status === "reserved") {
-      // Show confirmation or handle reserved tables
-      const confirm = window.confirm(
-        `Table ${table.number} is reserved for ${table.orderTime}.\nDo you want to proceed?`
-      );
-      if (confirm) {
-        navigate(`/waiter/order/${table.id}`);
-      }
     }
   };
 
+  useEffect(() => {
+    fetchTables();
+  }, []);
+
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const filtered =
+    filter === "all" ? tables : tables.filter((t) => t.status === filter);
+  const counts = {
+    available: tables.filter((t) => t.status === "available").length,
+    occupied: tables.filter((t) => t.status === "occupied").length,
+    billing: tables.filter((t) => t.status === "billing").length,
+    reserved: tables.filter((t) => t.status === "reserved").length,
+  };
+
+  // ── Admin: Add table ──
+  const handleAddTable = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data } = await createTableApi({
+        tableNumber: parseInt(addForm.tableNumber),
+        capacity: parseInt(addForm.capacity),
+      });
+      setTables([...tables, data.table]);
+      setShowAddModal(false);
+      setAddForm({ tableNumber: "", capacity: "" });
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
+      alert(e?.response?.data?.error || "Failed to add table");
+    }
+  };
+
+  // ── Admin: Delete table ──
+  const handleDeleteTable = async (table: Table, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(`Delete Table ${table.tableNumber}?`)) return;
+    try {
+      await deleteTableApi(table._id);
+      setTables(tables.filter((t) => t._id !== table._id));
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
+      alert(e?.response?.data?.error || "Failed to delete table");
+    }
+  };
+
+  // ── Table click ──
+  const handleTableClick = (table: Table) => {
+    if (table.status === "reserved" || table.status === "cleaning") return;
+    if (table.status === "available" && !isAdmin) {
+      // Waiter: show allocate modal first
+      setSelectedTable(table);
+      setAllocateForm({ name: "", phone: "" });
+      setShowAllocateModal(true);
+    } else {
+      navigate(`/waiter/order/${table._id}`);
+    }
+  };
+
+  // ── Waiter: Allocate table ──
+  const handleAllocate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTable) return;
+    try {
+      const { data } = await allocateTableApi(selectedTable._id, allocateForm);
+      setTables(
+        tables.map((t) => (t._id === selectedTable._id ? data.table : t)),
+      );
+      setShowAllocateModal(false);
+      navigate(`/waiter/order/${selectedTable._id}`);
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
+      alert(e?.response?.data?.error || "Failed to allocate table");
+    }
+  };
+
+  const inputClass =
+    "w-full px-3 py-2.5 border-2 border-kot-chart rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50 text-sm";
+
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-kot-primary">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading tables...</p>
+          <div className="w-12 h-12 rounded-full border-4 border-kot-dark border-t-transparent animate-spin mx-auto mb-3" />
+          <p className="text-sm text-kot-text">Loading tables…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-kot-primary">
+        <div className="text-center">
+          <p className="text-red-600 font-medium mb-3">{error}</p>
+          <button
+            onClick={fetchTables}
+            className="px-4 py-2 bg-kot-dark text-white rounded-lg hover:bg-kot-darker"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen">
-      <TableGrid tables={tables} onSelectTable={handleSelectTable} />
+    <div className="min-h-screen bg-kot-primary">
+      <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-kot-darker">Tables</h1>
+            <p className="text-sm mt-0.5 text-kot-text">
+              {tables.length} total ·{" "}
+              {isAdmin ? "manage tables" : "select a table to take an order"}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {/* ✅ Admin only */}
+            {isAdmin && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-kot-dark hover:bg-kot-darker transition-all"
+              >
+                <Plus size={16} /> Add Table
+              </button>
+            )}
+            <button
+              onClick={fetchTables}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border-2 border-kot-chart text-kot-dark bg-kot-white hover:bg-kot-light transition-all"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Stat strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {(
+            [
+              { key: "available", label: "Available", dot: "bg-kot-dark" },
+              { key: "occupied", label: "Occupied", dot: "bg-yellow-400" },
+              { key: "billing", label: "Billing", dot: "bg-red-500" },
+              { key: "reserved", label: "Reserved", dot: "bg-blue-400" },
+            ] as const
+          ).map((s) => (
+            <div
+              key={s.key}
+              className="bg-kot-white rounded-2xl px-5 py-4 flex items-center gap-3 shadow-kot"
+            >
+              <div className={`w-3 h-3 rounded-full flex-shrink-0 ${s.dot}`} />
+              <div>
+                <p className="text-xl font-bold text-kot-darker">
+                  {counts[s.key]}
+                </p>
+                <p className="text-xs text-kot-text">{s.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Filter tabs */}
+        <div className="bg-kot-white rounded-2xl p-1.5 flex gap-1 w-fit shadow-kot">
+          {ALL_FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all duration-200 ${
+                filter === f
+                  ? "bg-kot-dark text-white"
+                  : "text-kot-text hover:bg-kot-light hover:text-kot-darker"
+              }`}
+            >
+              {f === "all" ? `All (${tables.length})` : f}
+            </button>
+          ))}
+        </div>
+
+        {/* Table grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {filtered.map((table) => {
+            const cfg = STATUS_CONFIG[table.status];
+            const isClickable =
+              table.status !== "reserved" && table.status !== "cleaning";
+
+            return (
+              <div key={table._id} className="relative group">
+                <button
+                  onClick={() => handleTableClick(table)}
+                  disabled={!isClickable}
+                  className={`text-left rounded-2xl p-4 border-l-4 transition-all duration-200 w-full bg-kot-white shadow-kot hover:shadow-kot-lg ${cfg.border} ${
+                    !isClickable
+                      ? "opacity-70 cursor-default"
+                      : "cursor-pointer"
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-base ${cfg.bg} ${cfg.text}`}
+                    >
+                      {table.tableNumber}
+                    </div>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${cfg.bg} ${cfg.text}`}
+                    >
+                      {cfg.label}
+                    </span>
+                  </div>
+
+                  <p className="text-xs mb-1 text-kot-text">
+                    <span className="text-kot-darker font-semibold">
+                      T-{table.tableNumber}
+                    </span>
+                    {" · "}
+                    {table.capacity} seats
+                  </p>
+
+                  {(table.status === "occupied" ||
+                    table.status === "billing") && (
+                    <div className="mt-2 pt-2 space-y-1 border-t border-kot-chart">
+                      {table.waiterName && (
+                        <p className="text-xs text-kot-text">
+                          Waiter:{" "}
+                          <span className="text-kot-darker font-semibold">
+                            {table.waiterName}
+                          </span>
+                        </p>
+                      )}
+                      {table.orderAmount !== undefined && (
+                        <p className="text-sm font-bold text-kot-dark">
+                          ₹{table.orderAmount.toLocaleString()}
+                        </p>
+                      )}
+                      {table.sessionStart && (
+                        <p className="text-[10px] text-kot-text">
+                          {formatDuration(table.sessionStart)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {table.status === "available" && (
+                    <div className="mt-2 pt-2 text-xs font-medium text-kot-dark border-t border-kot-chart">
+                      {isAdmin ? "Tap to manage →" : "Tap to allocate →"}
+                    </div>
+                  )}
+                </button>
+
+                {/* ✅ Admin only: Delete button — shows on hover */}
+                {isAdmin && (
+                  <button
+                    onClick={(e) => handleDeleteTable(table, e)}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-all opacity-0 group-hover:opacity-100"
+                    title="Delete table"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Empty state */}
+        {filtered.length === 0 && (
+          <div className="bg-kot-white rounded-2xl p-12 text-center shadow-kot">
+            <p className="text-lg font-semibold text-kot-darker">
+              No {filter} tables
+            </p>
+            <p className="text-sm mt-1 text-kot-text">
+              {isAdmin
+                ? "Add a table using the button above"
+                : "Try a different filter"}
+            </p>
+          </div>
+        )}
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-4 pt-1">
+          {(
+            Object.entries(STATUS_CONFIG) as [
+              TableStatus,
+              (typeof STATUS_CONFIG)[TableStatus],
+            ][]
+          ).map(([key, cfg]) => (
+            <div key={key} className="flex items-center gap-1.5">
+              <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
+              <span className="text-xs text-kot-text">{cfg.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ✅ Admin: Add Table Modal */}
+      {isAdmin && showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-kot-white rounded-xl shadow-kot-lg max-w-sm w-full">
+            <div className="flex items-center justify-between p-6 border-b border-kot-chart">
+              <h2 className="text-xl font-bold text-kot-darker">
+                Add New Table
+              </h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-kot-text hover:text-kot-darker"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleAddTable} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-kot-darker mb-1">
+                  Table Number *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={addForm.tableNumber}
+                  onChange={(e) =>
+                    setAddForm({ ...addForm, tableNumber: e.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="e.g. 7"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-kot-darker mb-1">
+                  Capacity *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  max="20"
+                  value={addForm.capacity}
+                  onChange={(e) =>
+                    setAddForm({ ...addForm, capacity: e.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="e.g. 4"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg transition-colors"
+                >
+                  Add Table
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Waiter: Allocate Table Modal */}
+      {!isAdmin && showAllocateModal && selectedTable && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-kot-white rounded-xl shadow-kot-lg max-w-sm w-full">
+            <div className="flex items-center justify-between p-6 border-b border-kot-chart">
+              <div>
+                <h2 className="text-xl font-bold text-kot-darker">
+                  Allocate Table {selectedTable.tableNumber}
+                </h2>
+                <p className="text-xs text-kot-text mt-0.5">
+                  {selectedTable.capacity} seats
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAllocateModal(false)}
+                className="text-kot-text hover:text-kot-darker"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleAllocate} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-kot-darker mb-1">
+                  Customer Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={allocateForm.name}
+                  onChange={(e) =>
+                    setAllocateForm({ ...allocateForm, name: e.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="e.g. Rahul Kumar"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-kot-darker mb-1">
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={allocateForm.phone}
+                  onChange={(e) =>
+                    setAllocateForm({ ...allocateForm, phone: e.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="+91 XXXXX XXXXX"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAllocateModal(false)}
+                  className="flex-1 px-4 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg transition-colors"
+                >
+                  Allocate & Start Order
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-/* // In your router
-import TablesPage from "./templates/TablesPage";
-
-<Route path="/waiter/tables" element={<TablesPage />} /> */
-
-/* useEffect(() => {
-  fetchTables().then(data => setTables(data));
-}, []); */

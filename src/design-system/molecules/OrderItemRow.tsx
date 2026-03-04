@@ -59,7 +59,7 @@ export const OrderItemRow = ({
                 ₹{price.toFixed(2)} × {quantity}
               </span>
               <span className="text-kot-text">•</span>
-              <span className="font-semibold text-kot-primary">
+              <span className="font-semibold text-kot-dark">
                 ₹{subtotal.toFixed(2)}
               </span>
             </div>

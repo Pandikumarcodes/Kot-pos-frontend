@@ -12,33 +12,23 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items, onNavigate }: BreadcrumbProps) {
   return (
-    <nav className="flex items-center space-x-2 text-sm text-gray-600 px-4 py-3 bg-gray-50 border-b border-gray-200">
-      <Home size={16} className="text-gray-400" />
+    <nav className="flex items-center space-x-2 text-sm text-kot-text px-4 py-3 bg-kot-light border-b border-kot-chart">
+      <Home size={16} className="text-kot-dark" />
       {items.map((item, index) => (
         <div key={index} className="flex items-center gap-2">
-          <span className="text-gray-400">/</span>
+          <span className="text-kot-chart">/</span>
           {item.path ? (
             <button
               onClick={() => onNavigate?.(item.path!)}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-kot-dark transition-colors"
             >
               {item.label}
             </button>
           ) : (
-            <span className="font-semibold text-gray-900">{item.label}</span>
+            <span className="font-semibold text-kot-darker">{item.label}</span>
           )}
         </div>
       ))}
     </nav>
   );
 }
-
-/* // Breadcrumb (optional)
-<Breadcrumb
-  items={[
-    { label: "Home", path: "/" },
-    { label: "Orders", path: "/orders" },
-    { label: "Order #123" }
-  ]}
-  onNavigate={(path) => handleNavigate(path)}
-/> */
