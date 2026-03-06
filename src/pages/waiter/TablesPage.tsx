@@ -12,13 +12,7 @@ import type { Table, TableStatus } from "../../services/waiterApi/Table.api";
 
 const STATUS_CONFIG: Record<
   TableStatus,
-  {
-    bg: string;
-    text: string;
-    border: string;
-    label: string;
-    dot: string;
-  }
+  { bg: string; text: string; border: string; label: string; dot: string }
 > = {
   available: {
     bg: "bg-kot-stats",
@@ -74,21 +68,19 @@ function formatDuration(isoStart: string): string {
 
 export default function TablesPage() {
   const navigate = useNavigate();
-
-  // ── Role check ──
   const { user } = useAppSelector((state) => state.auth);
-  const isAdmin = user?.role === "admin";
 
+  // ✅ manager gets same access as admin
+  const isAdmin = user?.role === "admin" || user?.role === "manager";
+  const canDelete = user?.role === "admin";
   const [tables, setTables] = useState<Table[]>([]);
   const [filter, setFilter] = useState<(typeof ALL_FILTERS)[number]>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Admin: Add Table modal
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ tableNumber: "", capacity: "" });
 
-  // Waiter: Allocate modal
   const [showAllocateModal, setShowAllocateModal] = useState(false);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [allocateForm, setAllocateForm] = useState({ name: "", phone: "" });
@@ -126,7 +118,6 @@ export default function TablesPage() {
     reserved: tables.filter((t) => t.status === "reserved").length,
   };
 
-  // ── Admin: Add table ──
   const handleAddTable = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -143,7 +134,6 @@ export default function TablesPage() {
     }
   };
 
-  // ── Admin: Delete table ──
   const handleDeleteTable = async (table: Table, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!window.confirm(`Delete Table ${table.tableNumber}?`)) return;
@@ -156,20 +146,23 @@ export default function TablesPage() {
     }
   };
 
-  // ── Table click ──
   const handleTableClick = (table: Table) => {
     if (table.status === "reserved" || table.status === "cleaning") return;
+
     if (table.status === "available" && !isAdmin) {
-      // Waiter: show allocate modal first
+      // Waiter: available table → enter customer name first
       setSelectedTable(table);
       setAllocateForm({ name: "", phone: "" });
       setShowAllocateModal(true);
+    } else if (table.status === "available" && isAdmin) {
+      // Admin/Manager: available table → go directly to order page
+      navigate(`/waiter/order/${table._id}`);
     } else {
+      // ✅ ALL roles (waiter, admin, manager): occupied/billing table → go to order page
       navigate(`/waiter/order/${table._id}`);
     }
   };
 
-  // ── Waiter: Allocate table ──
   const handleAllocate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTable) return;
@@ -179,7 +172,13 @@ export default function TablesPage() {
         tables.map((t) => (t._id === selectedTable._id ? data.table : t)),
       );
       setShowAllocateModal(false);
-      navigate(`/waiter/order/${selectedTable._id}`);
+      // ✅ Pass customerName to OrderPage via router state
+      navigate(`/waiter/order/${selectedTable._id}`, {
+        state: {
+          customerName: allocateForm.name,
+          customerPhone: allocateForm.phone,
+        },
+      });
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
       alert(e?.response?.data?.error || "Failed to allocate table");
@@ -189,7 +188,7 @@ export default function TablesPage() {
   const inputClass =
     "w-full px-3 py-2.5 border-2 border-kot-chart rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50 text-sm";
 
-  if (loading) {
+  if (loading)
     return (
       <div className="h-screen flex items-center justify-center bg-kot-primary">
         <div className="text-center">
@@ -198,9 +197,8 @@ export default function TablesPage() {
         </div>
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <div className="h-screen flex items-center justify-center bg-kot-primary">
         <div className="text-center">
@@ -214,7 +212,6 @@ export default function TablesPage() {
         </div>
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-kot-primary">
@@ -225,11 +222,10 @@ export default function TablesPage() {
             <h1 className="text-2xl font-bold text-kot-darker">Tables</h1>
             <p className="text-sm mt-0.5 text-kot-text">
               {tables.length} total ·{" "}
-              {isAdmin ? "manage tables" : "select a table to take an order"}
+              {isAdmin ? "manage tables" : "allocate a table to start an order"}
             </p>
           </div>
           <div className="flex gap-2">
-            {/* ✅ Admin only */}
             {isAdmin && (
               <button
                 onClick={() => setShowAddModal(true)}
@@ -308,17 +304,12 @@ export default function TablesPage() {
             const cfg = STATUS_CONFIG[table.status];
             const isClickable =
               table.status !== "reserved" && table.status !== "cleaning";
-
             return (
               <div key={table._id} className="relative group">
                 <button
                   onClick={() => handleTableClick(table)}
                   disabled={!isClickable}
-                  className={`text-left rounded-2xl p-4 border-l-4 transition-all duration-200 w-full bg-kot-white shadow-kot hover:shadow-kot-lg ${cfg.border} ${
-                    !isClickable
-                      ? "opacity-70 cursor-default"
-                      : "cursor-pointer"
-                  }`}
+                  className={`text-left rounded-2xl p-4 border-l-4 transition-all duration-200 w-full bg-kot-white shadow-kot hover:shadow-kot-lg ${cfg.border} ${!isClickable ? "opacity-70 cursor-default" : "cursor-pointer"}`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div
@@ -332,7 +323,6 @@ export default function TablesPage() {
                       {cfg.label}
                     </span>
                   </div>
-
                   <p className="text-xs mb-1 text-kot-text">
                     <span className="text-kot-darker font-semibold">
                       T-{table.tableNumber}
@@ -340,7 +330,6 @@ export default function TablesPage() {
                     {" · "}
                     {table.capacity} seats
                   </p>
-
                   {(table.status === "occupied" ||
                     table.status === "billing") && (
                     <div className="mt-2 pt-2 space-y-1 border-t border-kot-chart">
@@ -364,7 +353,6 @@ export default function TablesPage() {
                       )}
                     </div>
                   )}
-
                   {table.status === "available" && (
                     <div className="mt-2 pt-2 text-xs font-medium text-kot-dark border-t border-kot-chart">
                       {isAdmin ? "Tap to manage →" : "Tap to allocate →"}
@@ -372,13 +360,8 @@ export default function TablesPage() {
                   )}
                 </button>
 
-                {/* ✅ Admin only: Delete button — shows on hover */}
-                {isAdmin && (
-                  <button
-                    onClick={(e) => handleDeleteTable(table, e)}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-all opacity-0 group-hover:opacity-100"
-                    title="Delete table"
-                  >
+                {canDelete && ( // ✅ manager won't see this button
+                  <button onClick={(e) => handleDeleteTable(table, e)}>
                     <Trash2 size={13} />
                   </button>
                 )}
@@ -387,7 +370,6 @@ export default function TablesPage() {
           })}
         </div>
 
-        {/* Empty state */}
         {filtered.length === 0 && (
           <div className="bg-kot-white rounded-2xl p-12 text-center shadow-kot">
             <p className="text-lg font-semibold text-kot-darker">
@@ -401,7 +383,6 @@ export default function TablesPage() {
           </div>
         )}
 
-        {/* Legend */}
         <div className="flex flex-wrap gap-4 pt-1">
           {(
             Object.entries(STATUS_CONFIG) as [
@@ -417,7 +398,7 @@ export default function TablesPage() {
         </div>
       </div>
 
-      {/* ✅ Admin: Add Table Modal */}
+      {/* Admin: Add Table Modal */}
       {isAdmin && showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-kot-white rounded-xl shadow-kot-lg max-w-sm w-full">
@@ -470,13 +451,13 @@ export default function TablesPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light transition-colors"
+                  className="flex-1 px-4 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg"
                 >
                   Add Table
                 </button>
@@ -486,7 +467,7 @@ export default function TablesPage() {
         </div>
       )}
 
-      {/* ✅ Waiter: Allocate Table Modal */}
+      {/* Waiter: Allocate Table Modal */}
       {!isAdmin && showAllocateModal && selectedTable && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-kot-white rounded-xl shadow-kot-lg max-w-sm w-full">
@@ -541,15 +522,15 @@ export default function TablesPage() {
                 <button
                   type="button"
                   onClick={() => setShowAllocateModal(false)}
-                  className="flex-1 px-4 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light transition-colors"
+                  className="flex-1 px-4 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg"
                 >
-                  Allocate & Start Order
+                  Allocate & Take Order
                 </button>
               </div>
             </form>

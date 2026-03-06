@@ -4,11 +4,11 @@ import { useAppSelector } from "../Store/hooks";
 
 const ROLE_HOME: Record<string, string> = {
   admin: "/admin/dashboard",
-  cashier: "/cashier/billing",
+  manager: "/admin/dashboard",
   waiter: "/waiter/tables",
   chef: "/chef/kot",
+  cashier: "/cashier/billing",
 };
-
 export default function RoleRedirect() {
   const { user, isAuthenticated, isLoading } = useAppSelector(
     (state) => state.auth,

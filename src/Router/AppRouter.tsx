@@ -2,13 +2,12 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRedirect from "./RoleRedirect";
+import { ROUTE_PERMISSIONS } from "../config/Permission";
 
-// Eager — small auth pages
 import LoginPage from "../pages/auth/LoginPage";
 import SignInPage from "../pages/auth/SighInPage";
 import SignUpPage from "../pages/auth/SignUpPage";
 
-// Lazy — all role pages
 const TablesPage = lazy(() => import("../pages/waiter/TablesPage"));
 const OrderPage = lazy(() => import("../pages/waiter/OrderPage"));
 const KitchenDashboard = lazy(() => import("../pages/chef/KitchenDashboard"));
@@ -28,11 +27,13 @@ const LoadingSpinner = () => (
   </div>
 );
 
+// Shorthand — get allowed roles from central config
+const r = (path: string) => ROUTE_PERMISSIONS[path] ?? [];
+
 export default function AppRouter() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
-        {/* Root → smart redirect based on role */}
         <Route path="/" element={<RoleRedirect />} />
 
         {/* ── PUBLIC ── */}
@@ -40,39 +41,53 @@ export default function AppRouter() {
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
 
-        {/* ── WAITER ── */}
-        <Route element={<ProtectedRoute allowedRoles={["waiter", "admin"]} />}>
+        {/* ── WAITER + MANAGER + ADMIN ── */}
+        <Route element={<ProtectedRoute allowedRoles={r("/waiter/tables")} />}>
           <Route path="/waiter/tables" element={<TablesPage />} />
           <Route path="/waiter/order/:tableId" element={<OrderPage />} />
         </Route>
 
-        {/* ── CHEF ── */}
-        <Route element={<ProtectedRoute allowedRoles={["chef", "admin"]} />}>
+        {/* ── CHEF + ADMIN ── */}
+        <Route element={<ProtectedRoute allowedRoles={r("/chef/kot")} />}>
           <Route path="/chef/kot" element={<KitchenDashboard />} />
         </Route>
 
-        {/* ── CASHIER ── */}
-        <Route element={<ProtectedRoute allowedRoles={["cashier", "admin"]} />}>
+        {/* ── CASHIER + ADMIN ── */}
+        <Route
+          element={<ProtectedRoute allowedRoles={r("/cashier/billing")} />}
+        >
           <Route path="/cashier/billing" element={<BillingPage />} />
         </Route>
 
-        {/* ── ADMIN ── */}
-        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+        {/* ── ADMIN + MANAGER ── */}
+        <Route
+          element={<ProtectedRoute allowedRoles={r("/admin/dashboard")} />}
+        >
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={r("/admin/reports")} />}>
           <Route path="/admin/reports" element={<ReportsPage />} />
-          <Route path="/admin/customers" element={<CustomersPage />} />{" "}
-          {/* ✅ fixed */}
-          <Route path="/admin/staff" element={<StaffManagementPage />} />{" "}
-          {/* ✅ fixed */}
-          <Route path="/admin/menu" element={<MenuManagement />} />{" "}
-          {/* ✅ fixed */}
-          <Route path="/admin/settings" element={<SettingsPage />} />{" "}
-          {/* ✅ fixed */}
-          <Route path="/admin/tables" element={<TablesPage />} />{" "}
-          {/* ✅ fixed */}
+        </Route>
+        <Route
+          element={<ProtectedRoute allowedRoles={r("/admin/customers")} />}
+        >
+          <Route path="/admin/customers" element={<CustomersPage />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={r("/admin/menu")} />}>
+          <Route path="/admin/menu" element={<MenuManagement />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={r("/admin/tables")} />}>
+          <Route path="/admin/tables" element={<TablesPage />} />
         </Route>
 
-        {/* 404 */}
+        {/* ── ADMIN ONLY ── */}
+        <Route element={<ProtectedRoute allowedRoles={r("/admin/staff")} />}>
+          <Route path="/admin/staff" element={<StaffManagementPage />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={r("/admin/settings")} />}>
+          <Route path="/admin/settings" element={<SettingsPage />} />
+        </Route>
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

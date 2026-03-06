@@ -1,6 +1,7 @@
 // src/pages/admin/StaffPage.tsx
 import { useState, useEffect } from "react";
 import { Plus, Search, Edit2, Trash2, X } from "lucide-react";
+import { useAppSelector } from "../../Store/hooks";
 import {
   getUsersApi,
   createUserApi,
@@ -28,6 +29,8 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function StaffPage() {
+  const { user } = useAppSelector((state) => state.auth);
+  const isAdmin = user?.role === "admin"; // ✅ only admin can delete
   const [users, setUsers] = useState<StaffUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -297,13 +300,15 @@ export default function StaffPage() {
                         >
                           <Edit2 size={16} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(user)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete user"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDelete(user)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete user"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

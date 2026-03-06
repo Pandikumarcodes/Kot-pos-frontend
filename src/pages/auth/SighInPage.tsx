@@ -1,4 +1,3 @@
-// src/pages/auth/SignInPage.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -21,8 +20,10 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // ✅ All 5 roles including manager
   const ROLE_HOME: Record<string, string> = {
     admin: "/admin/dashboard",
+    manager: "/admin/dashboard",
     cashier: "/cashier/billing",
     waiter: "/waiter/tables",
     chef: "/chef/kot",
@@ -53,13 +54,12 @@ export default function SignInPage() {
         { withCredentials: true },
       );
 
-      // ✅ Use user object directly — no JWT decode needed
       const { user } = res.data;
 
       dispatch(
         setCredentials({
           id: user.id,
-          name: user.username,
+          name: user.username, // ✅ backend returns username not name
           email: user.username,
           role: user.role,
         }),
@@ -83,7 +83,6 @@ export default function SignInPage() {
     <div className="min-h-screen flex bg-kot-primary">
       {/* ── Left Banner ── */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-14 bg-kot-stats">
-        {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
             <span className="text-white font-bold text-sm">K</span>
@@ -91,7 +90,6 @@ export default function SignInPage() {
           <span className="font-bold text-xl text-kot-darker">KOT POS</span>
         </div>
 
-        {/* Center */}
         <div className="flex-1 flex flex-col justify-center items-center text-center px-8">
           <div className="relative mb-10">
             <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto bg-kot-light shadow-kot-lg">
@@ -134,13 +132,19 @@ export default function SignInPage() {
           </p>
         </div>
 
-        {/* Role pills */}
+        {/* ✅ Added manager badge */}
         <div>
           <p className="text-xs mb-3 font-medium uppercase tracking-widest text-kot-text">
             Station Access
           </p>
           <div className="flex gap-2 flex-wrap">
-            {["⚙️ Admin", "💳 Cashier", "🍽️ Waiter", "👨‍🍳 Chef"].map((r) => (
+            {[
+              "⚙️ Admin",
+              "📋 Manager",
+              "💳 Cashier",
+              "🍽️ Waiter",
+              "👨‍🍳 Chef",
+            ].map((r) => (
               <span
                 key={r}
                 className="bg-kot-white text-xs px-3 py-1.5 rounded-full font-medium text-kot-dark shadow-kot"
@@ -155,7 +159,6 @@ export default function SignInPage() {
       {/* ── Right Form Panel ── */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          {/* Back */}
           <button
             onClick={() => navigate("/login")}
             className="flex items-center gap-1.5 mb-8 text-sm font-medium text-kot-text hover:text-kot-darker transition-colors"
@@ -176,7 +179,6 @@ export default function SignInPage() {
             Back
           </button>
 
-          {/* Heading */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-1 text-kot-darker">Sign In</h1>
             <p className="text-sm text-kot-text">
@@ -184,7 +186,6 @@ export default function SignInPage() {
             </p>
           </div>
 
-          {/* API Error */}
           {errors.api && (
             <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium bg-red-50 text-red-600">
               {errors.api}
@@ -277,7 +278,7 @@ export default function SignInPage() {
               )}
             </div>
 
-            {/* Remember me + Forgot */}
+            {/* Remember me */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -331,7 +332,6 @@ export default function SignInPage() {
             </button>
           </form>
 
-          {/* Sign up link */}
           <p className="text-center text-sm mt-6 text-kot-text">
             Don't have an account?{" "}
             <button

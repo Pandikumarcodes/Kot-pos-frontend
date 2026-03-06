@@ -226,7 +226,7 @@ export default function SignUpPage() {
             Station Access
           </p>
           <div className="flex gap-2 flex-wrap">
-            {["⚙️ Admin", "💳 Cashier", "🍽️ Waiter", "👨‍🍳 Chef"].map((r) => (
+            {["📋 Manager","⚙️ Admin", "💳 Cashier", "🍽️ Waiter", "👨‍🍳 Chef"].map((r) => (
               <span
                 key={r}
                 className="bg-kot-white text-xs px-3 py-1.5 rounded-full font-medium text-kot-dark shadow-kot"
@@ -313,10 +313,11 @@ export default function SignUpPage() {
                 onChange={(e) => handleChange("role", e.target.value)}
                 className={`${inputClass} cursor-pointer`}
               >
+                <option value="manager">📋 Manager</option>
+                <option value="admin">⚙️ Admin</option>
+                <option value="cashier">💳 Cashier</option>
                 <option value="waiter">🍽️ Waiter</option>
                 <option value="chef">👨‍🍳 Chef</option>
-                <option value="cashier">💳 Cashier</option>
-                <option value="admin">⚙️ Admin</option>
               </select>
               {errors.role && (
                 <p className="mt-1 text-xs text-red-500">{errors.role}</p>

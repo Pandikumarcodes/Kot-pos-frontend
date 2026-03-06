@@ -1,3 +1,4 @@
+// src/pages/admin/CustomersPage.tsx
 import { useState, useEffect } from "react";
 import {
   Plus,
@@ -10,344 +11,310 @@ import {
   MapPin,
   Calendar,
 } from "lucide-react";
-
-interface Customer {
-  id: string;
-  name: string;
-  phone: string;
-  email?: string;
-  address?: string;
-  totalOrders: number;
-  totalSpent: number;
-  lastVisit: string;
-  joinedDate: string;
-}
-
-// Mock data - replace with API call
-const MOCK_CUSTOMERS: Customer[] = [
-  {
-    id: "1",
-    name: "Rajesh Kumar",
-    phone: "+91 98765 43210",
-    email: "rajesh@example.com",
-    address: "123 MG Road, Bangalore",
-    totalOrders: 15,
-    totalSpent: 12500,
-    lastVisit: "2024-01-10",
-    joinedDate: "2023-06-15",
-  },
-  {
-    id: "2",
-    name: "Priya Sharma",
-    phone: "+91 87654 32109",
-    email: "priya.sharma@example.com",
-    address: "456 Indiranagar, Bangalore",
-    totalOrders: 8,
-    totalSpent: 6800,
-    lastVisit: "2024-01-12",
-    joinedDate: "2023-08-20",
-  },
-  {
-    id: "3",
-    name: "Amit Patel",
-    phone: "+91 76543 21098",
-    totalOrders: 22,
-    totalSpent: 18900,
-    lastVisit: "2024-01-14",
-    joinedDate: "2023-03-10",
-  },
-  {
-    id: "4",
-    name: "Sneha Reddy",
-    phone: "+91 65432 10987",
-    email: "sneha.reddy@example.com",
-    address: "789 Koramangala, Bangalore",
-    totalOrders: 12,
-    totalSpent: 9200,
-    lastVisit: "2024-01-11",
-    joinedDate: "2023-07-05",
-  },
-  {
-    id: "5",
-    name: "Vikram Singh",
-    phone: "+91 54321 09876",
-    totalOrders: 5,
-    totalSpent: 3500,
-    lastVisit: "2024-01-08",
-    joinedDate: "2023-11-12",
-  },
-];
+import { useAppSelector } from "../../Store/hooks";
+import {
+  getCustomersApi,
+  createCustomerApi,
+  updateCustomerApi,
+  deleteCustomerApi,
+} from "../../services/adminApi/customer.api";
+import type {
+  Customer,
+  CreateCustomerPayload,
+} from "../../services/adminApi/customer.api";
 
 export default function CustomersPage() {
+  const { user } = useAppSelector((state) => state.auth);
+  const isAdmin = user?.role === "admin";
+
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [formData, setFormData] = useState<Partial<Customer>>({
+  const [formData, setFormData] = useState<CreateCustomerPayload>({
     name: "",
     phone: "",
     email: "",
     address: "",
   });
 
-  // Fetch customers on mount
-  useEffect(() => {
-    // TODO: Replace with actual API call
-    setTimeout(() => {
-      setCustomers(MOCK_CUSTOMERS);
+  // ── Fetch customers ────────────────────────────────────────
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { data } = await getCustomersApi();
+      setCustomers(data.customers);
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(e?.response?.data?.error || "Failed to load customers");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
   }, []);
 
-  // Filter customers
+  // ── Filter ─────────────────────────────────────────────────
   const filteredCustomers = searchQuery
     ? customers.filter(
-        (customer) =>
-          customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          customer.phone.includes(searchQuery) ||
-          customer.email?.toLowerCase().includes(searchQuery.toLowerCase())
+        (c) =>
+          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.phone.includes(searchQuery) ||
+          c.email?.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : customers;
 
-  // Open modal for add/edit
+  // ── Modal ──────────────────────────────────────────────────
   const handleOpenModal = (customer?: Customer) => {
     if (customer) {
       setEditingCustomer(customer);
-      setFormData(customer);
+      setFormData({
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        address: customer.address,
+      });
     } else {
       setEditingCustomer(null);
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        address: "",
-      });
+      setFormData({ name: "", phone: "", email: "", address: "" });
     }
     setShowModal(true);
   };
 
-  // Close modal
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingCustomer(null);
   };
 
-  // Handle form submit
+  // ── Submit ─────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (editingCustomer) {
-      // Update existing customer
-      // TODO: API call - updateCustomer(editingCustomer.id, formData)
-      setCustomers(
-        customers.map((customer) =>
-          customer.id === editingCustomer.id
-            ? { ...customer, ...formData }
-            : customer
-        )
-      );
-      alert(`"${formData.name}" updated successfully!`);
-    } else {
-      // Add new customer
-      // TODO: API call - createCustomer(formData)
-      const newCustomer: Customer = {
-        // id: Date.now().toString(),
-        ...(formData as Customer),
-        totalOrders: 0,
-        totalSpent: 0,
-        lastVisit: new Date().toISOString().split("T")[0],
-        joinedDate: new Date().toISOString().split("T")[0],
-      };
-      setCustomers([...customers, newCustomer]);
-      alert(`"${formData.name}" added successfully!`);
+    try {
+      if (editingCustomer) {
+        const { data } = await updateCustomerApi(editingCustomer._id, formData);
+        setCustomers(
+          customers.map((c) =>
+            c._id === editingCustomer._id ? data.customer : c,
+          ),
+        );
+      } else {
+        const { data } = await createCustomerApi(formData);
+        setCustomers([data.customer, ...customers]);
+      }
+      handleCloseModal();
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
+      alert(e?.response?.data?.error || "Failed to save customer");
     }
-
-    handleCloseModal();
   };
 
-  // Delete customer
+  // ── Delete ─────────────────────────────────────────────────
   const handleDelete = async (customer: Customer) => {
-    const confirm = window.confirm(
-      `Are you sure you want to delete "${customer.name}"?`
-    );
-    if (!confirm) return;
-
-    // TODO: API call - deleteCustomer(customer.id)
-    setCustomers(customers.filter((c) => c.id !== customer.id));
-    alert(`"${customer.name}" deleted successfully!`);
+    if (!window.confirm(`Delete "${customer.name}"?`)) return;
+    try {
+      await deleteCustomerApi(customer._id);
+      setCustomers(customers.filter((c) => c._id !== customer._id));
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
+      alert(e?.response?.data?.error || "Failed to delete customer");
+    }
   };
 
-  if (loading) {
+  // ── Stats ──────────────────────────────────────────────────
+  const totalOrders = customers.reduce((sum, c) => sum + c.totalOrders, 0);
+  const totalSpent = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+  const avgOrderValue =
+    totalOrders > 0 ? Math.round(totalSpent / totalOrders) : 0;
+
+  const inputClass =
+    "w-full px-3 py-2.5 border-2 border-kot-chart rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark focus:border-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50 text-sm";
+
+  if (loading)
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-kot-primary">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading customers...</p>
+          <div className="w-14 h-14 border-4 border-kot-dark border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-kot-text">Loading customers...</p>
         </div>
       </div>
     );
-  }
+
+  if (error)
+    return (
+      <div className="h-screen flex items-center justify-center bg-kot-primary">
+        <div className="text-center">
+          <p className="text-red-600 font-medium mb-3">{error}</p>
+          <button
+            onClick={fetchCustomers}
+            className="px-4 py-2 bg-kot-dark text-white rounded-lg"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Manage your customer database
+    <div className="min-h-screen bg-kot-primary">
+      <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-kot-darker">Customers</h1>
+            <p className="text-sm text-kot-text mt-0.5">
+              {customers.length} customers registered
+            </p>
+          </div>
+          <button
+            onClick={() => handleOpenModal()}
+            className="flex items-center gap-2 px-4 py-2 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-xl transition-colors"
+          >
+            <Plus size={18} /> Add Customer
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            {
+              label: "Total Customers",
+              value: customers.length,
+              bg: "bg-kot-stats",
+            },
+            { label: "Total Orders", value: totalOrders, bg: "bg-blue-50" },
+            {
+              label: "Total Revenue",
+              value: `₹${totalSpent.toLocaleString()}`,
+              bg: "bg-emerald-50",
+            },
+            {
+              label: "Avg Order Value",
+              value: `₹${avgOrderValue}`,
+              bg: "bg-purple-50",
+            },
+          ].map((s) => (
+            <div key={s.label} className={`${s.bg} rounded-2xl p-4 shadow-kot`}>
+              <p className="text-xs text-kot-text font-medium">{s.label}</p>
+              <p className="text-2xl font-bold text-kot-darker mt-1">
+                {s.value}
               </p>
             </div>
-            <button
-              onClick={() => handleOpenModal()}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-lg transition-colors"
-            >
-              <Plus size={20} />
-              Add Customer
-            </button>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-            <input
-              type="text"
-              placeholder="Search by name, phone, or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+          ))}
         </div>
 
-        {/* Stats Bar */}
-        <div className="grid grid-cols-4 gap-4 px-6 pb-6">
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <p className="text-sm text-blue-600 font-medium">Total Customers</p>
-            <p className="text-2xl font-bold text-blue-700 mt-1">
-              {customers.length}
-            </p>
-          </div>
-          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-            <p className="text-sm text-green-600 font-medium">Total Orders</p>
-            <p className="text-2xl font-bold text-green-700 mt-1">
-              {customers.reduce((sum, c) => sum + c.totalOrders, 0)}
-            </p>
-          </div>
-          <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-            <p className="text-sm text-purple-600 font-medium">Total Revenue</p>
-            <p className="text-2xl font-bold text-purple-700 mt-1">
-              ₹
-              {customers
-                .reduce((sum, c) => sum + c.totalSpent, 0)
-                .toLocaleString()}
-            </p>
-          </div>
-          <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-            <p className="text-sm text-orange-600 font-medium">
-              Avg. Order Value
-            </p>
-            <p className="text-2xl font-bold text-orange-700 mt-1">
-              ₹
-              {customers.length > 0
-                ? Math.round(
-                    customers.reduce((sum, c) => sum + c.totalSpent, 0) /
-                      customers.reduce((sum, c) => sum + c.totalOrders, 0)
-                  )
-                : 0}
-            </p>
-          </div>
+        {/* Search */}
+        <div className="relative">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-kot-text"
+            size={18}
+          />
+          <input
+            type="text"
+            placeholder="Search by name, phone or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 border-2 border-kot-chart rounded-xl bg-kot-white text-kot-darker text-sm focus:outline-none focus:border-kot-dark placeholder:text-kot-text/50"
+          />
         </div>
-      </div>
 
-      {/* Customers Grid */}
-      <div className="flex-1 overflow-y-auto p-6">
+        {/* Customer Cards */}
         {filteredCustomers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
-            <Search size={64} className="mb-4 text-gray-300" />
-            <p className="text-xl font-medium">No customers found</p>
-            <p className="text-sm mt-2">Try adjusting your search</p>
+          <div className="bg-kot-white rounded-2xl p-16 text-center shadow-kot">
+            <p className="text-4xl mb-3">👥</p>
+            <p className="text-lg font-bold text-kot-darker">
+              No customers found
+            </p>
+            <p className="text-sm text-kot-text mt-1">
+              {searchQuery
+                ? "Try a different search"
+                : "Customers appear automatically when orders are placed"}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCustomers.map((customer) => (
               <div
-                key={customer.id}
-                className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-lg transition-shadow"
+                key={customer._id}
+                className="bg-kot-white rounded-2xl shadow-kot p-5 hover:shadow-kot-lg transition-all"
               >
-                {/* Customer Header */}
+                {/* Card Header */}
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">
-                      {customer.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-1">
-                      <Phone size={14} />
-                      {customer.phone}
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-kot-stats flex items-center justify-center text-kot-darker font-bold text-lg flex-shrink-0">
+                      {customer.name.charAt(0).toUpperCase()}
                     </div>
-                    {customer.email && (
-                      <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                        <Mail size={14} />
-                        {customer.email}
+                    <div>
+                      <p className="font-bold text-kot-darker">
+                        {customer.name}
+                      </p>
+                      <div className="flex items-center gap-1 text-xs text-kot-text mt-0.5">
+                        <Phone size={11} /> {customer.phone}
                       </div>
-                    )}
+                    </div>
                   </div>
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleOpenModal(customer)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="p-2 text-kot-dark hover:bg-kot-light rounded-lg transition-colors"
                     >
-                      <Edit2 size={16} />
+                      <Edit2 size={15} />
                     </button>
-                    <button
-                      onClick={() => handleDelete(customer)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDelete(customer)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Address */}
-                {customer.address && (
-                  <div className="flex items-start gap-1.5 text-sm text-gray-600 mb-4">
-                    <MapPin size={14} className="mt-0.5 flex-shrink-0" />
-                    <span className="line-clamp-2">{customer.address}</span>
-                  </div>
-                )}
+                {/* Contact */}
+                <div className="space-y-1 mb-4">
+                  {customer.email && (
+                    <div className="flex items-center gap-1.5 text-xs text-kot-text">
+                      <Mail size={11} /> {customer.email}
+                    </div>
+                  )}
+                  {customer.address && (
+                    <div className="flex items-center gap-1.5 text-xs text-kot-text">
+                      <MapPin size={11} /> {customer.address}
+                    </div>
+                  )}
+                </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-3 mb-4 pt-4 border-t border-gray-200">
-                  <div className="bg-blue-50 rounded-lg p-3">
-                    <p className="text-xs text-blue-600 font-medium">Orders</p>
-                    <p className="text-xl font-bold text-blue-700 mt-1">
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <div className="bg-kot-light rounded-xl p-3">
+                    <p className="text-xs text-kot-text">Orders</p>
+                    <p className="text-xl font-bold text-kot-darker">
                       {customer.totalOrders}
                     </p>
                   </div>
-                  <div className="bg-green-50 rounded-lg p-3">
-                    <p className="text-xs text-green-600 font-medium">Spent</p>
-                    <p className="text-xl font-bold text-green-700 mt-1">
+                  <div className="bg-kot-stats rounded-xl p-3">
+                    <p className="text-xs text-kot-text">Spent</p>
+                    <p className="text-xl font-bold text-kot-darker">
                       ₹{customer.totalSpent.toLocaleString()}
                     </p>
                   </div>
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-200">
+                <div className="flex items-center justify-between text-xs text-kot-text pt-3 border-t border-kot-chart">
                   <div className="flex items-center gap-1">
-                    <Calendar size={12} />
+                    <Calendar size={11} />
                     Last:{" "}
                     {new Date(customer.lastVisit).toLocaleDateString("en-IN")}
                   </div>
                   <div>
                     Joined:{" "}
-                    {new Date(customer.joinedDate).toLocaleDateString("en-IN")}
+                    {new Date(customer.createdAt).toLocaleDateString("en-IN")}
                   </div>
                 </div>
               </div>
@@ -358,25 +325,24 @@ export default function CustomersPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">
-                {editingCustomer ? "Edit Customer" : "Add New Customer"}
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-kot-white rounded-2xl shadow-kot-lg max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-kot-chart">
+              <h2 className="text-xl font-bold text-kot-darker">
+                {editingCustomer
+                  ? `Edit: ${editingCustomer.name}`
+                  : "Add New Customer"}
               </h2>
               <button
                 onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-kot-text hover:text-kot-darker"
               >
                 <X size={24} />
               </button>
             </div>
-
-            {/* Modal Body */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-kot-darker mb-1">
                   Full Name *
                 </label>
                 <input
@@ -386,13 +352,12 @@ export default function CustomersPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter full name"
+                  className={inputClass}
+                  placeholder="e.g. Rahul Kumar"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-kot-darker mb-1">
                   Phone Number *
                 </label>
                 <input
@@ -402,55 +367,51 @@ export default function CustomersPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="+91 XXXXX XXXXX"
+                  className={inputClass}
+                  placeholder="e.g. 9876543210"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-kot-darker mb-1">
                   Email
                 </label>
                 <input
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputClass}
                   placeholder="email@example.com"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-kot-darker mb-1">
                   Address
                 </label>
                 <textarea
-                  value={formData.address}
+                  value={formData.address || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, address: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter full address"
-                  rows={3}
+                  className={inputClass}
+                  placeholder="Enter address"
+                  rows={2}
                 />
               </div>
-
-              {/* Modal Footer */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg"
                 >
-                  {editingCustomer ? "Update" : "Add"} Customer
+                  {editingCustomer ? "Update" : "Add Customer"}
                 </button>
               </div>
             </form>

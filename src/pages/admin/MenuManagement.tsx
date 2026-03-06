@@ -1,6 +1,7 @@
 // src/pages/admin/MenuManagement.tsx
 import { useState, useEffect } from "react";
 import { Plus, Search, Edit2, Trash2, X } from "lucide-react";
+import { useAppSelector } from "../../Store/hooks";
 import {
   getMenuItemsApi,
   createMenuItemApi,
@@ -30,6 +31,8 @@ const getCategoryLabel = (key: string) =>
   CATEGORIES.find((c) => c.key === key)?.label ?? key;
 
 export default function MenuManagementPage() {
+  const { user } = useAppSelector((state) => state.auth);
+  const isAdmin = user?.role === "admin"; // ✅ only admin can delete
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,7 +59,7 @@ export default function MenuManagementPage() {
       setMenuItems(data.menuItems);
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      alert(error?.response?.data?.error || "...");
+      setError(error?.response?.data?.error || "Failed to load menu items");
     } finally {
       setLoading(false);
     }
@@ -121,7 +124,7 @@ export default function MenuManagementPage() {
       handleCloseModal();
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      alert(error?.response?.data?.error || "...");
+      alert(error?.response?.data?.error || "Failed to save item");
     }
   };
 
@@ -132,7 +135,7 @@ export default function MenuManagementPage() {
       setMenuItems(menuItems.filter((i) => i._id !== item._id));
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      alert(error?.response?.data?.error || "...");
+      alert(error?.response?.data?.error || "Failed to delete item");
     }
   };
 
@@ -146,7 +149,7 @@ export default function MenuManagementPage() {
       );
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      alert(error?.response?.data?.error || "...");
+      alert(error?.response?.data?.error || "Failed to update availability");
     }
   };
 
@@ -314,12 +317,14 @@ export default function MenuManagementPage() {
                         >
                           <Edit2 size={18} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(item)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDelete(item)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

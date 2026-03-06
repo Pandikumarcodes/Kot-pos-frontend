@@ -1,38 +1,36 @@
+// src/services/apiClient.ts
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000", // your Express backend
-  withCredentials: true, // sends cookies automatically
+  baseURL: "http://localhost:3000",
+  withCredentials: true, // ✅ sends cookies automatically
   headers: {
     "Content-Type": "application/json",
   },
 });
 
 // ── Request Interceptor ──────────────────────────────────────
-// Runs before every request — good place to attach tokens later
 api.interceptors.request.use(
-  (config) => {
-    return config;
-  },
+  (config) => config,
   (error) => Promise.reject(error),
 );
 
 // ── Response Interceptor ─────────────────────────────────────
 api.interceptors.response.use(
-  (response) => response, // just pass through success
+  (response) => response,
 
   (error) => {
     const status = error.response?.status;
 
     if (status === 401) {
-      // Cookie expired or invalid → force back to login
+      // ✅ Only redirect on 401 — token expired/missing
+      // Clear cookie and go to login
       window.location.href = "/login";
     }
 
-    if (status === 403) {
-      // Logged in but not allowed → go to unauthorized
-      window.location.href = "/unauthorized";
-    }
+    // ❌ REMOVED 403 redirect — was causing infinite loop
+    // 403 = logged in but wrong role → let the page handle it gracefully
+    // Never redirect on 403 — just reject the promise
 
     if (status === 500) {
       console.error("Server error:", error.response?.data?.error);
