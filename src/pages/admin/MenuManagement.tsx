@@ -12,6 +12,7 @@ import type {
   MenuItem,
   CreateMenuPayload,
 } from "../../services/adminApi/Menu.api";
+import { useToast } from "../../Context/ToastContext";
 
 // ✅ Keys match model enum exactly, labels are display names
 const CATEGORIES: { key: string; label: string }[] = [
@@ -32,6 +33,7 @@ const getCategoryLabel = (key: string) =>
 
 export default function MenuManagementPage() {
   const { user } = useAppSelector((state) => state.auth);
+  const toast = useToast();
   const isAdmin = user?.role === "admin"; // ✅ only admin can delete
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -122,9 +124,10 @@ export default function MenuManagementPage() {
         setMenuItems([...menuItems, data.menuItem]);
       }
       handleCloseModal();
+      toast.success(editingItem ? "Item updated!" : "Item added!");
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      alert(error?.response?.data?.error || "Failed to save item");
+      toast.error(error?.response?.data?.error || "Failed to save item");
     }
   };
 
@@ -133,9 +136,10 @@ export default function MenuManagementPage() {
     try {
       await deleteMenuItemApi(item._id);
       setMenuItems(menuItems.filter((i) => i._id !== item._id));
+      toast.success(`"${item.ItemName}" deleted!`);
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      alert(error?.response?.data?.error || "Failed to delete item");
+      toast.error(error?.response?.data?.error || "Failed to save item");
     }
   };
 
@@ -149,7 +153,9 @@ export default function MenuManagementPage() {
       );
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      alert(error?.response?.data?.error || "Failed to update availability");
+      toast.error(
+        error?.response?.data?.error || "Failed to update availability",
+      );
     }
   };
 

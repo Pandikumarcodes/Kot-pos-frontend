@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Trash2, X } from "lucide-react";
 import { useAppSelector } from "../../Store/hooks";
+import { useToast } from "../../Context/ToastContext";
 import {
   getTablesApi,
   createTableApi,
@@ -67,6 +68,7 @@ function formatDuration(isoStart: string): string {
 }
 
 export default function TablesPage() {
+  const toast = useToast();
   const navigate = useNavigate();
   const { user } = useAppSelector((state) => state.auth);
 
@@ -128,9 +130,10 @@ export default function TablesPage() {
       setTables([...tables, data.table]);
       setShowAddModal(false);
       setAddForm({ tableNumber: "", capacity: "" });
+      toast.success("Table added successfully!");
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to add table");
+      toast.error(e?.response?.data?.error || "Failed to add table");
     }
   };
 
@@ -142,7 +145,7 @@ export default function TablesPage() {
       setTables(tables.filter((t) => t._id !== table._id));
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to delete table");
+      toast.error(e?.response?.data?.error || "Failed to delete table");
     }
   };
 
@@ -181,7 +184,7 @@ export default function TablesPage() {
       });
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to allocate table");
+      toast.error(e?.response?.data?.error || "Failed to allocate table");
     }
   };
 
@@ -360,8 +363,11 @@ export default function TablesPage() {
                   )}
                 </button>
 
-                {canDelete && ( // ✅ manager won't see this button
-                  <button onClick={(e) => handleDeleteTable(table, e)}>
+                {canDelete && (
+                  <button
+                    onClick={(e) => handleDeleteTable(table, e)}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-all opacity-0 group-hover:opacity-100"
+                  >
                     <Trash2 size={13} />
                   </button>
                 )}

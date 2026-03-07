@@ -17,7 +17,7 @@ import {
   markBillPaidApi,
 } from "../../services/CashierApi/cashier.api";
 import type { Bill } from "../../services/CashierApi/cashier.api";
-
+import { useToast } from "../../Context/ToastContext";
 // ── Types ─────────────────────────────────────────────────────
 interface MenuItem {
   _id: string;
@@ -38,6 +38,8 @@ type Tab = "takeaway" | "bills";
 type Step = "customer" | "order" | "payment";
 
 export default function BillingPage() {
+  //toast
+  const toast = useToast();
   // const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("takeaway");
 
@@ -142,7 +144,7 @@ export default function BillingPage() {
   // ── Send KOT ───────────────────────────────────────────────
   const handleSendKOT = async () => {
     if (orderItems.length === 0) {
-      alert("Add items first!");
+      toast.warning("Add items first!");
       return;
     }
     try {
@@ -159,7 +161,7 @@ export default function BillingPage() {
       setStep("payment");
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to send KOT");
+      toast.error(e?.response?.data?.error || "Failed to send KOT");
     } finally {
       setSending(false);
     }
@@ -191,7 +193,7 @@ export default function BillingPage() {
       }, 3000);
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to process payment");
+      toast.error(e?.response?.data?.error || "Failed to process payment");
     } finally {
       setPaying(false);
     }
@@ -220,7 +222,7 @@ export default function BillingPage() {
         setSelectedBill({ ...selectedBill, paymentStatus: "paid" });
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to mark as paid");
+      toast.error(e?.response?.data?.error || "Failed to mark as paid");
     }
   };
 
@@ -356,7 +358,7 @@ export default function BillingPage() {
                     onClick={() => {
                       if (customerForm.name && customerForm.phone)
                         setStep("order");
-                      else alert("Fill in name and phone!");
+                      else toast.warning("Fill in name and phone!");
                     }}
                     className="w-full py-3 bg-kot-dark hover:bg-kot-darker text-white font-bold rounded-xl transition-colors"
                   >

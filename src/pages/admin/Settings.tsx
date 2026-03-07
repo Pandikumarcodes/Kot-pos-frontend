@@ -7,7 +7,7 @@ import {
   updateSettingsApi,
 } from "../../services/adminApi/Settings.api";
 import type { Settings } from "../../services/adminApi/Settings.api";
-
+import { useToast } from "../../Context/ToastContext";
 type SettingsTab = "general" | "restaurant" | "billing" | "notifications";
 
 const TABS: { id: SettingsTab; label: string; icon: string }[] = [
@@ -24,7 +24,7 @@ const labelClass = "block text-sm font-semibold text-kot-darker mb-1";
 export default function SettingsPage() {
   const { user } = useAppSelector((state) => state.auth);
   const isAdmin = user?.role === "admin";
-
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,7 +59,7 @@ export default function SettingsPage() {
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to save settings");
+      toast.error(e?.response?.data?.error || "Failed to save settings");
     } finally {
       setSaving(false);
     }

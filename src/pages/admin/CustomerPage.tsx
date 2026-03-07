@@ -17,15 +17,16 @@ import {
   createCustomerApi,
   updateCustomerApi,
   deleteCustomerApi,
-} from "../../services/adminApi/customer.api";
+} from "../../services/adminApi/Customer.api";
 import type {
   Customer,
   CreateCustomerPayload,
-} from "../../services/adminApi/customer.api";
-
+} from "../../services/adminApi/Customer.api";
+import { useToast } from "../../Context/ToastContext";
 export default function CustomersPage() {
   const { user } = useAppSelector((state) => state.auth);
   const isAdmin = user?.role === "admin";
+  const toast = useToast();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -107,9 +108,10 @@ export default function CustomersPage() {
         setCustomers([data.customer, ...customers]);
       }
       handleCloseModal();
+      toast.success(editingCustomer ? "Customer updated!" : "Customer added!");
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to save customer");
+      toast.error(e?.response?.data?.error || "Failed to save customer");
     }
   };
 
@@ -121,7 +123,7 @@ export default function CustomersPage() {
       setCustomers(customers.filter((c) => c._id !== customer._id));
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to delete customer");
+      toast.error(e?.response?.data?.error || "Failed to delete customer");
     }
   };
 

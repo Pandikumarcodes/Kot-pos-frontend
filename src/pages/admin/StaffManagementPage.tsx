@@ -12,7 +12,7 @@ import type {
   StaffUser,
   CreateUserPayload,
 } from "../../services/adminApi/Staff.api";
-
+import { useToast } from "../../Context/ToastContext";
 const ALLOWED_ROLES = ["admin", "chef", "waiter", "cashier", "manager"];
 
 const ROLE_EMOJI: Record<string, string> = {
@@ -29,6 +29,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function StaffPage() {
+  const toast = useToast();
   const { user } = useAppSelector((state) => state.auth);
   const isAdmin = user?.role === "admin"; // ✅ only admin can delete
   const [users, setUsers] = useState<StaffUser[]>([]);
@@ -112,9 +113,10 @@ export default function StaffPage() {
         setUsers([...users, data.user]);
       }
       handleCloseModal();
+      toast.success(editingUser ? "Role updated!" : "Staff added!");
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      alert(error?.response?.data?.error || "Failed to save user");
+      toast.error(error?.response?.data?.error || "Failed to save user");
     }
   };
 
@@ -125,7 +127,7 @@ export default function StaffPage() {
       setUsers(users.filter((u) => u._id !== user._id));
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      alert(error?.response?.data?.error || "Failed to delete user");
+      toast.error(error?.response?.data?.error || "Failed to delete user");
     }
   };
 

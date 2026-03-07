@@ -8,7 +8,7 @@ import {
   cancelKotApi,
 } from "../../services/chefApi/chef.api";
 import type { Kot, KotStatus } from "../../services/chefApi/chef.api";
-
+import { useToast } from "../../Context/ToastContext";
 // ── Status config ─────────────────────────────────────────────
 const STATUS_CONFIG: Record<
   KotStatus,
@@ -66,6 +66,7 @@ function isUrgent(iso: string): boolean {
 type TabFilter = KotStatus | "all";
 
 export default function KitchenPage() {
+  const toast = useToast();
   const [kots, setKots] = useState<Kot[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -116,9 +117,10 @@ export default function KitchenPage() {
       setUpdatingId(kotId);
       const res = await startKotApi(kotId);
       setKots(kots.map((k) => (k._id === kotId ? res.data.order : k)));
+      toast.success("Cooking started! 🔥");
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to update");
+      toast.error(e?.response?.data?.error || "Failed to update");
     } finally {
       setUpdatingId(null);
     }
@@ -129,9 +131,10 @@ export default function KitchenPage() {
       setUpdatingId(kotId);
       const res = await markKotReadyApi(kotId);
       setKots(kots.map((k) => (k._id === kotId ? res.data.order : k)));
+      toast.success("Order marked ready! ✅");
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to update");
+      toast.error(e?.response?.data?.error || "Failed to update");
     } finally {
       setUpdatingId(null);
     }
@@ -143,9 +146,10 @@ export default function KitchenPage() {
       setUpdatingId(kotId);
       const res = await cancelKotApi(kotId);
       setKots(kots.map((k) => (k._id === kotId ? res.data.order : k)));
+      toast.info("Order cancelled");
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to cancel");
+      toast.error(e?.response?.data?.error || "Failed to cancel");
     } finally {
       setUpdatingId(null);
     }

@@ -4,6 +4,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAppSelector } from "../../Store/hooks";
 import api from "../../services/apiClient";
 import { createOrderApi } from "../../services/waiterApi/waiter.api";
+import { useToast } from "../../Context/ToastContext";
 
 interface MenuItem {
   _id: string;
@@ -33,8 +34,8 @@ export default function OrderPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAppSelector((state) => state.auth);
+  const toast = useToast();
 
-  // ✅ Read customerName passed from TablesPage after allocation
   const customerName =
     (location.state as { customerName?: string })?.customerName || "Walk-in";
 
@@ -125,7 +126,7 @@ export default function OrderPage() {
 
   const handleSendToKitchen = async () => {
     if (orderItems.length === 0) {
-      alert("Please add items first!");
+      toast.warning("Please add items first!");
       return;
     }
     try {
@@ -145,11 +146,11 @@ export default function OrderPage() {
       // ✅ Step 2 — Send to kitchen (creates KOT entry for chef)
       await api.put(`/waiter/orders/${res.data.order._id}/send`);
 
-      alert("Order sent to kitchen successfully!");
+      toast.success("Order sent to kitchen successfully! 🍳");
       navigate("/waiter/tables");
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
-      alert(e?.response?.data?.error || "Failed to send order");
+      toast.error(e?.response?.data?.error || "Failed to send order");
     } finally {
       setSending(false);
     }
