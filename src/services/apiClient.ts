@@ -33,15 +33,22 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
     const currentPath = window.location.pathname;
+
     const isAuthPage =
       currentPath === "/login" ||
       currentPath === "/signin" ||
       currentPath === "/signup";
 
-    // ✅ If 401 and not already retrying and not on auth page
-    if (status === 401 && !originalRequest._retry && !isAuthPage) {
+    // ✅ Skip refresh if header says so (initial /auth/me check)
+    const skipRefresh = originalRequest.headers?.["x-skip-refresh"];
+
+    if (
+      status === 401 &&
+      !originalRequest._retry &&
+      !isAuthPage &&
+      !skipRefresh
+    ) {
       if (isRefreshing) {
-        // ✅ Queue requests while refreshing
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -56,11 +63,11 @@ api.interceptors.response.use(
         // ✅ Try to refresh access token
         await api.post("/auth/refresh");
         processQueue(null);
-        return api(originalRequest); // retry original request
+        return api(originalRequest);
       } catch (refreshError) {
-        // ✅ Refresh failed — logout
+        // ✅ Refresh failed — go to login
         processQueue(refreshError);
-        window.location.href = "/login";
+        if (!isAuthPage) window.location.href = "/login";
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

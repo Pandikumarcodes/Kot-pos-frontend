@@ -1,3 +1,4 @@
+// src/App.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "./Store/hooks";
@@ -19,22 +20,44 @@ export default function App() {
 
   // ── Boot: check if cookie session is valid ──
   useEffect(() => {
+    const controller = new AbortController();
+
     dispatch(setAuthLoading(true));
 
-    // ✅ Show message if server takes more than 5 seconds (Render cold start)
+    // ✅ Show slow message after 5 seconds
     const slowTimer = setTimeout(() => setSlowLoad(true), 5000);
 
+    // ✅ Max 10 seconds — then just go to login
+    const maxTimer = setTimeout(() => {
+      controller.abort(); // cancel the request
+      dispatch(clearCredentials());
+      dispatch(setAuthLoading(false));
+    }, 10000);
+
     api
-      .get("/auth/me")
+      .get("/auth/me", {
+        signal: controller.signal,
+        headers: { "x-skip-refresh": "true" }, // skip refresh interceptor
+      })
       .then((res) => dispatch(setCredentials(res.data.user)))
-      .catch(() => dispatch(clearCredentials()))
+      .catch((err) => {
+        // ✅ Ignore abort errors — handled by maxTimer
+        if (err.name !== "CanceledError" && err.name !== "AbortError") {
+          dispatch(clearCredentials());
+        }
+      })
       .finally(() => {
         clearTimeout(slowTimer);
+        clearTimeout(maxTimer);
         setSlowLoad(false);
         dispatch(setAuthLoading(false));
       });
 
-    return () => clearTimeout(slowTimer);
+    return () => {
+      controller.abort(); // ✅ cleanup on unmount
+      clearTimeout(slowTimer);
+      clearTimeout(maxTimer);
+    };
   }, []);
 
   // ── Logout ──
@@ -49,7 +72,7 @@ export default function App() {
     }
   };
 
-  // ── While checking session, show full-screen spinner ──
+  // ── Loading screen ──
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-kot-primary gap-4">
