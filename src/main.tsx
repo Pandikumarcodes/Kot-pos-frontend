@@ -6,14 +6,18 @@ import { ToastProvider } from "./Context/ToastContext.tsx";
 import { store } from "./Store";
 import "./index.css";
 import App from "./App.tsx";
+import ErrorBoundary from "./errorBoundary/ErrorBoundary.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
       <BrowserRouter>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
+        <ErrorBoundary>
+          {" "}
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </ErrorBoundary>
       </BrowserRouter>
     </Provider>
   </StrictMode>,
