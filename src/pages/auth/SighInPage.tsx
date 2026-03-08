@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../Store/hooks";
 import { setCredentials } from "../../Store/Slices/authSlice";
-import api from "../../services/apiClient"; // ✅ use apiClient
+import api from "../../services/apiClient";
 
 interface FormErrors {
   username?: string;

@@ -6,21 +6,21 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// ── Request Interceptor ──────────────────────────────────────
-api.interceptors.request.use(
-  (config) => config,
-  (error) => Promise.reject(error),
-);
-
-// ── Response Interceptor ─────────────────────────────────────
 api.interceptors.response.use(
   (response) => response,
-
   (error) => {
     const status = error.response?.status;
 
     if (status === 401) {
-      window.location.href = "/login";
+      // ✅ Only redirect if NOT already on login/signin page
+      const currentPath = window.location.pathname;
+      if (
+        currentPath !== "/login" &&
+        currentPath !== "/signin" &&
+        currentPath !== "/signup"
+      ) {
+        window.location.href = "/login";
+      }
     }
 
     if (status === 500) {
