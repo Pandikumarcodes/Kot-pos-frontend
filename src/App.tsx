@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "./Store/hooks";
 import {
@@ -16,21 +16,32 @@ export default function App() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, user } = useAppSelector((s) => s.auth);
+  const [slowLoad, setSlowLoad] = useState(false);
 
   // ── Boot: check if cookie session is valid ──
   useEffect(() => {
     dispatch(setAuthLoading(true));
+
+    // ✅ Show message if server takes more than 5 seconds (Render cold start)
+    const slowTimer = setTimeout(() => setSlowLoad(true), 5000);
+
     api
-      .get("/auth/me") // ✅ no hardcoded URL
+      .get("/auth/me")
       .then((res) => dispatch(setCredentials(res.data.user)))
       .catch(() => dispatch(clearCredentials()))
-      .finally(() => dispatch(setAuthLoading(false)));
+      .finally(() => {
+        clearTimeout(slowTimer);
+        setSlowLoad(false);
+        dispatch(setAuthLoading(false));
+      });
+
+    return () => clearTimeout(slowTimer);
   }, []);
 
   // ── Logout ──
   const handleLogout = async () => {
     try {
-      await api.post("/auth/logout"); // ✅ no hardcoded URL
+      await api.post("/auth/logout");
     } catch {
       // clear anyway
     } finally {
@@ -42,8 +53,24 @@ export default function App() {
   // ── While checking session, show full-screen spinner ──
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-kot-primary">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-kot-primary gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
+            <span className="text-white font-bold text-sm">K</span>
+          </div>
+          <span className="font-bold text-xl text-kot-darker">KOT POS</span>
+        </div>
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-kot-dark border-t-transparent" />
+        {slowLoad && (
+          <div className="text-center">
+            <p className="text-sm text-kot-text animate-pulse">
+              Starting server, please wait...
+            </p>
+            <p className="text-xs text-kot-text/60 mt-1">
+              This may take up to 30 seconds
+            </p>
+          </div>
+        )}
       </div>
     );
   }
