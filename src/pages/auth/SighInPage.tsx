@@ -1,8 +1,10 @@
+// src/pages/auth/SignInPage.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../Store/hooks";
 import { setCredentials } from "../../Store/Slices/authSlice";
 import api from "../../services/apiClient";
+import { validateLogin, hasErrors } from "../../utils/validation";
 
 interface FormErrors {
   username?: string;
@@ -28,18 +30,12 @@ export default function SignInPage() {
     chef: "/chef/kot",
   };
 
-  const validate = (): FormErrors => {
-    const e: FormErrors = {};
-    if (!formData.username) e.username = "Username is required";
-    if (!formData.password) e.password = "Password is required";
-    else if (formData.password.length < 6) e.password = "Minimum 6 characters";
-    return e;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length > 0) {
+
+    // ✅ Use shared validation
+    const errs = validateLogin(formData);
+    if (hasErrors(errs)) {
       setErrors(errs);
       return;
     }
@@ -47,14 +43,12 @@ export default function SignInPage() {
     setIsLoading(true);
     setErrors({});
     try {
-      // ✅ Fixed: /auth/login not /auth/me
       const res = await api.post("/auth/login", {
-        username: formData.username,
+        username: formData.username.trim(),
         password: formData.password,
       });
 
       const { user } = res.data;
-
       dispatch(
         setCredentials({
           id: user.id,
@@ -63,7 +57,6 @@ export default function SignInPage() {
           role: user.role,
         }),
       );
-
       navigate(ROLE_HOME[user.role] ?? "/");
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
@@ -88,7 +81,6 @@ export default function SignInPage() {
           </div>
           <span className="font-bold text-xl text-kot-darker">KOT POS</span>
         </div>
-
         <div className="flex-1 flex flex-col justify-center items-center text-center px-8">
           <div className="relative mb-10">
             <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto bg-kot-light shadow-kot-lg">
@@ -119,7 +111,6 @@ export default function SignInPage() {
               </span>
             </div>
           </div>
-
           <h2 className="text-2xl font-bold mb-3 leading-tight text-kot-darker">
             Manage your restaurant
             <br />
@@ -130,7 +121,6 @@ export default function SignInPage() {
             time.
           </p>
         </div>
-
         <div>
           <p className="text-xs mb-3 font-medium uppercase tracking-widest text-kot-text">
             Station Access
@@ -154,7 +144,7 @@ export default function SignInPage() {
         </div>
       </div>
 
-      {/* ── Right Form Panel ── */}
+      {/* ── Right Form ── */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <button

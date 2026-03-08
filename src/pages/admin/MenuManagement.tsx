@@ -13,8 +13,12 @@ import type {
   CreateMenuPayload,
 } from "../../services/adminApi/Menu.api";
 import { useToast } from "../../Context/ToastContext";
+import {
+  validateMenuItem,
+  hasErrors,
+  type ValidationErrors,
+} from "../../utils/validation";
 
-// ✅ Keys match model enum exactly, labels are display names
 const CATEGORIES: { key: string; label: string }[] = [
   { key: "starter", label: "Starter" },
   { key: "main_course", label: "Main Course" },
@@ -34,7 +38,7 @@ const getCategoryLabel = (key: string) =>
 export default function MenuManagementPage() {
   const { user } = useAppSelector((state) => state.auth);
   const toast = useToast();
-  const isAdmin = user?.role === "admin"; // ✅ only admin can delete
+  const isAdmin = user?.role === "admin";
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,6 +46,7 @@ export default function MenuManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [formErrors, setFormErrors] = useState<ValidationErrors>({}); // ✅
   const [formData, setFormData] = useState<CreateMenuPayload>({
     ItemName: "",
     price: 0,
@@ -96,16 +101,40 @@ export default function MenuManagementPage() {
         available: true,
       });
     }
+    setFormErrors({}); // ✅ clear errors on open
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingItem(null);
+    setFormErrors({});
+  };
+
+  // ✅ Clear field error on change
+  const handleFieldChange = (
+    field: string,
+    value: string | number | boolean,
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors((prev) => ({
+        ...prev,
+        [field]: undefined as unknown as string,
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // ✅ Validate before submit
+    const errors = validateMenuItem(formData, !!editingItem);
+    if (hasErrors(errors)) {
+      setFormErrors(errors);
+      return;
+    }
+
     try {
       if (editingItem) {
         await updateMenuItemApi(editingItem._id, {
@@ -139,7 +168,7 @@ export default function MenuManagementPage() {
       toast.success(`"${item.ItemName}" deleted!`);
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
-      toast.error(error?.response?.data?.error || "Failed to save item");
+      toast.error(error?.response?.data?.error || "Failed to delete item");
     }
   };
 
@@ -159,8 +188,10 @@ export default function MenuManagementPage() {
     }
   };
 
-  const inputClass =
-    "w-full px-3 py-2 border-2 border-kot-chart rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark focus:border-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50 text-sm";
+  const inputClass = (field: string) =>
+    `w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark focus:border-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50 text-sm transition-colors ${
+      formErrors[field] ? "border-red-500" : "border-kot-chart"
+    }`;
 
   if (loading) {
     return (
@@ -207,12 +238,10 @@ export default function MenuManagementPage() {
               onClick={() => handleOpenModal()}
               className="flex items-center gap-2 bg-kot-dark hover:bg-kot-darker text-white font-semibold px-4 py-2.5 rounded-lg transition-colors"
             >
-              <Plus size={20} />
-              Add Item
+              <Plus size={20} /> Add Item
             </button>
           </div>
 
-          {/* Search */}
           <div className="relative mb-4">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-kot-text"
@@ -227,15 +256,10 @@ export default function MenuManagementPage() {
             />
           </div>
 
-          {/* Category Tabs — key values, display labels */}
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setSelectedCategory("all")}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                selectedCategory === "all"
-                  ? "bg-kot-dark text-white"
-                  : "bg-kot-light text-kot-text hover:bg-kot-stats hover:text-kot-darker"
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${selectedCategory === "all" ? "bg-kot-dark text-white" : "bg-kot-light text-kot-text hover:bg-kot-stats hover:text-kot-darker"}`}
             >
               All
             </button>
@@ -243,11 +267,7 @@ export default function MenuManagementPage() {
               <button
                 key={cat.key}
                 onClick={() => setSelectedCategory(cat.key)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  selectedCategory === cat.key
-                    ? "bg-kot-dark text-white"
-                    : "bg-kot-light text-kot-text hover:bg-kot-stats hover:text-kot-darker"
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${selectedCategory === cat.key ? "bg-kot-dark text-white" : "bg-kot-light text-kot-text hover:bg-kot-stats hover:text-kot-darker"}`}
               >
                 {cat.label}
               </button>
@@ -293,7 +313,6 @@ export default function MenuManagementPage() {
                       </p>
                     </td>
                     <td className="px-6 py-4">
-                      {/* ✅ Display label, not raw key */}
                       <span className="text-xs px-2.5 py-1 rounded-full bg-kot-light text-kot-dark font-medium">
                         {getCategoryLabel(item.category)}
                       </span>
@@ -306,11 +325,7 @@ export default function MenuManagementPage() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleToggleAvailability(item)}
-                        className={`text-xs font-semibold px-3 py-1 rounded-full transition-colors ${
-                          item.available
-                            ? "bg-kot-stats text-kot-darker hover:bg-kot-chart"
-                            : "bg-red-100 text-red-700 hover:bg-red-200"
-                        }`}
+                        className={`text-xs font-semibold px-3 py-1 rounded-full transition-colors ${item.available ? "bg-kot-stats text-kot-darker hover:bg-kot-chart" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
                       >
                         {item.available ? "Available" : "Unavailable"}
                       </button>
@@ -358,78 +373,83 @@ export default function MenuManagementPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Name — new items only */}
               {!editingItem && (
-                <div>
-                  <label className="block text-sm font-semibold text-kot-darker mb-1">
-                    Item Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.ItemName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, ItemName: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="e.g. Paneer Butter Masala"
-                  />
-                </div>
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold text-kot-darker mb-1">
+                      Item Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.ItemName}
+                      onChange={(e) =>
+                        handleFieldChange("ItemName", e.target.value)
+                      }
+                      className={inputClass("ItemName")}
+                      placeholder="e.g. Paneer Butter Masala"
+                    />
+                    {formErrors.ItemName && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {formErrors.ItemName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-kot-darker mb-1">
+                      Category *
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) =>
+                        handleFieldChange("category", e.target.value)
+                      }
+                      className={inputClass("category")}
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat.key} value={cat.key}>
+                          {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.category && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {formErrors.category}
+                      </p>
+                    )}
+                  </div>
+                </>
               )}
 
-              {/* Category — new items only, sends key to backend */}
-              {!editingItem && (
-                <div>
-                  <label className="block text-sm font-semibold text-kot-darker mb-1">
-                    Category *
-                  </label>
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                    className={inputClass}
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat.key} value={cat.key}>
-                        {cat.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Price */}
               <div>
                 <label className="block text-sm font-semibold text-kot-darker mb-1">
                   Price (₹) *
                 </label>
                 <input
                   type="number"
-                  required
                   min="1"
                   step="0.01"
-                  value={formData.price}
+                  value={formData.price || ""}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      price: parseFloat(e.target.value),
-                    })
+                    handleFieldChange("price", parseFloat(e.target.value) || 0)
                   }
-                  className={inputClass}
+                  className={inputClass("price")}
                   placeholder="0.00"
                 />
+                {formErrors.price && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {formErrors.price}
+                  </p>
+                )}
               </div>
 
-              {/* Available */}
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   id="available"
                   checked={formData.available}
                   onChange={(e) =>
-                    setFormData({ ...formData, available: e.target.checked })
+                    handleFieldChange("available", e.target.checked)
                   }
                   className="w-4 h-4 rounded accent-kot-dark"
                 />

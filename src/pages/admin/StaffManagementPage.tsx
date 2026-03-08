@@ -13,6 +13,12 @@ import type {
   CreateUserPayload,
 } from "../../services/adminApi/Staff.api";
 import { useToast } from "../../Context/ToastContext";
+import {
+  validateStaff,
+  hasErrors,
+  type ValidationErrors,
+} from "../../utils/validation";
+
 const ALLOWED_ROLES = ["admin", "chef", "waiter", "cashier", "manager"];
 
 const ROLE_EMOJI: Record<string, string> = {
@@ -31,13 +37,14 @@ const STATUS_STYLES: Record<string, string> = {
 export default function StaffPage() {
   const toast = useToast();
   const { user } = useAppSelector((state) => state.auth);
-  const isAdmin = user?.role === "admin"; // ✅ only admin can delete
+  const isAdmin = user?.role === "admin";
   const [users, setUsers] = useState<StaffUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
+  const [formErrors, setFormErrors] = useState<ValidationErrors>({}); // ✅
   const [formData, setFormData] = useState<CreateUserPayload>({
     username: "",
     password: "",
@@ -89,19 +96,39 @@ export default function StaffPage() {
         status: "active",
       });
     }
+    setFormErrors({}); // ✅ clear errors on open
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingUser(null);
+    setFormErrors({});
+  };
+
+  // ✅ Clear field error on change
+  const handleFieldChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors((prev) => ({
+        ...prev,
+        [field]: undefined as unknown as string,
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // ✅ Validate before submit
+    const errors = validateStaff(formData, !!editingUser);
+    if (hasErrors(errors)) {
+      setFormErrors(errors);
+      return;
+    }
+
     try {
       if (editingUser) {
-        // Only role can be updated per backend
         await updateUserRoleApi(editingUser._id, formData.role);
         setUsers(
           users.map((u) =>
@@ -125,16 +152,18 @@ export default function StaffPage() {
     try {
       await deleteUserApi(user._id);
       setUsers(users.filter((u) => u._id !== user._id));
+      toast.success(`"${user.username}" deleted!`);
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
       toast.error(error?.response?.data?.error || "Failed to delete user");
     }
   };
 
-  const inputClass =
-    "w-full px-3 py-2.5 border-2 border-kot-chart rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark focus:border-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50 text-sm";
+  const inputClass = (field: string) =>
+    `w-full px-3 py-2.5 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark focus:border-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50 text-sm transition-colors ${
+      formErrors[field] ? "border-red-500" : "border-kot-chart"
+    }`;
 
-  // ── Stats ──
   const totalByRole = ALLOWED_ROLES.map((role) => ({
     role,
     count: users.filter((u) => u.role === role).length,
@@ -188,12 +217,10 @@ export default function StaffPage() {
               onClick={() => handleOpenModal()}
               className="flex items-center gap-2 bg-kot-dark hover:bg-kot-darker text-white font-semibold px-4 py-2.5 rounded-lg transition-colors"
             >
-              <Plus size={20} />
-              Add Staff
+              <Plus size={20} /> Add Staff
             </button>
           </div>
 
-          {/* Search */}
           <div className="relative mb-4">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-kot-text"
@@ -208,7 +235,6 @@ export default function StaffPage() {
             />
           </div>
 
-          {/* Stats Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-kot-light rounded-xl p-4 border border-kot-chart">
               <p className="text-xs text-kot-text font-medium">Total Staff</p>
@@ -238,7 +264,7 @@ export default function StaffPage() {
         </div>
       </div>
 
-      {/* Staff Table */}
+      {/* Table */}
       <div className="flex-1 overflow-y-auto p-6">
         {filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-kot-text">
@@ -267,7 +293,6 @@ export default function StaffPage() {
                     key={user._id}
                     className="hover:bg-kot-primary transition-colors"
                   >
-                    {/* Name */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-kot-stats flex items-center justify-center text-kot-darker font-bold text-sm">
@@ -278,13 +303,11 @@ export default function StaffPage() {
                         </p>
                       </div>
                     </td>
-                    {/* Role */}
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full bg-kot-light text-kot-darker">
                         {ROLE_EMOJI[user.role] ?? "👤"} {user.role}
                       </span>
                     </td>
-                    {/* Status */}
                     <td className="px-6 py-4">
                       <span
                         className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${STATUS_STYLES[user.status] ?? "bg-kot-light text-kot-text"}`}
@@ -292,13 +315,11 @@ export default function StaffPage() {
                         {user.status}
                       </span>
                     </td>
-                    {/* Actions */}
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleOpenModal(user)}
                           className="p-2 text-kot-dark hover:bg-kot-light rounded-lg transition-colors"
-                          title="Edit role"
                         >
                           <Edit2 size={16} />
                         </button>
@@ -306,7 +327,6 @@ export default function StaffPage() {
                           <button
                             onClick={() => handleDelete(user)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete user"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -340,42 +360,50 @@ export default function StaffPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Username — new only */}
               {!editingUser && (
-                <div>
-                  <label className="block text-sm font-semibold text-kot-darker mb-1">
-                    Username *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.username}
-                    onChange={(e) =>
-                      setFormData({ ...formData, username: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="e.g. john_waiter"
-                  />
-                </div>
-              )}
+                <>
+                  {/* Username */}
+                  <div>
+                    <label className="block text-sm font-semibold text-kot-darker mb-1">
+                      Username *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) =>
+                        handleFieldChange("username", e.target.value)
+                      }
+                      className={inputClass("username")}
+                      placeholder="e.g. john_waiter"
+                    />
+                    {formErrors.username && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {formErrors.username}
+                      </p>
+                    )}
+                  </div>
 
-              {/* Password — new only */}
-              {!editingUser && (
-                <div>
-                  <label className="block text-sm font-semibold text-kot-darker mb-1">
-                    Password *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="Min 8 chars, uppercase, number"
-                  />
-                </div>
+                  {/* Password */}
+                  <div>
+                    <label className="block text-sm font-semibold text-kot-darker mb-1">
+                      Password *
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        handleFieldChange("password", e.target.value)
+                      }
+                      className={inputClass("password")}
+                      placeholder="Min 8 chars, uppercase, number"
+                    />
+                    {formErrors.password && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {formErrors.password}
+                      </p>
+                    )}
+                  </div>
+                </>
               )}
 
               {/* Role */}
@@ -384,12 +412,9 @@ export default function StaffPage() {
                   Role *
                 </label>
                 <select
-                  required
                   value={formData.role}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value })
-                  }
-                  className={inputClass}
+                  onChange={(e) => handleFieldChange("role", e.target.value)}
+                  className={inputClass("role")}
                 >
                   {ALLOWED_ROLES.map((role) => (
                     <option key={role} value={role}>
@@ -398,6 +423,9 @@ export default function StaffPage() {
                     </option>
                   ))}
                 </select>
+                {formErrors.role && (
+                  <p className="mt-1 text-xs text-red-500">{formErrors.role}</p>
+                )}
               </div>
 
               {/* Status — new only */}
@@ -409,13 +437,18 @@ export default function StaffPage() {
                   <select
                     value={formData.status}
                     onChange={(e) =>
-                      setFormData({ ...formData, status: e.target.value })
+                      handleFieldChange("status", e.target.value)
                     }
-                    className={inputClass}
+                    className={inputClass("status")}
                   >
                     <option value="active">Active</option>
                     <option value="locked">Locked</option>
                   </select>
+                  {formErrors.status && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {formErrors.status}
+                    </p>
+                  )}
                 </div>
               )}
 
