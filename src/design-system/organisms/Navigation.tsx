@@ -19,7 +19,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../Store/hooks";
 import { clearCredentials } from "../../Store/Slices/authSlice";
-
+import { API_BASE_URL } from "../../config/Api";
 interface NavItem {
   label: string;
   path: string;
@@ -107,7 +107,7 @@ export default function Navigation({ className = "" }: { className?: string }) {
   const handleLogout = async () => {
     try {
       await axios.post(
-        "http://localhost:3000/auth/logout",
+        `${API_BASE_URL}/auth/logout`,
         {},
         { withCredentials: true },
       );

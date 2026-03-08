@@ -1,7 +1,6 @@
 // src/App.tsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useAppDispatch, useAppSelector } from "./Store/hooks";
 import {
   setCredentials,
@@ -11,6 +10,7 @@ import {
 import AppRouter from "./Router/AppRouter";
 import Header from "./design-system/organisms/Header";
 import Sidebar from "./design-system/organisms/Sidebar";
+import api from "./services/apiClient";
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -19,22 +19,18 @@ export default function App() {
 
   // ── Boot: check if cookie session is valid ──
   useEffect(() => {
-    dispatch(setAuthLoading(true)); // ✅ set loading BEFORE the request
-    axios
-      .get("http://localhost:3000/auth/me", { withCredentials: true })
+    dispatch(setAuthLoading(true));
+    api
+      .get("/auth/me") // ✅ no hardcoded URL
       .then((res) => dispatch(setCredentials(res.data.user)))
       .catch(() => dispatch(clearCredentials()))
-      .finally(() => dispatch(setAuthLoading(false))); // ✅ clear loading AFTER
+      .finally(() => dispatch(setAuthLoading(false)));
   }, []);
 
   // ── Logout ──
   const handleLogout = async () => {
     try {
-      await axios.post(
-        "http://localhost:3000/auth/logout",
-        {},
-        { withCredentials: true },
-      );
+      await api.post("/auth/logout"); // ✅ no hardcoded URL
     } catch {
       // clear anyway
     } finally {

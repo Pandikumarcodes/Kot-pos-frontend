@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { API_BASE_URL } from "../../config/Api";
 interface FormData {
   username: string;
   password: string;
@@ -84,7 +84,7 @@ export default function SignUpPage() {
     setErrors({});
     try {
       await axios.post(
-        "http://localhost:3000/auth/signup",
+        `${API_BASE_URL}/auth/signup`,
         {
           username: formData.username,
           password: formData.password,
@@ -226,7 +226,13 @@ export default function SignUpPage() {
             Station Access
           </p>
           <div className="flex gap-2 flex-wrap">
-            {["📋 Manager","⚙️ Admin", "💳 Cashier", "🍽️ Waiter", "👨‍🍳 Chef"].map((r) => (
+            {[
+              "📋 Manager",
+              "⚙️ Admin",
+              "💳 Cashier",
+              "🍽️ Waiter",
+              "👨‍🍳 Chef",
+            ].map((r) => (
               <span
                 key={r}
                 className="bg-kot-white text-xs px-3 py-1.5 rounded-full font-medium text-kot-dark shadow-kot"

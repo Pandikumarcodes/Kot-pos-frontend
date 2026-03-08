@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://kot-pos-backend.onrender.com",
+  baseURL:
+    import.meta.env.VITE_API_URL || "https://kot-pos-backend.onrender.com",
   withCredentials: true,
 });
 
@@ -19,14 +20,8 @@ api.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      // ✅ Only redirect on 401 — token expired/missing
-      // Clear cookie and go to login
       window.location.href = "/login";
     }
-
-    // ❌ REMOVED 403 redirect — was causing infinite loop
-    // 403 = logged in but wrong role → let the page handle it gracefully
-    // Never redirect on 403 — just reject the promise
 
     if (status === 500) {
       console.error("Server error:", error.response?.data?.error);

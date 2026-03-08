@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useAppDispatch } from "../../Store/hooks";
 import { setCredentials } from "../../Store/Slices/authSlice";
+import api from "../../services/apiClient"; // ✅ use apiClient
 
 interface FormErrors {
   username?: string;
@@ -20,7 +20,6 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ All 5 roles including manager
   const ROLE_HOME: Record<string, string> = {
     admin: "/admin/dashboard",
     manager: "/admin/dashboard",
@@ -48,18 +47,18 @@ export default function SignInPage() {
     setIsLoading(true);
     setErrors({});
     try {
-      const res = await axios.post(
-        "http://localhost:3000/auth/login",
-        { username: formData.username, password: formData.password },
-        { withCredentials: true },
-      );
+      // ✅ Fixed: /auth/login not /auth/me
+      const res = await api.post("/auth/login", {
+        username: formData.username,
+        password: formData.password,
+      });
 
       const { user } = res.data;
 
       dispatch(
         setCredentials({
           id: user.id,
-          name: user.username, // ✅ backend returns username not name
+          name: user.username,
           email: user.username,
           role: user.role,
         }),
@@ -132,7 +131,6 @@ export default function SignInPage() {
           </p>
         </div>
 
-        {/* ✅ Added manager badge */}
         <div>
           <p className="text-xs mb-3 font-medium uppercase tracking-widest text-kot-text">
             Station Access
