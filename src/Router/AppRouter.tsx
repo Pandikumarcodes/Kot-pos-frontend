@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import ProtectedRoute from "./ProtectedRoute";
+import ProtectedRoute, { PublicRoute } from "./ProtectedRoute";
 import RoleRedirect from "./RoleRedirect";
 import { ROUTE_PERMISSIONS } from "../config/Permission";
 
@@ -27,7 +27,6 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Shorthand — get allowed roles from central config
 const r = (path: string) => ROUTE_PERMISSIONS[path] ?? [];
 
 export default function AppRouter() {
@@ -36,10 +35,12 @@ export default function AppRouter() {
       <Routes>
         <Route path="/" element={<RoleRedirect />} />
 
-        {/* ── PUBLIC ── */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signin" element={<SignInPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+        {/* ── PUBLIC — redirect to dashboard if already logged in ── */}
+        <Route element={<PublicRoute />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signin" element={<SignInPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+        </Route>
 
         {/* ── WAITER + MANAGER + ADMIN ── */}
         <Route element={<ProtectedRoute allowedRoles={r("/waiter/tables")} />}>

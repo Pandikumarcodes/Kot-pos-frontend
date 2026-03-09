@@ -9,18 +9,19 @@ interface ProtectedRouteProps {
 
 const ROLE_HOME: Record<string, string> = {
   admin: "/admin/dashboard",
+  manager: "/admin/dashboard",
   cashier: "/cashier/billing",
   waiter: "/waiter/tables",
   chef: "/chef/kot",
 };
 
+// ✅ Private Route — must be logged in + correct role
 export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const { user, isAuthenticated, isLoading } = useAppSelector(
     (state) => state.auth,
   );
   const location = useLocation();
 
-  // ── Still checking auth cookie ──
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-kot-primary">
@@ -29,14 +30,34 @@ export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     );
   }
 
-  // ── Not logged in → go to login ──
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // ── Wrong role → redirect to their own home, not /unauthorized ──
   if (!allowedRoles.includes(user!.role)) {
     return <Navigate to={ROLE_HOME[user!.role] ?? "/login"} replace />;
+  }
+
+  return <Outlet />;
+}
+
+// ✅ Public Route — if already logged in, redirect to their dashboard
+export function PublicRoute() {
+  const { isAuthenticated, isLoading, user } = useAppSelector(
+    (state) => state.auth,
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-kot-primary">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-kot-dark border-t-transparent" />
+      </div>
+    );
+  }
+
+  // ✅ Already logged in → go to their home page
+  if (isAuthenticated && user) {
+    return <Navigate to={ROLE_HOME[user.role] ?? "/admin/dashboard"} replace />;
   }
 
   return <Outlet />;
