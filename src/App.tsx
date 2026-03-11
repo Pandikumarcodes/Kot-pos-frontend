@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "./Store/hooks";
@@ -11,25 +10,31 @@ import AppRouter from "./Router/AppRouter";
 import Header from "./design-system/organisms/Header";
 import Sidebar from "./design-system/organisms/Sidebar";
 import api from "./services/apiClient";
+import { notificationService } from "./services/notificationServices";
+import { useToast } from "./Context/ToastContext";
 
 export default function App() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, user } = useAppSelector((s) => s.auth);
   const [slowLoad, setSlowLoad] = useState(false);
+  const toast = useToast();
 
-  // ── Boot: check if cookie session is valid ──
+  useEffect(() => {
+    notificationService.setToast(toast);
+  }, [toast]);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role) notificationService.connect(user.role);
+    else notificationService.disconnect();
+  }, [isAuthenticated, user?.role]);
+
   useEffect(() => {
     const controller = new AbortController();
-
     dispatch(setAuthLoading(true));
-
-    // ✅ Show slow message after 5 seconds
     const slowTimer = setTimeout(() => setSlowLoad(true), 5000);
-
-    // ✅ Max 10 seconds — then just go to login
     const maxTimer = setTimeout(() => {
-      controller.abort(); // cancel the request
+      controller.abort();
       dispatch(clearCredentials());
       dispatch(setAuthLoading(false));
     }, 10000);
@@ -37,14 +42,12 @@ export default function App() {
     api
       .get("/auth/me", {
         signal: controller.signal,
-        headers: { "x-skip-refresh": "true" }, // skip refresh interceptor
+        headers: { "x-skip-refresh": "true" },
       })
       .then((res) => dispatch(setCredentials(res.data.user)))
       .catch((err) => {
-        // ✅ Ignore abort errors — handled by maxTimer
-        if (err.name !== "CanceledError" && err.name !== "AbortError") {
+        if (err.name !== "CanceledError" && err.name !== "AbortError")
           dispatch(clearCredentials());
-        }
       })
       .finally(() => {
         clearTimeout(slowTimer);
@@ -54,26 +57,25 @@ export default function App() {
       });
 
     return () => {
-      controller.abort(); // ✅ cleanup on unmount
+      controller.abort();
       clearTimeout(slowTimer);
       clearTimeout(maxTimer);
     };
   }, []);
 
-  // ── Logout ──
   const handleLogout = async () => {
     try {
       await api.post("/auth/logout");
-    } catch {
-      // clear anyway
+    } catch (err) {
+      console.log(err);
     } finally {
+      notificationService.disconnect();
       dispatch(clearCredentials());
       navigate("/login");
     }
   };
 
-  // ── Loading screen ──
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-kot-primary gap-4">
         <div className="flex items-center gap-3">
@@ -95,7 +97,6 @@ export default function App() {
         )}
       </div>
     );
-  }
 
   return (
     <>
@@ -108,7 +109,12 @@ export default function App() {
           />
           <div className="flex flex-1 overflow-hidden">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-kot-primary">
+            {/*
+              pl-10 on mobile: offset content so it's not hidden under the
+              fixed hamburger button (w-9 + left-3 = ~48px ≈ pl-12).
+              md:pl-0: tablet icon-sidebar is in flow, no offset needed.
+            */}
+            <main className="flex-1 overflow-y-auto bg-kot-primary pl-12 md:pl-0">
               <AppRouter />
             </main>
           </div>

@@ -1,4 +1,3 @@
-// src/pages/auth/LoginPage.tsx
 import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
@@ -6,22 +5,24 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-kot-primary">
-      {/* ── Left Banner ── */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-14 bg-kot-stats">
+      {/* ── Left Banner — hidden on mobile, shown lg+ ── */}
+      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col justify-between p-10 xl:p-14 bg-kot-stats">
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
             <span className="text-white font-bold text-sm">K</span>
           </div>
-          <span className="font-bold text-xl text-kot-darker">KOT POS</span>
+          <span className="font-bold text-xl xl:text-2xl text-kot-darker">
+            KOT POS
+          </span>
         </div>
 
-        {/* Center content */}
-        <div className="flex-1 flex flex-col justify-center items-center text-center px-8">
+        {/* Center */}
+        <div className="flex-1 flex flex-col justify-center items-center text-center px-6 xl:px-8">
           <div className="relative mb-10">
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto bg-kot-light shadow-kot-lg">
+            <div className="w-20 h-20 xl:w-24 xl:h-24 rounded-3xl flex items-center justify-center mx-auto bg-kot-light shadow-kot-lg">
               <svg
-                className="w-12 h-12"
+                className="w-10 h-10 xl:w-12 xl:h-12"
                 fill="none"
                 stroke="#4A5F52"
                 viewBox="0 0 24 24"
@@ -34,14 +35,12 @@ export default function LoginPage() {
                 />
               </svg>
             </div>
-            {/* Floating badge top */}
             <div className="absolute -top-3 -right-8 bg-kot-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-kot">
               <div className="w-2 h-2 rounded-full bg-emerald-400" />
               <span className="text-xs font-medium text-kot-darker">
                 Live Orders
               </span>
             </div>
-            {/* Floating badge bottom */}
             <div className="absolute -bottom-3 -left-8 bg-kot-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-kot">
               <span className="text-xs">👨‍🍳</span>
               <span className="text-xs font-medium text-kot-darker">
@@ -49,8 +48,7 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
-
-          <h2 className="text-2xl font-bold mb-3 leading-tight text-kot-darker">
+          <h2 className="text-xl xl:text-2xl font-bold mb-3 leading-tight text-kot-darker">
             Manage your restaurant
             <br />
             from one place
@@ -80,19 +78,35 @@ export default function LoginPage() {
       </div>
 
       {/* ── Right Panel ── */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
+      <div className="w-full lg:w-1/2 xl:w-[45%] flex items-center justify-center p-4 sm:p-6 xl:p-8">
+        <div className="w-full max-w-sm xl:max-w-md">
           {/* Mobile logo */}
-          <div className="flex items-center gap-3 mb-10 lg:hidden">
+          <div className="flex items-center gap-3 mb-8 lg:hidden">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
               <span className="text-white font-bold text-sm">K</span>
             </div>
             <span className="font-bold text-lg text-kot-darker">KOT POS</span>
           </div>
 
-          {/* Heading */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2 text-kot-darker">
+          {/* Mobile brand strip */}
+          <div className="lg:hidden mb-6 p-4 bg-kot-stats rounded-2xl">
+            <p className="text-xs font-medium uppercase tracking-widest text-kot-text mb-2">
+              Station Access
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {["⚙️ Admin", "💳 Cashier", "🍽️ Waiter", "👨‍🍳 Chef"].map((r) => (
+                <span
+                  key={r}
+                  className="bg-kot-white text-xs px-2.5 py-1 rounded-full font-medium text-kot-dark shadow-kot"
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl xl:text-4xl font-bold mb-2 text-kot-darker">
               Welcome back
             </h1>
             <p className="text-sm text-kot-text">
@@ -103,11 +117,11 @@ export default function LoginPage() {
           {/* Sign In Card */}
           <div
             onClick={() => navigate("/signin")}
-            className="group bg-kot-white rounded-2xl p-6 mb-3 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg"
+            className="group bg-kot-white rounded-2xl p-4 sm:p-6 mb-3 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg"
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-kot-light">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center bg-kot-light flex-shrink-0">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -132,7 +146,7 @@ export default function LoginPage() {
                 </div>
               </div>
               <svg
-                className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1 flex-shrink-0"
                 fill="none"
                 stroke="#C1D9CD"
                 viewBox="0 0 24 24"
@@ -150,11 +164,11 @@ export default function LoginPage() {
           {/* Sign Up Card */}
           <div
             onClick={() => navigate("/signup")}
-            className="group bg-kot-white rounded-2xl p-6 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg"
+            className="group bg-kot-white rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg"
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-kot-stats">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center bg-kot-stats flex-shrink-0">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -179,7 +193,7 @@ export default function LoginPage() {
                 </div>
               </div>
               <svg
-                className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1 flex-shrink-0"
                 fill="none"
                 stroke="#C1D9CD"
                 viewBox="0 0 24 24"
@@ -194,8 +208,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Footer */}
-          <p className="text-center text-xs mt-8 text-kot-text">
+          <p className="text-center text-xs mt-6 sm:mt-8 text-kot-text">
             © 2026 KOT POS · All rights reserved
           </p>
         </div>

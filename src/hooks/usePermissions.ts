@@ -1,4 +1,3 @@
-// src/hooks/usePermission.ts
 import { useAppSelector } from "../Store/hooks";
 import { hasPermission, ROLE_HOME } from "../config/Permission";
 import type { Role, FeatureKey } from "../config/Permission";

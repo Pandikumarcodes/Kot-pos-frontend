@@ -1,4 +1,3 @@
-// src/pages/auth/SignInPage.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../Store/hooks";
@@ -10,6 +9,79 @@ interface FormErrors {
   username?: string;
   password?: string;
   api?: string;
+}
+
+// ── Shared Left Banner ────────────────────────────────────────
+function LeftBanner() {
+  return (
+    <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col justify-between p-10 xl:p-14 bg-kot-stats">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
+          <span className="text-white font-bold text-sm">K</span>
+        </div>
+        <span className="font-bold text-xl xl:text-2xl text-kot-darker">
+          KOT POS
+        </span>
+      </div>
+      <div className="flex-1 flex flex-col justify-center items-center text-center px-6 xl:px-8">
+        <div className="relative mb-10">
+          <div className="w-20 h-20 xl:w-24 xl:h-24 rounded-3xl flex items-center justify-center mx-auto bg-kot-light shadow-kot-lg">
+            <svg
+              className="w-10 h-10 xl:w-12 xl:h-12"
+              fill="none"
+              stroke="#4A5F52"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+          </div>
+          <div className="absolute -top-3 -right-8 bg-kot-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-kot">
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-xs font-medium text-kot-darker">
+              Live Orders
+            </span>
+          </div>
+          <div className="absolute -bottom-3 -left-8 bg-kot-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-kot">
+            <span className="text-xs">👨‍🍳</span>
+            <span className="text-xs font-medium text-kot-darker">
+              Kitchen Ready
+            </span>
+          </div>
+        </div>
+        <h2 className="text-xl xl:text-2xl font-bold mb-3 leading-tight text-kot-darker">
+          Manage your restaurant
+          <br />
+          from one place
+        </h2>
+        <p className="text-sm leading-relaxed max-w-xs text-kot-text">
+          Orders, tables, billing and kitchen display — all connected in real
+          time.
+        </p>
+      </div>
+      <div>
+        <p className="text-xs mb-3 font-medium uppercase tracking-widest text-kot-text">
+          Station Access
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          {["⚙️ Admin", "📋 Manager", "💳 Cashier", "🍽️ Waiter", "👨‍🍳 Chef"].map(
+            (r) => (
+              <span
+                key={r}
+                className="bg-kot-white text-xs px-3 py-1.5 rounded-full font-medium text-kot-dark shadow-kot"
+              >
+                {r}
+              </span>
+            ),
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function SignInPage() {
@@ -32,14 +104,11 @@ export default function SignInPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // ✅ Use shared validation
     const errs = validateLogin(formData);
     if (hasErrors(errs)) {
       setErrors(errs);
       return;
     }
-
     setIsLoading(true);
     setErrors({});
     try {
@@ -47,7 +116,6 @@ export default function SignInPage() {
         username: formData.username.trim(),
         password: formData.password,
       });
-
       const { user } = res.data;
       dispatch(
         setCredentials({
@@ -68,88 +136,27 @@ export default function SignInPage() {
     }
   };
 
-  const inputClass =
+  const inputBase =
     "w-full px-4 py-3 rounded-xl border-2 border-kot-chart bg-kot-white text-kot-darker text-sm outline-none transition-all duration-200 placeholder:text-kot-text/50 focus:border-kot-dark";
 
   return (
     <div className="min-h-screen flex bg-kot-primary">
-      {/* ── Left Banner ── */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-14 bg-kot-stats">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
-            <span className="text-white font-bold text-sm">K</span>
-          </div>
-          <span className="font-bold text-xl text-kot-darker">KOT POS</span>
-        </div>
-        <div className="flex-1 flex flex-col justify-center items-center text-center px-8">
-          <div className="relative mb-10">
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto bg-kot-light shadow-kot-lg">
-              <svg
-                className="w-12 h-12"
-                fill="none"
-                stroke="#4A5F52"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-            </div>
-            <div className="absolute -top-3 -right-8 bg-kot-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-kot">
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-xs font-medium text-kot-darker">
-                Live Orders
-              </span>
-            </div>
-            <div className="absolute -bottom-3 -left-8 bg-kot-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-kot">
-              <span className="text-xs">👨‍🍳</span>
-              <span className="text-xs font-medium text-kot-darker">
-                Kitchen Ready
-              </span>
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold mb-3 leading-tight text-kot-darker">
-            Manage your restaurant
-            <br />
-            from one place
-          </h2>
-          <p className="text-sm leading-relaxed max-w-xs text-kot-text">
-            Orders, tables, billing and kitchen display — all connected in real
-            time.
-          </p>
-        </div>
-        <div>
-          <p className="text-xs mb-3 font-medium uppercase tracking-widest text-kot-text">
-            Station Access
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            {[
-              "⚙️ Admin",
-              "📋 Manager",
-              "💳 Cashier",
-              "🍽️ Waiter",
-              "👨‍🍳 Chef",
-            ].map((r) => (
-              <span
-                key={r}
-                className="bg-kot-white text-xs px-3 py-1.5 rounded-full font-medium text-kot-dark shadow-kot"
-              >
-                {r}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
+      <LeftBanner />
 
       {/* ── Right Form ── */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
+      <div className="w-full lg:w-1/2 xl:w-[45%] flex items-center justify-center p-4 sm:p-6 xl:p-8 overflow-y-auto">
+        <div className="w-full max-w-sm xl:max-w-md">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-6 lg:hidden">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
+              <span className="text-white font-bold text-sm">K</span>
+            </div>
+            <span className="font-bold text-lg text-kot-darker">KOT POS</span>
+          </div>
+
           <button
             onClick={() => navigate("/login")}
-            className="flex items-center gap-1.5 mb-8 text-sm font-medium text-kot-text hover:text-kot-darker transition-colors"
+            className="flex items-center gap-1.5 mb-6 sm:mb-8 text-sm font-medium text-kot-text hover:text-kot-darker transition-colors"
           >
             <svg
               className="w-4 h-4"
@@ -167,8 +174,10 @@ export default function SignInPage() {
             Back
           </button>
 
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-1 text-kot-darker">Sign In</h1>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl xl:text-4xl font-bold mb-1 text-kot-darker">
+              Sign In
+            </h1>
             <p className="text-sm text-kot-text">
               Welcome back! Access your station below.
             </p>
@@ -195,7 +204,7 @@ export default function SignInPage() {
                     setErrors({ ...errors, username: undefined });
                 }}
                 placeholder="Enter your username"
-                className={`${inputClass} ${errors.username ? "border-red-500" : ""}`}
+                className={`${inputBase} ${errors.username ? "border-red-500" : ""}`}
               />
               {errors.username && (
                 <p className="mt-1 text-xs text-red-500">{errors.username}</p>
@@ -217,7 +226,7 @@ export default function SignInPage() {
                       setErrors({ ...errors, password: undefined });
                   }}
                   placeholder="••••••••"
-                  className={`${inputClass} pr-11 ${errors.password ? "border-red-500" : ""}`}
+                  className={`${inputBase} pr-11 ${errors.password ? "border-red-500" : ""}`}
                 />
                 <button
                   type="button"
@@ -289,7 +298,7 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 rounded-xl text-sm font-semibold text-white bg-kot-dark hover:bg-kot-darker transition-all duration-200 mt-2 disabled:opacity-60"
+              className="w-full py-3 sm:py-3.5 rounded-xl text-sm font-semibold text-white bg-kot-dark hover:bg-kot-darker transition-all duration-200 mt-2 disabled:opacity-60"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -320,7 +329,7 @@ export default function SignInPage() {
             </button>
           </form>
 
-          <p className="text-center text-sm mt-6 text-kot-text">
+          <p className="text-center text-sm mt-5 sm:mt-6 text-kot-text">
             Don't have an account?{" "}
             <button
               onClick={() => navigate("/signup")}
