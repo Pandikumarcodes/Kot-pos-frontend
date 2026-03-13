@@ -4,21 +4,39 @@ import ProtectedRoute, { PublicRoute } from "./ProtectedRoute";
 import RoleRedirect from "./RoleRedirect";
 import { ROUTE_PERMISSIONS } from "../config/Permission";
 
-import LoginPage from "../pages/auth/LoginPage";
-import SignInPage from "../pages/auth/SighInPage";
-import SignUpPage from "../pages/auth/SignUpPage";
+import LoginPage from "../features/auth/loginPage/LoginContainer";
+import SignInPage from "../features/auth/signInPage/SignInContainer";
+import SignUpPage from "../features/auth/signUpPage/SignUpContainer";
 
-const TablesPage = lazy(() => import("../pages/waiter/TablesPage"));
-const OrderPage = lazy(() => import("../pages/waiter/OrderPage"));
-const KitchenDashboard = lazy(() => import("../pages/chef/KitchenDashboard"));
-const BillingPage = lazy(() => import("../pages/cashier/BillingPage"));
-const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
-const ReportsPage = lazy(() => import("../pages/admin/ReportsPage"));
-const CustomersPage = lazy(() => import("../pages/admin/CustomerPage"));
-const MenuManagement = lazy(() => import("../pages/admin/MenuManagement"));
-const SettingsPage = lazy(() => import("../pages/admin/Settings"));
+const TablesPage = lazy(
+  () => import("../features/waiter/tablesPage/TablesContainer"),
+);
+const OrderPage = lazy(
+  () => import("../features/waiter/ordersPage/OrderContainer"),
+);
+const KitchenDashboard = lazy(
+  () => import("../features/chef/KitchenPage/KitchenContainer"),
+);
+const BillingPage = lazy(
+  () => import("../features/cashier/BillingPage/BillingContainer"),
+);
+const AdminDashboard = lazy(
+  () => import("../features/admin/dashboard/AdminDashboardContainer"),
+);
+const ReportsPage = lazy(
+  () => import("../features/admin/reports/ReportsContainer"),
+);
+const CustomersPage = lazy(
+  () => import("../features/admin/customers/CustomersContainer"),
+);
+const MenuManagement = lazy(
+  () => import("../features/admin/menu/MenuContainer"),
+);
+const SettingsPage = lazy(
+  () => import("../features/admin/settings/SettingsContainer"),
+);
 const StaffManagementPage = lazy(
-  () => import("../pages/admin/StaffManagementPage"),
+  () => import("../features/admin/staff/StaffContainer"),
 );
 
 const LoadingSpinner = () => (
