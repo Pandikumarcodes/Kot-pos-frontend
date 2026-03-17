@@ -4,45 +4,58 @@ import type {
   FilterValue,
   TableStatus,
 } from "./Table.types";
+import { TableQrCode } from "../../../UiComponents/TableQrCode";
 
 const STATUS_CONFIG: Record<
   TableStatus,
-  { bg: string; text: string; border: string; label: string; dot: string }
+  {
+    bg: string;
+    text: string;
+    border: string;
+    label: string;
+    dot: string;
+    pill: string;
+  }
 > = {
   available: {
     bg: "bg-kot-stats",
     text: "text-kot-darker",
-    border: "border-l-kot-dark",
+    border: "border-kot-dark",
     label: "Available",
     dot: "bg-kot-dark",
+    pill: "bg-emerald-100 text-emerald-700",
   },
   occupied: {
     bg: "bg-yellow-100",
     text: "text-yellow-800",
-    border: "border-l-yellow-400",
+    border: "border-yellow-400",
     label: "Occupied",
     dot: "bg-yellow-400",
+    pill: "bg-yellow-100 text-yellow-700",
   },
   billing: {
     bg: "bg-red-100",
     text: "text-red-800",
-    border: "border-l-red-400",
+    border: "border-red-400",
     label: "Billing",
     dot: "bg-red-500",
+    pill: "bg-red-100 text-red-700",
   },
   reserved: {
     bg: "bg-blue-100",
     text: "text-blue-800",
-    border: "border-l-blue-400",
+    border: "border-blue-400",
     label: "Reserved",
     dot: "bg-blue-400",
+    pill: "bg-blue-100 text-blue-700",
   },
   cleaning: {
     bg: "bg-purple-100",
     text: "text-purple-800",
-    border: "border-l-purple-400",
+    border: "border-purple-400",
     label: "Cleaning",
     dot: "bg-purple-400",
+    pill: "bg-purple-100 text-purple-700",
   },
 };
 
@@ -56,8 +69,8 @@ const ALL_FILTERS: FilterValue[] = [
 
 function formatDuration(isoStart: string): string {
   const diff = Math.floor((Date.now() - new Date(isoStart).getTime()) / 1000);
-  const h = Math.floor(diff / 3600),
-    m = Math.floor((diff % 3600) / 60);
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
@@ -67,13 +80,19 @@ const Pulse = ({ className }: { className: string }) => (
 
 function SkeletonTableCard() {
   return (
-    <div className="bg-kot-white rounded-2xl p-3 sm:p-4 border-l-4 border-kot-chart shadow-kot">
-      <div className="flex items-start justify-between mb-2 sm:mb-3">
-        <Pulse className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl" />
-        <Pulse className="h-5 w-14 rounded-full" />
+    <div className="bg-kot-white rounded-2xl shadow-kot border-2 border-transparent flex flex-col">
+      <div className="p-3 sm:p-4 space-y-3 flex-1">
+        <div className="flex items-start justify-between">
+          <Pulse className="w-10 h-10 rounded-xl" />
+          <Pulse className="h-5 w-16 rounded-full" />
+        </div>
+        <Pulse className="h-3 w-20" />
+        <Pulse className="h-3 w-16" />
       </div>
-      <Pulse className="h-3 w-24 mb-1.5" />
-      <Pulse className="h-3 w-20" />
+      <div className="px-3 pb-3 flex items-center justify-between gap-2 border-t border-kot-chart pt-2">
+        <Pulse className="h-7 w-14 rounded-lg" />
+        <Pulse className="h-7 w-7 rounded-lg" />
+      </div>
     </div>
   );
 }
@@ -108,23 +127,23 @@ export function TablesPresenter({
 }: TablesPresenterProps) {
   return (
     <div className="min-h-screen bg-kot-primary">
-      <div className="p-3 sm:p-4 lg:p-6 xl:p-8 max-w-[2400px] mx-auto space-y-3 sm:space-y-4 lg:space-y-5">
-        {/* Header */}
+      <div className="p-3 sm:p-4 lg:p-6 xl:p-8 max-w-[2400px] mx-auto space-y-4 sm:space-y-5">
+        {/* ── Header ── */}
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="text-base sm:text-2xl lg:text-3xl font-bold text-kot-darker truncate">
+          <div>
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-kot-darker">
               Tables
             </h1>
-            <p className="text-[10px] sm:text-sm text-kot-text mt-0.5">
+            <p className="text-xs sm:text-sm text-kot-text mt-0.5">
               {tables.length} total ·{" "}
               {isAdmin ? "manage tables" : "allocate to start order"}
             </p>
           </div>
-          <div className="flex gap-1.5 sm:gap-2 flex-shrink-0">
+          <div className="flex gap-2 flex-shrink-0">
             {isAdmin && (
               <button
                 onClick={onOpenAddModal}
-                className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium text-white bg-kot-dark hover:bg-kot-darker transition-all"
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-white bg-kot-dark hover:bg-kot-darker transition-colors"
               >
                 <Plus size={14} />
                 <span className="hidden sm:inline">Add Table</span>
@@ -133,10 +152,10 @@ export function TablesPresenter({
             )}
             <button
               onClick={onRefresh}
-              className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium border-2 border-kot-chart text-kot-dark bg-kot-white hover:bg-kot-light transition-all"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium border-2 border-kot-chart text-kot-dark bg-kot-white hover:bg-kot-light transition-colors"
             >
               <svg
-                className="w-3 h-3 sm:w-4 sm:h-4"
+                className="w-3.5 h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -153,18 +172,18 @@ export function TablesPresenter({
           </div>
         </div>
 
-        {/* Stats */}
+        {/* ── Stats ── */}
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="bg-kot-white rounded-2xl px-3 py-3 sm:px-5 sm:py-4 flex items-center gap-2 sm:gap-3 shadow-kot"
+                className="bg-kot-white rounded-2xl p-4 flex items-center gap-3 shadow-kot"
               >
-                <Pulse className="w-2.5 h-2.5 rounded-full flex-shrink-0" />
-                <div>
-                  <Pulse className="h-6 w-6 mb-1" />
-                  <Pulse className="h-2.5 w-14" />
+                <Pulse className="w-3 h-3 rounded-full flex-shrink-0" />
+                <div className="space-y-1.5">
+                  <Pulse className="h-6 w-8" />
+                  <Pulse className="h-2.5 w-16" />
                 </div>
               </div>
             ))}
@@ -181,16 +200,16 @@ export function TablesPresenter({
             ).map((s) => (
               <div
                 key={s.key}
-                className="bg-kot-white rounded-2xl px-3 py-3 sm:px-5 sm:py-4 lg:px-6 lg:py-5 flex items-center gap-2 sm:gap-3 shadow-kot"
+                className="bg-kot-white rounded-2xl px-4 py-4 sm:px-5 sm:py-5 flex items-center gap-3 shadow-kot"
               >
                 <div
-                  className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0 ${s.dot}`}
+                  className={`w-3 h-3 rounded-full flex-shrink-0 ${s.dot}`}
                 />
                 <div>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-kot-darker">
+                  <p className="text-xl sm:text-2xl font-bold text-kot-darker">
                     {counts[s.key]}
                   </p>
-                  <p className="text-[10px] sm:text-xs lg:text-sm text-kot-text">
+                  <p className="text-[10px] sm:text-xs text-kot-text">
                     {s.label}
                   </p>
                 </div>
@@ -199,15 +218,15 @@ export function TablesPresenter({
           </div>
         )}
 
-        {/* Filter tabs */}
-        <div className="bg-kot-white rounded-2xl p-1 sm:p-1.5 flex gap-1 shadow-kot overflow-x-auto">
+        {/* ── Filter tabs ── */}
+        <div className="bg-kot-white rounded-2xl p-1.5 flex gap-1 shadow-kot overflow-x-auto">
           {ALL_FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => onFilterChange(f)}
-              className={`px-2.5 sm:px-4 py-1.5 sm:py-2 lg:px-5 lg:py-2.5 rounded-xl text-[11px] sm:text-sm lg:text-base font-medium capitalize transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium capitalize transition-all whitespace-nowrap flex-shrink-0 ${
                 filter === f
-                  ? "bg-kot-dark text-white"
+                  ? "bg-kot-dark text-white shadow-sm"
                   : "text-kot-text hover:bg-kot-light hover:text-kot-darker"
               }`}
             >
@@ -216,55 +235,65 @@ export function TablesPresenter({
           ))}
         </div>
 
-        {/* Table Grid */}
+        {/* ── Table Grid ── */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2 sm:gap-3">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
+            {Array.from({ length: 10 }).map((_, i) => (
               <SkeletonTableCard key={i} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2 sm:gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
             {filtered.map((table) => {
               const cfg = STATUS_CONFIG[table.status as TableStatus];
               const isClickable =
                 table.status !== "reserved" && table.status !== "cleaning";
+
               return (
-                <div key={table._id} className="relative group">
+                <div
+                  key={table._id}
+                  className={`bg-kot-white rounded-2xl shadow-kot border-2 transition-all duration-200 flex flex-col ${
+                    isClickable
+                      ? "hover:shadow-kot-lg hover:border-kot-chart"
+                      : "opacity-70"
+                  } border-transparent`}
+                >
+                  {/* ── Clickable top section ── */}
                   <button
                     onClick={() => onTableClick(table)}
                     disabled={!isClickable}
-                    className={`text-left rounded-2xl p-3 sm:p-4 border-l-4 transition-all duration-200 w-full bg-kot-white shadow-kot hover:shadow-kot-lg ${cfg.border} ${
-                      !isClickable
-                        ? "opacity-70 cursor-default"
-                        : "cursor-pointer"
-                    }`}
+                    className="text-left p-3 sm:p-4 flex-1 disabled:cursor-default rounded-t-2xl"
                   >
-                    <div className="flex items-start justify-between mb-2 sm:mb-3">
+                    {/* Number + status pill */}
+                    <div className="flex items-start justify-between mb-3">
                       <div
-                        className={`w-9 h-9 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center font-bold text-sm sm:text-base ${cfg.bg} ${cfg.text}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center font-bold text-sm sm:text-base flex-shrink-0 ${cfg.bg} ${cfg.text}`}
                       >
                         {table.tableNumber}
                       </div>
                       <span
-                        className={`text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-semibold ${cfg.bg} ${cfg.text}`}
+                        className={`text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-semibold ${cfg.pill}`}
                       >
                         {cfg.label}
                       </span>
                     </div>
-                    <p className="text-[10px] sm:text-xs mb-1 text-kot-text">
-                      <span className="text-kot-darker font-semibold">
+
+                    {/* Capacity */}
+                    <p className="text-[10px] sm:text-xs text-kot-text">
+                      <span className="font-semibold text-kot-darker">
                         T-{table.tableNumber}
                       </span>{" "}
                       · {table.capacity} seats
                     </p>
+
+                    {/* Occupied/Billing details */}
                     {(table.status === "occupied" ||
                       table.status === "billing") && (
-                      <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 space-y-0.5 sm:space-y-1 border-t border-kot-chart">
+                      <div className="mt-2 pt-2 space-y-0.5 border-t border-kot-chart">
                         {table.waiterName && (
                           <p className="text-[10px] sm:text-xs text-kot-text">
-                            Waiter:{" "}
-                            <span className="text-kot-darker font-semibold">
+                            👤{" "}
+                            <span className="font-semibold text-kot-darker">
                               {table.waiterName}
                             </span>
                           </p>
@@ -276,26 +305,39 @@ export function TablesPresenter({
                         )}
                         {table.sessionStart && (
                           <p className="text-[9px] sm:text-[10px] text-kot-text">
-                            {formatDuration(table.sessionStart)}
+                            ⏱ {formatDuration(table.sessionStart)}
                           </p>
                         )}
                       </div>
                     )}
+
+                    {/* Available CTA */}
                     {table.status === "available" && (
-                      <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 text-[10px] sm:text-xs font-medium text-kot-dark border-t border-kot-chart">
+                      <p className="mt-2 pt-2 text-[10px] sm:text-xs font-medium text-kot-dark border-t border-kot-chart">
                         {isAdmin ? "Tap to manage →" : "Tap to allocate →"}
-                      </div>
+                      </p>
                     )}
                   </button>
-                  {canDelete && (
-                    <button
-                      onClick={(e) => onDeleteTable(table, e)}
-                      className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 p-1 sm:p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 size={11} className="sm:hidden" />
-                      <Trash2 size={13} className="hidden sm:block" />
-                    </button>
-                  )}
+
+                  {/* ── Action bar: QR + delete ── */}
+                  <div className="flex items-center justify-between px-3 pb-3 pt-2 gap-2 border-t border-kot-chart">
+                    {/* QR — always visible */}
+                    <TableQrCode
+                      tableId={table._id}
+                      tableNumber={table.tableNumber}
+                    />
+
+                    {/* Delete — admin only */}
+                    {canDelete && (
+                      <button
+                        onClick={(e) => onDeleteTable(table, e)}
+                        title="Delete table"
+                        className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -303,7 +345,8 @@ export function TablesPresenter({
         )}
 
         {!loading && filtered.length === 0 && (
-          <div className="bg-kot-white rounded-2xl p-10 sm:p-12 text-center shadow-kot">
+          <div className="bg-kot-white rounded-2xl p-10 sm:p-14 text-center shadow-kot">
+            <p className="text-3xl mb-2">🪑</p>
             <p className="text-base sm:text-lg font-semibold text-kot-darker">
               No {filter} tables
             </p>
@@ -315,7 +358,7 @@ export function TablesPresenter({
           </div>
         )}
 
-        {/* Legend */}
+        {/* ── Legend ── */}
         <div className="flex flex-wrap gap-3 sm:gap-4 pt-1">
           {(
             Object.entries(STATUS_CONFIG) as [
@@ -335,19 +378,19 @@ export function TablesPresenter({
         </div>
       </div>
 
-      {/* Add Table Modal */}
+      {/* ── Add Table Modal ── */}
       {isAdmin && showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-kot-white rounded-t-3xl sm:rounded-xl shadow-kot-lg w-full sm:max-w-sm">
+          <div className="bg-kot-white rounded-t-3xl sm:rounded-2xl shadow-kot-lg w-full sm:max-w-sm">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-kot-chart">
-              <h2 className="text-lg sm:text-xl font-bold text-kot-darker">
+              <h2 className="text-lg font-bold text-kot-darker">
                 Add New Table
               </h2>
               <button
                 onClick={onCloseAddModal}
                 className="text-kot-text hover:text-kot-darker p-1"
               >
-                <X size={22} />
+                <X size={20} />
               </button>
             </div>
             <form onSubmit={onAddTable} className="p-4 sm:p-6 space-y-4">
@@ -386,13 +429,13 @@ export function TablesPresenter({
                 <button
                   type="button"
                   onClick={onCloseAddModal}
-                  className="flex-1 px-4 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light text-sm"
+                  className="flex-1 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-xl hover:bg-kot-light text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg text-sm"
+                  className="flex-1 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-xl text-sm"
                 >
                   Add Table
                 </button>
@@ -402,13 +445,13 @@ export function TablesPresenter({
         </div>
       )}
 
-      {/* Allocate Modal */}
+      {/* ── Allocate Modal ── */}
       {!isAdmin && showAllocateModal && selectedTable && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-kot-white rounded-t-3xl sm:rounded-xl shadow-kot-lg w-full sm:max-w-sm">
+          <div className="bg-kot-white rounded-t-3xl sm:rounded-2xl shadow-kot-lg w-full sm:max-w-sm">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-kot-chart">
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-kot-darker">
+                <h2 className="text-lg font-bold text-kot-darker">
                   Allocate Table {selectedTable.tableNumber}
                 </h2>
                 <p className="text-xs text-kot-text mt-0.5">
@@ -419,7 +462,7 @@ export function TablesPresenter({
                 onClick={onCloseAllocateModal}
                 className="text-kot-text hover:text-kot-darker p-1"
               >
-                <X size={22} />
+                <X size={20} />
               </button>
             </div>
             <form onSubmit={onAllocate} className="p-4 sm:p-6 space-y-4">
@@ -455,13 +498,13 @@ export function TablesPresenter({
                 <button
                   type="button"
                   onClick={onCloseAllocateModal}
-                  className="flex-1 px-4 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light text-sm"
+                  className="flex-1 py-2.5 border-2 border-kot-chart text-kot-darker font-semibold rounded-xl hover:bg-kot-light text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg text-sm"
+                  className="flex-1 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-xl text-sm"
                 >
                   Allocate & Order
                 </button>

@@ -1,8 +1,10 @@
-import type { Bill } from "../../../services/CashierApi/cashier.api";
-export type { Bill };
+/**
+ * Billing.tyes.ts  →  src/pages/cashier/billing/Billing.tyes.ts
+ * ─────────────────────────────────────────────────────────────
+ * Change: added  onPrintBill: (bill: Bill) => void  to BillingPresenterProps
+ */
 
-export type Tab = "takeaway" | "bills";
-export type Step = "customer" | "order" | "payment";
+import type { Bill } from "../../../services/CashierApi/cashier.api";
 
 export interface MenuItem {
   _id: string;
@@ -19,37 +21,44 @@ export interface OrderItem {
   quantity: number;
 }
 
+export type Tab = "takeaway" | "bills";
+export type Step = "customer" | "order" | "payment";
+
 export interface BillingPresenterProps {
-  // tab
+  // Tab
   activeTab: Tab;
   onTabChange: (t: Tab) => void;
 
-  // takeaway — step
+  // Step
   step: Step;
 
-  // takeaway — customer
+  // Customer form
   customerForm: { name: string; phone: string };
   onCustomerChange: (field: "name" | "phone", value: string) => void;
   onCustomerNext: () => void;
 
-  // takeaway — order
+  // Menu
   menuItems: MenuItem[];
   menuLoading: boolean;
   categories: string[];
   selectedCategory: string;
   onCategoryChange: (cat: string) => void;
   filteredMenu: MenuItem[];
+
+  // Order
   orderItems: OrderItem[];
   total: number;
   onAddItem: (item: MenuItem) => void;
   onUpdateQty: (id: string, qty: number) => void;
   showOrderPanel: boolean;
-  onToggleOrderPanel: (v: boolean) => void;
+  onToggleOrderPanel: (show: boolean) => void;
+
+  // KOT
   sending: boolean;
   onSendKOT: () => void;
-
-  // takeaway — payment
   kotSent: boolean;
+
+  // Payment
   paymentMethod: "cash" | "card" | "upi";
   onPaymentMethodChange: (m: "cash" | "card" | "upi") => void;
   paying: boolean;
@@ -57,7 +66,7 @@ export interface BillingPresenterProps {
   onCollectPayment: () => void;
   onReset: () => void;
 
-  // bills
+  // Bills tab
   bills: Bill[];
   filteredBills: Bill[];
   billsLoading: boolean;
@@ -65,9 +74,12 @@ export interface BillingPresenterProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   selectedBill: Bill | null;
-  onSelectBill: (b: Bill | null) => void;
+  onSelectBill: (bill: Bill | null) => void;
   invoiceBill: Bill | null;
-  onSetInvoiceBill: (b: Bill | null) => void;
+  onSetInvoiceBill: (bill: Bill | null) => void;
   onMarkPaid: (billId: string) => void;
   onRetryBills: () => void;
+
+  // ✅ Print
+  onPrintBill: (bill: Bill) => void;
 }

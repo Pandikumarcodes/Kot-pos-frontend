@@ -10,14 +10,30 @@ import {
 import type { Bill } from "../../../services/CashierApi/cashier.api";
 import { useToast } from "../../../Context/ToastContext";
 import { useNotifications } from "../../../hooks/useNotifications";
+import { usePrint } from "../../../hooks/usePrint";
+import { getSettingsApi } from "../../../services/adminApi/Settings.api";
+import type { Settings } from "../../../services/adminApi/Settings.api";
 import { BillingPresenter } from "./BillingPresenter";
 import type { Tab, Step, MenuItem, OrderItem } from "./Billing.tyes";
 
 export default function BillingContainer() {
   const toast = useToast();
+  const { printBill } = usePrint();
 
+  // ── Settings (for print: businessName, taxRate, printReceipt, etc.) ──
+  const [settings, setSettings] = useState<Partial<Settings>>({});
+
+  useEffect(() => {
+    getSettingsApi()
+      .then((res) => setSettings(res.data.settings))
+      .catch(() => {}); // silently fail — print still works without it
+  }, []);
+
+  // ── Tab / Step ────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<Tab>("takeaway");
   const [step, setStep] = useState<Step>("customer");
+
+  // ── Takeaway state ────────────────────────────────────────
   const [customerForm, setCustomerForm] = useState({ name: "", phone: "" });
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -33,6 +49,7 @@ export default function BillingContainer() {
   const [successMsg, setSuccessMsg] = useState("");
   const [showOrderPanel, setShowOrderPanel] = useState(false);
 
+  // ── Bills state ───────────────────────────────────────────
   const [bills, setBills] = useState<Bill[]>([]);
   const [billsLoading, setBillsLoading] = useState(false);
   const [billsError, setBillsError] = useState<string | null>(null);
@@ -40,9 +57,9 @@ export default function BillingContainer() {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [invoiceBill, setInvoiceBill] = useState<Bill | null>(null);
 
-  // suppress unused warning — kept for potential socket use
   void currentOrderId;
 
+  // ── Socket: live bill updates ─────────────────────────────
   useNotifications({
     "billing:created": (bill: unknown) => {
       const b = bill as Bill;
@@ -53,6 +70,7 @@ export default function BillingContainer() {
     },
   });
 
+  // ── Fetch menu on mount ───────────────────────────────────
   useEffect(() => {
     const fetchMenu = async () => {
       try {
@@ -70,6 +88,7 @@ export default function BillingContainer() {
     fetchMenu();
   }, []);
 
+  // ── Fetch bills when switching to bills tab ───────────────
   const fetchBills = async () => {
     try {
       setBillsLoading(true);
@@ -90,7 +109,7 @@ export default function BillingContainer() {
     if (activeTab === "bills") fetchBills();
   }, [activeTab]);
 
-  // Derived
+  // ── Derived ───────────────────────────────────────────────
   const categories = [
     "All",
     ...Array.from(new Set(menuItems.map((i) => i.category))),
@@ -107,6 +126,7 @@ export default function BillingContainer() {
       b.customerPhone?.includes(searchQuery),
   );
 
+  // ── Handlers ─────────────────────────────────────────────
   const handleAddItem = (item: MenuItem) => {
     const existing = orderItems.find((oi) => oi.id === item._id);
     if (existing)
@@ -156,16 +176,23 @@ export default function BillingContainer() {
     }
   };
 
+  // ✅ Auto-prints receipt after payment if settings.printReceipt is true
   const handleCollectPayment = async () => {
     try {
       setPaying(true);
-      await createBillApi({
+      const res = await createBillApi({
         customerName: customerForm.name,
         customerPhone: customerForm.phone,
         items: orderItems.map((i) => ({ itemId: i.id, quantity: i.quantity })),
         paymentStatus: "paid",
         paymentMethod,
       });
+
+      // ✅ Auto-print if the admin enabled "Print Receipt by Default" in Settings
+      if (settings.printReceipt) {
+        printBill(res.data.bill, settings);
+      }
+
       setSuccessMsg(
         `Payment collected! ₹${total.toFixed(2)} via ${paymentMethod.toUpperCase()}`,
       );
@@ -209,6 +236,11 @@ export default function BillingContainer() {
       const e = err as { response?: { data?: { error?: string } } };
       toast.error(e?.response?.data?.error || "Failed");
     }
+  };
+
+  // ✅ Reprint any past bill from the Bills tab
+  const handlePrintBill = (bill: Bill) => {
+    printBill(bill, settings);
   };
 
   const handleCustomerNext = () => {
@@ -257,6 +289,7 @@ export default function BillingContainer() {
       onSetInvoiceBill={setInvoiceBill}
       onMarkPaid={handleMarkPaid}
       onRetryBills={fetchBills}
+      onPrintBill={handlePrintBill} // ✅ new prop
     />
   );
 }

@@ -8,18 +8,19 @@ export interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
+  branchId: string | null;
 }
 
 interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  isLoading: boolean; // true on app boot — waiting for /auth/me
+  isLoading: boolean;
 }
 
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
-  isLoading: true, // ← IMPORTANT: prevents flash of /login on refresh
+  isLoading: true,
 };
 
 const authSlice = createSlice({

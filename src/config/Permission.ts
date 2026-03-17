@@ -9,6 +9,8 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/admin/customers": ["admin", "manager"],
   "/admin/reports": ["admin", "manager"],
   "/admin/settings": ["admin"],
+  "/admin/branches": ["admin", "manager"],
+  "/admin/inventory": ["admin", "manager"],
   "/admin/tables": ["admin", "manager"],
   "/waiter/tables": ["admin", "manager", "waiter"],
   "/waiter/order": ["admin", "manager", "waiter"],
@@ -30,6 +32,8 @@ export const ROLE_HOME: Record<Role, string> = {
 export const NAV_PERMISSIONS: Record<string, Role[]> = {
   Dashboard: ["admin", "manager"],
   Menu: ["admin", "manager"],
+  Branches: ["admin", "manager"],
+  Inventory: ["admin", "manager"],
   Tables: ["admin", "manager", "waiter"],
   Kitchen: ["admin", "chef"],
   Billing: ["admin", "cashier"],

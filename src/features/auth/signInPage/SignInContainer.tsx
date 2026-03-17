@@ -54,6 +54,7 @@ export default function SignInContainer() {
           name: user.username,
           email: user.username,
           role: user.role,
+          branchId: user.branchId ?? null,
         }),
       );
       navigate(ROLE_HOME[user.role] ?? "/");

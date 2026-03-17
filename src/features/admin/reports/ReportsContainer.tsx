@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   getSummaryApi,
   getTopItemsApi,
@@ -25,13 +25,22 @@ export default function ReportsPageContainer() {
   const [payments, setPayments] = useState<PaymentStat[]>([]);
   const [hourly, setHourly] = useState<HourlyStat[]>([]);
 
+  const customDatesRef = useRef({ from, to });
+  useEffect(() => {
+    customDatesRef.current = { from, to };
+  }, [from, to]);
+
+  // ✅ Only depends on `range` — not from/to
   const fetchAll = useCallback(
     async (showRefresh = false) => {
       try {
         if (showRefresh) setRefreshing(true);
         else setLoading(true);
-        const f = range === "custom" ? from : undefined;
-        const t = range === "custom" ? to : undefined;
+
+        // Read latest custom dates from ref at call time
+        const f = range === "custom" ? customDatesRef.current.from : undefined;
+        const t = range === "custom" ? customDatesRef.current.to : undefined;
+
         const [sRes, tRes, pRes, hRes] = await Promise.all([
           getSummaryApi(range, f, t),
           getTopItemsApi(range, f, t),
@@ -49,12 +58,13 @@ export default function ReportsPageContainer() {
         setRefreshing(false);
       }
     },
-    [range, from, to],
+    [range], // ✅ from/to removed — no more keystroke re-fires
   );
 
+  // ✅ Only auto-fetch for preset ranges, not custom
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    if (range !== "custom") fetchAll();
+  }, [fetchAll, range]);
 
   return (
     <ReportsPresenter
@@ -71,7 +81,7 @@ export default function ReportsPageContainer() {
       onFromChange={setFrom}
       onToChange={setTo}
       onRefresh={() => fetchAll(true)}
-      onApplyCustom={() => from && to && fetchAll()}
+      onApplyCustom={() => from && to && fetchAll()} // ✅ manual trigger only
     />
   );
 }

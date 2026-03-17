@@ -1,11 +1,14 @@
+// src/services/adminApi/Order.api.ts
 import api from "../apiClient";
+import type { PaginationMeta } from "../../hooks/usePagination";
 
 export type OrderStatus =
   | "pending"
   | "preparing"
   | "ready"
-  | "delivered"
-  | "cancelled";
+  | "served"
+  | "cancelled"
+  | "all";
 
 export interface OrderItemDetail {
   itemId: string;
@@ -29,13 +32,6 @@ export interface Order {
   updatedAt: string;
 }
 
-export interface OrdersResponse {
-  orders: Order[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
 export interface OrdersQuery {
   search?: string;
   status?: string;
@@ -44,6 +40,11 @@ export interface OrdersQuery {
   tableNumber?: string;
   page?: number;
   limit?: number;
+}
+
+export interface OrdersResponse {
+  data: Order[];
+  pagination: PaginationMeta;
 }
 
 export const getOrdersApi = (params: OrdersQuery = {}) =>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAppSelector } from "../../Store/hooks";
 import { NAV_PERMISSIONS } from "../../config/Permission";
@@ -13,12 +13,17 @@ import {
   User,
   Settings,
   Home,
-  Menu,
-  X,
-  LogOut,
+  Building2,
+  MapPin,
+  ChevronDown,
+  Check,
+  Rocket,
+  Package,
   ClipboardList,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getBranchesApi } from "../../services/adminApi/Branch.api";
+import type { Branch } from "../../services/adminApi/Branch.api";
 
 interface NavLink {
   label: string;
@@ -28,236 +33,249 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Menu", to: "/admin/menu", icon: UtensilsCrossed },
+  { label: "Inventory", to: "/admin/inventory", icon: Package },
   { label: "Orders", to: "/admin/orders", icon: ClipboardList },
+  { label: "Branches", to: "/admin/branches", icon: Building2 },
+  { label: "Menu", to: "/admin/menu", icon: UtensilsCrossed },
   { label: "Tables", to: "/waiter/tables", icon: Home },
   { label: "Kitchen", to: "/chef/kot", icon: ChefHat },
   { label: "Billing", to: "/cashier/billing", icon: CreditCard },
-  { label: "Customers", to: "/admin/customers", icon: Users },
-  { label: "Staff", to: "/admin/staff", icon: User },
+  { label: "Customers", to: "/admin/customers", icon: User },
+  { label: "Staff", to: "/admin/staff", icon: Users },
   { label: "Reports", to: "/admin/reports", icon: BarChart3 },
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ];
 
-// ── NavItem — declared outside to avoid "component created during render" ──
-interface NavItemProps {
-  label: string;
-  icon: LucideIcon;
-  isActive: boolean;
-  compact: boolean;
-  onClick: () => void;
-}
-
-function NavItem({
-  label,
-  icon: Icon,
-  isActive,
-  compact,
-  onClick,
-}: NavItemProps) {
-  return (
-    <button
-      onClick={onClick}
-      title={label}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
-        compact ? "justify-center" : ""
-      } ${
-        isActive
-          ? "bg-kot-sidebar text-kot-darker font-semibold shadow-kot"
-          : "text-kot-text hover:bg-kot-light hover:text-kot-darker"
-      }`}
-    >
-      <Icon size={20} className="shrink-0" />
-      {!compact && <span className="text-sm truncate">{label}</span>}
-      {compact && isActive && (
-        <span className="absolute right-1.5 w-1.5 h-1.5 rounded-full bg-kot-dark" />
-      )}
-    </button>
-  );
-}
-
-// ── SidebarContent — declared outside ────────────────────────
-interface SidebarContentProps {
-  compact?: boolean;
-  visibleLinks: NavLink[];
-  pathname: string;
-  role: string | undefined;
-  userName: string | undefined;
-  onNavigate: (to: string) => void;
-}
-
-function SidebarContent({
-  compact = false,
-  visibleLinks,
-  pathname,
-  role,
-  userName,
-  onNavigate,
-}: SidebarContentProps) {
-  return (
-    <div className={`flex flex-col h-full ${compact ? "items-center" : ""}`}>
-      {/* Logo */}
-      <div className={`mb-6 sm:mb-8 ${compact ? "flex justify-center" : ""}`}>
-        {compact ? (
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
-            <span className="text-white font-bold text-sm">K</span>
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-kot-dark flex-shrink-0">
-                <span className="text-white font-bold text-sm">K</span>
-              </div>
-              <h1 className="text-lg font-bold text-kot-darker">KOT POS</h1>
-            </div>
-            <p className="text-xs text-kot-text mt-1 capitalize ml-10">
-              {role} Dashboard
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Nav */}
-      <nav
-        className={`flex-1 space-y-1 w-full ${compact ? "flex flex-col items-center" : ""}`}
-      >
-        {visibleLinks.map((link) => (
-          <NavItem
-            key={link.to}
-            {...link}
-            isActive={pathname === link.to}
-            compact={compact}
-            onClick={() => onNavigate(link.to)}
-          />
-        ))}
-      </nav>
-
-      {/* User badge */}
-      {!compact && (
-        <div className="mt-4 pt-4 border-t border-kot-chart">
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-kot-light">
-            <div className="w-7 h-7 rounded-full bg-kot-dark flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xs font-bold">
-                {userName?.[0]?.toUpperCase() || "U"}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-kot-darker truncate">
-                {userName || "User"}
-              </p>
-              <p className="text-[10px] text-kot-text capitalize">{role}</p>
-            </div>
-            <LogOut
-              size={14}
-              className="text-kot-text hover:text-red-500 cursor-pointer flex-shrink-0 ml-auto transition-colors"
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Main Sidebar ──────────────────────────────────────────────
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAppSelector((state) => state.auth);
   const role = user?.role as Role | undefined;
-  const [mobileOpen, setMobileOpen] = useState(false);
 
+  // ── super-admin detection ─────────────────────────────────
+  const isSuperAdmin = role === "admin" && !user?.branchId;
+
+  // ── Branch switcher state (super-admin only) ──────────────
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [activeBranch, setActiveBranch] = useState<Branch | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch branches once for super-admin
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    getBranchesApi()
+      .then((res) => {
+        const active = res.data.branches.filter((b) => b.isActive);
+        setBranches(active);
+      })
+      .catch(() => {});
+  }, [isSuperAdmin]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // ── Filter nav links by role + permission ─────────────────
   const visibleLinks = NAV_LINKS.filter((link) =>
     role ? (NAV_PERMISSIONS[link.label] ?? []).includes(role) : false,
   );
 
-  const handleNavigate = (to: string) => {
-    navigate(to);
-    setMobileOpen(false);
-  };
+  // ── Branch name to show for staff ─────────────────────────
+  const staffBranchName =
+    !isSuperAdmin && user?.branchId
+      ? (activeBranch?.name ?? "My Branch")
+      : null;
 
-  const sharedProps = {
-    visibleLinks,
-    pathname: location.pathname,
-    role: user?.role,
-    userName: user?.name,
-    onNavigate: handleNavigate,
-  };
+  // Resolve staff branch name on mount
+  useEffect(() => {
+    if (isSuperAdmin || !user?.branchId) return;
+    getBranchesApi()
+      .then((res) => {
+        const found = res.data.branches.find((b) => b._id === user.branchId);
+        if (found) setActiveBranch(found);
+      })
+      .catch(() => {});
+  }, [isSuperAdmin, user?.branchId]);
 
   return (
-    <>
-      {/* ── Mobile hamburger ── */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="fixed top-3 left-3 z-50 md:hidden w-9 h-9 bg-kot-white rounded-xl shadow-kot flex items-center justify-center border border-kot-chart"
-      >
-        <Menu size={18} className="text-kot-darker" />
-      </button>
-
-      {/* ── Mobile overlay ── */}
-      {mobileOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/40 z-40 md:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="fixed top-0 left-0 h-full w-64 bg-kot-header border-r border-kot-chart z-50 md:hidden p-4 overflow-y-auto flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-kot-dark">
-                  <span className="text-white font-bold text-sm">K</span>
-                </div>
-                <h1 className="text-lg font-bold text-kot-darker">KOT POS</h1>
-              </div>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="p-1.5 rounded-lg text-kot-text hover:bg-kot-light transition-colors"
-              >
-                <X size={18} />
-              </button>
+    <aside className="w-64 min-h-screen bg-kot-header border-r border-kot-chart flex-shrink-0 flex flex-col">
+      <div className="p-4 flex flex-col h-full">
+        {/* ── Logo ── */}
+        <div className="mb-5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-kot-dark flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-sm">K</span>
             </div>
-            <p className="text-xs text-kot-text mb-5 capitalize px-1">
-              {role} Dashboard
-            </p>
-            <nav className="flex-1 space-y-1">
-              {visibleLinks.map((link) => (
-                <NavItem
-                  key={link.to}
-                  {...link}
-                  isActive={location.pathname === link.to}
-                  compact={false}
-                  onClick={() => handleNavigate(link.to)}
+            <span className="font-bold text-lg text-kot-darker">KOT POS</span>
+          </div>
+          <p className="text-xs text-kot-text mt-1 ml-0.5 capitalize">
+            {role} Dashboard
+          </p>
+        </div>
+
+        {/* ── Branch Selector (super-admin) ── */}
+        {isSuperAdmin && (
+          <div className="mb-4" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen((p) => !p)}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 border-kot-chart bg-kot-white hover:border-kot-dark transition-all group"
+            >
+              <MapPin size={16} className="text-kot-dark flex-shrink-0" />
+              <span className="flex-1 text-left text-sm font-medium text-kot-darker truncate">
+                {activeBranch ? activeBranch.name : "All Branches"}
+              </span>
+              <div className="flex items-center gap-1">
+                <Rocket
+                  size={14}
+                  className="text-kot-text group-hover:text-kot-dark transition-colors"
                 />
-              ))}
-            </nav>
-            <div className="mt-4 pt-4 border-t border-kot-chart">
-              <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-kot-light">
-                <div className="w-7 h-7 rounded-full bg-kot-dark flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-xs font-bold">
-                    {user?.name?.[0]?.toUpperCase() || "U"}
+                <ChevronDown
+                  size={14}
+                  className={`text-kot-text transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+                />
+              </div>
+            </button>
+
+            {/* Dropdown */}
+            {dropdownOpen && (
+              <div className="absolute z-50 mt-1 w-56 bg-kot-white rounded-xl shadow-kot-lg border border-kot-chart overflow-hidden">
+                {/* All branches option */}
+                <button
+                  onClick={() => {
+                    setActiveBranch(null);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-kot-light transition-colors text-left"
+                >
+                  <div className="w-6 h-6 rounded-full bg-kot-stats flex items-center justify-center flex-shrink-0">
+                    <Building2 size={12} className="text-kot-darker" />
+                  </div>
+                  <span className="text-sm font-medium text-kot-darker flex-1">
+                    All Branches
                   </span>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-kot-darker truncate">
-                    {user?.name || "User"}
-                  </p>
-                  <p className="text-[10px] text-kot-text capitalize">{role}</p>
+                  {!activeBranch && (
+                    <Check size={14} className="text-kot-dark" />
+                  )}
+                </button>
+
+                {branches.length > 0 && (
+                  <div className="border-t border-kot-chart">
+                    <p className="px-3 py-1.5 text-[10px] font-semibold text-kot-text uppercase tracking-wide">
+                      Branches
+                    </p>
+                    {branches.map((branch) => (
+                      <button
+                        key={branch._id}
+                        onClick={() => {
+                          setActiveBranch(branch);
+                          setDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-kot-light transition-colors text-left"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                          <MapPin size={11} className="text-emerald-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-kot-darker truncate">
+                            {branch.name}
+                          </p>
+                          {branch.address && (
+                            <p className="text-[10px] text-kot-text truncate">
+                              {branch.address}
+                            </p>
+                          )}
+                        </div>
+                        {activeBranch?._id === branch._id && (
+                          <Check
+                            size={14}
+                            className="text-kot-dark flex-shrink-0"
+                          />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Manage branches link */}
+                <div className="border-t border-kot-chart p-2">
+                  <button
+                    onClick={() => {
+                      navigate("/admin/branches");
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-kot-dark hover:bg-kot-light transition-colors"
+                  >
+                    <Building2 size={12} />
+                    Manage Branches
+                  </button>
                 </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Branch Badge (branch staff) ── */}
+        {!isSuperAdmin && staffBranchName && (
+          <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
+            <MapPin size={14} className="text-emerald-600 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[10px] text-emerald-600 font-medium uppercase tracking-wide">
+                Branch
+              </p>
+              <p className="text-xs font-semibold text-emerald-800 truncate">
+                {staffBranchName}
+              </p>
             </div>
-          </aside>
-        </>
-      )}
+          </div>
+        )}
 
-      {/* ── Tablet: icon-only (md, hidden lg+) ── */}
-      <aside className="hidden md:flex lg:hidden w-16 min-h-screen bg-kot-header border-r border-kot-chart flex-shrink-0 flex-col p-3 overflow-y-auto">
-        <SidebarContent {...sharedProps} compact={true} />
-      </aside>
+        {/* ── Nav Links ── */}
+        <nav className="space-y-0.5 flex-1">
+          {visibleLinks.map(({ label, to, icon: Icon }) => {
+            const isActive = location.pathname === to;
+            return (
+              <button
+                key={to}
+                onClick={() => navigate(to)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
+                  isActive
+                    ? "bg-kot-sidebar text-kot-darker font-medium shadow-kot"
+                    : "text-kot-text hover:bg-kot-light hover:text-kot-darker"
+                }`}
+              >
+                <Icon size={18} className="shrink-0" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
-      {/* ── Desktop: full (lg+) ── */}
-      <aside className="hidden lg:flex xl:w-64 2xl:w-72 min-h-screen bg-kot-header border-r border-kot-chart flex-shrink-0 flex-col p-4 xl:p-5 overflow-y-auto">
-        <SidebarContent {...sharedProps} compact={false} />
-      </aside>
-    </>
+        {/* ── Active branch indicator at bottom ── */}
+        {isSuperAdmin && activeBranch && (
+          <div className="mt-4 pt-4 border-t border-kot-chart">
+            <div className="flex items-center gap-2 px-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-xs text-kot-text">
+                Viewing:{" "}
+                <span className="font-semibold text-kot-darker">
+                  {activeBranch.name}
+                </span>
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }

@@ -6,6 +6,7 @@ import {
   CheckCircle,
   Clock,
   ChevronDown,
+  Printer,
 } from "lucide-react";
 import type { BillingPresenterProps, Step } from "./Billing.tyes";
 import GstInvoice from "./GstInvoice";
@@ -54,7 +55,6 @@ export function BillingPresenter({
   customerForm,
   onCustomerChange,
   onCustomerNext,
-  // menuItems,
   menuLoading,
   categories,
   selectedCategory,
@@ -87,6 +87,7 @@ export function BillingPresenter({
   onSetInvoiceBill,
   onMarkPaid,
   onRetryBills,
+  onPrintBill, // ✅ new
 }: BillingPresenterProps) {
   return (
     <div className="min-h-screen bg-kot-primary">
@@ -208,7 +209,6 @@ export function BillingPresenter({
                     <ChevronDown size={16} className="rotate-180" />
                   </button>
                 )}
-
                 <div
                   className="flex flex-col sm:flex-row gap-3 sm:gap-4"
                   style={{ height: "calc(100vh - 260px)" }}
@@ -678,6 +678,7 @@ export function BillingPresenter({
                         {selectedBill.paymentStatus}
                       </span>
                     </div>
+
                     {selectedBill.paymentStatus !== "paid" && (
                       <button
                         onClick={() => onMarkPaid(selectedBill._id)}
@@ -686,6 +687,16 @@ export function BillingPresenter({
                         Mark as Paid ✓
                       </button>
                     )}
+
+                    {/* ✅ NEW: Reprint receipt button */}
+                    <button
+                      onClick={() => onPrintBill(selectedBill)}
+                      className="w-full py-2.5 flex items-center justify-center gap-2 border-2 border-kot-chart text-kot-darker font-semibold rounded-xl hover:bg-kot-light transition-colors text-sm"
+                    >
+                      <Printer size={15} />
+                      Reprint Receipt
+                    </button>
+
                     <button
                       onClick={() => onSetInvoiceBill(selectedBill)}
                       className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
