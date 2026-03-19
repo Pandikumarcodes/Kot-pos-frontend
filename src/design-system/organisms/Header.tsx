@@ -1,5 +1,5 @@
 // src/components/organisms/Header/Header.tsx
-import { Button } from "../atoms/Button/Button";
+import { Button } from "../../UiComponents/Button";
 
 export interface HeaderProps {
   title?: string;

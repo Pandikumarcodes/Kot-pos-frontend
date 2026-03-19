@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import {
   CheckCircle,
   XCircle,
@@ -7,6 +13,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { registerGlobalToastHandler } from "../services/globalToast";
 
 // ── Types ─────────────────────────────────────────────────────
 type ToastType = "success" | "error" | "warning" | "info";
@@ -74,6 +81,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     },
     [removeToast],
   );
+
+  // ✅ Register so apiClient can fire toasts without hooks
+  useEffect(() => {
+    registerGlobalToastHandler(addToast);
+  }, [addToast]);
 
   const value: ToastContextValue = {
     success: (msg) => addToast("success", msg),

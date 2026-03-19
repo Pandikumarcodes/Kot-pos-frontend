@@ -1,8 +1,3 @@
-// ─────────────────────────────────────────────
-// All API base URLs and endpoint paths.
-// Change base URL here → updates all API calls.
-// ─────────────────────────────────────────────
-
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 

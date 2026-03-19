@@ -7,7 +7,7 @@ interface LoginPayload {
 }
 
 interface AuthResponse {
-  user: AuthUser; // { id, name, email, role }
+  user: AuthUser;
   message: string;
 }
 

@@ -1,4 +1,3 @@
-// src/services/adminApi/Customer.api.ts
 import api from "../apiClient";
 
 export interface Customer {
