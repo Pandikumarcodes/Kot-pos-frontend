@@ -115,6 +115,7 @@ export default function TablesContainer() {
         state: {
           customerName: allocateForm.name,
           customerPhone: allocateForm.phone,
+          tableNumber: selectedTable.tableNumber,
         },
       });
     } catch (err) {

@@ -11,8 +11,13 @@ import SignUpPage from "../features/auth/signUpPage/SignUpContainer";
 const TablesPage = lazy(
   () => import("../features/waiter/tablesPage/TablesContainer"),
 );
+// Orders history list
 const OrderPage = lazy(
   () => import("../features/waiter/ordersPage/OrderContainer"),
+);
+// Menu + cart + KOT + bill (loaded after table allocation)
+const WaiterOrderPage = lazy(
+  () => import("../features/waiter/waiterOrderpage/WaiterOrderContainer"),
 );
 const KitchenDashboard = lazy(
   () => import("../features/chef/KitchenPage/KitchenContainer"),
@@ -44,7 +49,6 @@ const BranchManagementPage = lazy(
 const InventoryPage = lazy(
   () => import("../features/admin/inventory/InventoryContainer"),
 );
-
 const QrMenuPage = lazy(() => import("../features/qrCode/QrMenuContainer"));
 
 const LoadingSpinner = () => (
@@ -60,28 +64,37 @@ export default function AppRouter() {
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
         <Route path="/" element={<RoleRedirect />} />
-        {/* ── PUBLIC — redirect to dashboard if already logged in ── */}
+
+        {/* ── PUBLIC ── */}
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/menu/:tableId" element={<QrMenuPage />} />
         </Route>
+
         {/* ── WAITER + MANAGER + ADMIN ── */}
         <Route element={<ProtectedRoute allowedRoles={r("/waiter/tables")} />}>
+          {/* Tables list */}
           <Route path="/waiter/tables" element={<TablesPage />} />
-          <Route path="/waiter/order/:tableId" element={<OrderPage />} />
+          {/* Order history list */}
+          <Route path="/waiter/orders" element={<OrderPage />} />
+          {/* Menu + cart + KOT + bill — navigated to after table allocation */}
+          <Route path="/waiter/order/:tableId" element={<WaiterOrderPage />} />
         </Route>
+
         {/* ── CHEF + ADMIN ── */}
         <Route element={<ProtectedRoute allowedRoles={r("/chef/kot")} />}>
           <Route path="/chef/kot" element={<KitchenDashboard />} />
         </Route>
+
         {/* ── CASHIER + ADMIN ── */}
         <Route
           element={<ProtectedRoute allowedRoles={r("/cashier/billing")} />}
         >
           <Route path="/cashier/billing" element={<BillingPage />} />
         </Route>
+
         {/* ── ADMIN + MANAGER ── */}
         <Route
           element={<ProtectedRoute allowedRoles={r("/admin/dashboard")} />}
@@ -102,6 +115,7 @@ export default function AppRouter() {
         <Route element={<ProtectedRoute allowedRoles={r("/admin/tables")} />}>
           <Route path="/admin/tables" element={<TablesPage />} />
         </Route>
+
         {/* ── ADMIN ONLY ── */}
         <Route element={<ProtectedRoute allowedRoles={r("/admin/staff")} />}>
           <Route path="/admin/staff" element={<StaffManagementPage />} />
@@ -117,6 +131,7 @@ export default function AppRouter() {
         >
           <Route path="/admin/inventory" element={<InventoryPage />} />
         </Route>
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

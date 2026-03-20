@@ -1,11 +1,14 @@
-// src/services/cashierApi/cashier.api.ts
 import api from "../apiClient";
 
 // ── Types ─────────────────────────────────────────────────────
 
 export type PaymentMethod = "cash" | "card" | "upi";
 export type PaymentStatus = "paid" | "pending" | "due";
-export type TakeawayStatus = "pending" | "sent_to_kitchen" | "received" | "cancelled";
+export type TakeawayStatus =
+  | "pending"
+  | "sent_to_kitchen"
+  | "received"
+  | "cancelled";
 
 export interface BillItem {
   itemId: string;
@@ -56,7 +59,10 @@ export interface CreateBillPayload {
 
 // POST /cashier/takeaway-orders — create takeaway order
 export const createTakeawayApi = (data: CreateTakeawayPayload) =>
-  api.post<{ message: string; order: TakeawayOrder }>("/cashier/takeaway-orders", data);
+  api.post<{ message: string; order: TakeawayOrder }>(
+    "/cashier/takeaway-orders",
+    data,
+  );
 
 // GET /cashier/takeaway-orders — get all takeaway orders
 export const getTakeawayOrdersApi = () =>
@@ -68,15 +74,21 @@ export const getTakeawayByIdApi = (orderId: string) =>
 
 // PUT /cashier/takeaway/:orderId/send — send to kitchen (KOT)
 export const sendTakeawayToKitchenApi = (orderId: string) =>
-  api.put<{ message: string; order: TakeawayOrder }>(`/cashier/takeaway/${orderId}/send`);
+  api.put<{ message: string; order: TakeawayOrder }>(
+    `/cashier/takeaway/${orderId}/send`,
+  );
 
 // PUT /cashier/takeAway/:orderId/received — mark received
 export const markTakeawayReceivedApi = (orderId: string) =>
-  api.put<{ message: string; order: TakeawayOrder }>(`/cashier/takeAway/${orderId}/received`);
+  api.put<{ message: string; order: TakeawayOrder }>(
+    `/cashier/takeAway/${orderId}/received`,
+  );
 
 // PUT /cashier/takeAway/:orderId/cancel — cancel order
 export const cancelTakeawayApi = (orderId: string) =>
-  api.put<{ message: string; order: TakeawayOrder }>(`/cashier/takeAway/${orderId}/cancel`);
+  api.put<{ message: string; order: TakeawayOrder }>(
+    `/cashier/takeAway/${orderId}/cancel`,
+  );
 
 // ── Billing APIs ──────────────────────────────────────────────
 
@@ -85,8 +97,7 @@ export const createBillApi = (data: CreateBillPayload) =>
   api.post<{ message: string; bill: Bill }>("/cashier/billing", data);
 
 // GET /cashier/bills — get all bills
-export const getBillsApi = () =>
-  api.get<{ myBills: Bill[] }>("/cashier/bills");
+export const getBillsApi = () => api.get<{ myBills: Bill[] }>("/cashier/bills");
 
 // GET /cashier/bills/:billId — get single bill
 export const getBillByIdApi = (billId: string) =>

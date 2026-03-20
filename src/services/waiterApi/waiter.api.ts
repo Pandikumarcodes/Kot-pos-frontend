@@ -1,69 +1,84 @@
 // src/services/waiterApi/waiter.api.ts
 import api from "../apiClient";
+export type {
+  Order,
+  OrdersQuery,
+} from "../../features/waiter/ordersPage/Order.types";
+import type {
+  Order,
+  OrdersQuery,
+} from "../../features/waiter/ordersPage/Order.types";
 
-// ── Types ────────────────────────────────────────────────────
+export interface MenuItem {
+  _id: string;
+  ItemName: string;
+  price: number;
+  category: string;
+  description?: string;
+  image?: string;
+  available: boolean;
+}
 
-export type OrderStatus =
-  | "pending"
-  | "sent_to_kitchen"
-  | "served"
-  | "cancelled";
-
-export interface OrderItem {
+export interface TableOrderItem {
+  _id: string;
   itemId: string;
   name: string;
   quantity: number;
   price: number;
+  orderId: string;
+  round: number;
+  status: string;
 }
 
-export interface Order {
-  _id: string;
-  tableId: string;
-  tableNumber: number;
-  customerName: string;
-  createdBy: { _id: string; username: string };
-  items: OrderItem[];
-  totalAmount: number;
-  status: OrderStatus;
-  createdAt: string;
+export interface TableOrdersResponse {
+  orders: Order[];
+  allItems: TableOrderItem[];
+  grandTotal: number;
 }
 
 export interface CreateOrderPayload {
   tableId: string;
   tableNumber?: number;
   customerName?: string;
-  items: {
-    itemId: string; // ✅ must match backend field name
-    quantity: number;
-  }[];
+  items: { itemId: string; quantity: number }[];
 }
 
-// ── API calls ────────────────────────────────────────────────
+// ── Menu ─────────────────────────────────────────────────────
+export const getMenuApi = (params?: { category?: string; search?: string }) =>
+  api.get<{ menuItems: MenuItem[] }>("/waiter/menu", { params });
 
-// POST /waiter/orders — create new order
+// ── Orders ───────────────────────────────────────────────────
 export const createOrderApi = (data: CreateOrderPayload) =>
   api.post<{ message: string; order: Order }>("/waiter/orders", data);
 
-// GET /waiter/orders — get all orders
-export const getOrdersApi = () =>
-  api.get<{ myOrders: Order[] }>("/waiter/orders");
+export const getOrdersApi = (query?: OrdersQuery) =>
+  api.get<{ myOrders: Order[] }>("/waiter/orders", { params: query });
 
-// GET /waiter/orders/:orderId — get single order
+export const getTableOrdersApi = (tableId: string) =>
+  api.get<TableOrdersResponse>(`/waiter/orders/table/${tableId}`);
+
 export const getOrderByIdApi = (orderId: string) =>
   api.get<{ order: Order }>(`/waiter/orders/${orderId}`);
 
-// PUT /waiter/orders/:orderId/send — send to kitchen
 export const sendToKitchenApi = (orderId: string) =>
   api.put<{ message: string; order: Order }>(`/waiter/orders/${orderId}/send`);
 
-// PUT /waiter/orders/:orderId/served — mark as served
 export const markServedApi = (orderId: string) =>
   api.put<{ message: string; order: Order }>(
     `/waiter/orders/${orderId}/served`,
   );
 
-// PUT /waiter/orders/:orderId/cancel — cancel order
 export const cancelOrderApi = (orderId: string) =>
   api.put<{ message: string; order: Order }>(
     `/waiter/orders/${orderId}/cancel`,
+  );
+
+// Send all rounds to cashier as a pending bill
+export const sendToCashierApi = (
+  tableId: string,
+  data: { customerName: string; customerPhone: string; tableNumber?: number },
+) =>
+  api.post<{ message: string; bill: object }>(
+    `/waiter/orders/table/${tableId}/send-to-cashier`,
+    data,
   );
