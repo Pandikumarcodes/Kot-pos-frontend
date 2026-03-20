@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { getOrdersApi } from "../../../services/waiterApi/waiter.api";
 import type { Order, OrdersQuery } from "./Order.types";
 import { OrdersPresenter } from "./OrdersPresenter";
+
 const PAGE_SIZE = 20;
 
-export default function OrdersContainer() {
+export default function OrderContainer() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -39,9 +40,9 @@ export default function OrdersContainer() {
           ...(tableNum && { tableNumber: tableNum }),
         };
         const { data } = await getOrdersApi(q);
-        setOrders(data.orders ?? []);
-        setTotal(data.total ?? 0);
-        setTotalPages(data.totalPages ?? 1);
+        setOrders(data.myOrders ?? []);
+        setTotal(data.myOrders?.length ?? 0);
+        setTotalPages(1);
         setPage(p);
       } catch {
         setOrders([]);

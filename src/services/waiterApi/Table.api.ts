@@ -1,4 +1,3 @@
-// src/services/waiterApi/Table.api.ts
 import api from "../apiClient";
 
 export type TableStatus =
@@ -19,14 +18,16 @@ export interface Table {
   sessionStart?: string;
 }
 
-// ── Admin routes ─────────────────────────────────────────────
+// ── Table reads — accessible by waiter role ──────────────────
 
-// GET /admin/tables
+// GET /admin/tables — waiter role is allowed by adminTableRouter
 export const getTablesApi = () => api.get<{ tables: Table[] }>("/admin/tables");
 
 // GET /admin/tables/:id
 export const getTableByIdApi = (id: string) =>
   api.get<{ table: Table }>(`/admin/tables/${id}`);
+
+// ── Admin-only table writes ───────────────────────────────────
 
 // POST /admin/tables
 export const createTableApi = (data: {
@@ -44,7 +45,7 @@ export const updateTableApi = (
 export const deleteTableApi = (id: string) =>
   api.delete<{ message: string }>(`/admin/tables/${id}`);
 
-// ── Waiter routes ────────────────────────────────────────────
+// ── Waiter actions ───────────────────────────────────────────
 
 // POST /waiter/allocate/:tableId
 export const allocateTableApi = (

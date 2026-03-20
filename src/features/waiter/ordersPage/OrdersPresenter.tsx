@@ -51,12 +51,14 @@ const formatDate = (iso: string) =>
     month: "short",
     year: "numeric",
   });
+
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
   });
 
+// ── Skeletons ─────────────────────────────────────────────────
 const Pulse = ({ className }: { className: string }) => (
   <div className={`bg-kot-chart rounded animate-pulse ${className}`} />
 );
@@ -103,6 +105,7 @@ function SkeletonCard() {
   );
 }
 
+// ── Order detail panel ────────────────────────────────────────
 function OrderDetailPanel({
   order,
   onClose,
@@ -216,6 +219,7 @@ function OrderDetailPanel({
   );
 }
 
+// ── Presenter ─────────────────────────────────────────────────
 export function OrdersPresenter({
   orders,
   total,
@@ -293,7 +297,11 @@ export function OrdersPresenter({
             </div>
             <button
               onClick={onToggleFilters}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 text-sm font-medium transition-all flex-shrink-0 ${showFilters || activeFilterCount > 0 ? "border-kot-dark bg-kot-dark text-white" : "border-kot-chart text-kot-text hover:border-kot-dark hover:text-kot-darker"}`}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 text-sm font-medium transition-all flex-shrink-0 ${
+                showFilters || activeFilterCount > 0
+                  ? "border-kot-dark bg-kot-dark text-white"
+                  : "border-kot-chart text-kot-text hover:border-kot-dark hover:text-kot-darker"
+              }`}
             >
               <Filter size={15} />
               <span className="hidden xs:inline">Filters</span>
@@ -311,7 +319,11 @@ export function OrdersPresenter({
               <button
                 key={s.value}
                 onClick={() => onStatusChange(s.value)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all border-2 ${status === s.value ? "border-kot-dark bg-kot-dark text-white" : `border-transparent ${s.bg} ${s.color} hover:border-kot-chart`}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all border-2 ${
+                  status === s.value
+                    ? "border-kot-dark bg-kot-dark text-white"
+                    : `border-transparent ${s.bg} ${s.color} hover:border-kot-chart`
+                }`}
               >
                 {s.label}
               </button>
@@ -387,7 +399,15 @@ export function OrdersPresenter({
                     ].map((h, i) => (
                       <th
                         key={h}
-                        className={`px-4 py-3 text-left text-xs font-semibold text-kot-text uppercase ${i === 2 ? "hidden md:table-cell" : i === 4 ? "hidden lg:table-cell" : i === 5 ? "hidden xl:table-cell" : ""}`}
+                        className={`px-4 py-3 text-left text-xs font-semibold text-kot-text uppercase ${
+                          i === 2
+                            ? "hidden md:table-cell"
+                            : i === 4
+                              ? "hidden lg:table-cell"
+                              : i === 5
+                                ? "hidden xl:table-cell"
+                                : ""
+                        }`}
                       >
                         {h}
                       </th>
@@ -600,7 +620,11 @@ export function OrdersPresenter({
                         <button
                           key={pg}
                           onClick={() => onPageChange(pg)}
-                          className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${pg === page ? "bg-kot-dark text-white" : "border-2 border-kot-chart text-kot-darker hover:bg-kot-light"}`}
+                          className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                            pg === page
+                              ? "bg-kot-dark text-white"
+                              : "border-2 border-kot-chart text-kot-darker hover:bg-kot-light"
+                          }`}
                         >
                           {pg}
                         </button>
