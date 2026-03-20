@@ -1,3 +1,4 @@
+//Waiterordertypes
 import type {
   MenuItem,
   TableOrderItem,
