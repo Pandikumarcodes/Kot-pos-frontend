@@ -104,8 +104,10 @@ export const getBillByIdApi = (billId: string) =>
   api.get<{ bill: Bill }>(`/cashier/bills/${billId}`);
 
 // PUT /cashier/bills/:billId/pay — mark bill as paid
-export const markBillPaidApi = (billId: string) =>
-  api.put<{ message: string; bill: Bill }>(`/cashier/bills/${billId}/pay`);
+export const markBillPaidApi = (billId: string, paymentMethod?: string) =>
+  api.put<{ message: string; bill: Bill }>(`/cashier/bills/${billId}/pay`, {
+    paymentMethod: paymentMethod ?? "cash",
+  });
 
 // DELETE /cashier/bills/:billId — delete bill
 export const deleteBillApi = (billId: string) =>

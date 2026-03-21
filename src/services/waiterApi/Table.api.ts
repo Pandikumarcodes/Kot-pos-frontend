@@ -12,6 +12,10 @@ export interface Table {
   tableNumber: number;
   capacity: number;
   status: TableStatus;
+  currentCustomer?: {
+    name: string;
+    phone: string;
+  };
   currentOrderId?: string;
   waiterName?: string;
   orderAmount?: number;

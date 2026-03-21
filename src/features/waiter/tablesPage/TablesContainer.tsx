@@ -98,7 +98,13 @@ export default function TablesContainer() {
       setAllocateForm({ name: "", phone: "" });
       setShowAllocateModal(true);
     } else {
-      navigate(`/waiter/order/${table._id}`);
+      navigate(`/waiter/order/${table._id}`, {
+        state: {
+          tableNumber: table.tableNumber,
+          customerName: table.currentCustomer?.name || "Walk-in",
+          customerPhone: table.currentCustomer?.phone || "",
+        },
+      });
     }
   };
 
