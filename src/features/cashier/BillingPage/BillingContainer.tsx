@@ -224,7 +224,7 @@ export default function BillingContainer() {
 
   const handleMarkPaid = async (billId: string) => {
     try {
-      await markBillPaidApi(billId);
+      await markBillPaidApi(billId, paymentMethod);
       setBills(
         bills.map((b) =>
           b._id === billId ? { ...b, paymentStatus: "paid" } : b,
@@ -289,7 +289,7 @@ export default function BillingContainer() {
       onSetInvoiceBill={setInvoiceBill}
       onMarkPaid={handleMarkPaid}
       onRetryBills={fetchBills}
-      onPrintBill={handlePrintBill} // ✅ new prop
+      onPrintBill={handlePrintBill}
     />
   );
 }
