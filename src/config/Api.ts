@@ -1,5 +1,10 @@
+// src/config/Api.ts
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+// Use this for direct axios calls that don't go through apiClient.ts
+// e.g. SignUpPage.tsx uses raw axios — use API_V1_URL there
+export const API_V1_URL = `${API_BASE_URL}/api/v1`;
 
 export const API_ENDPOINTS = {
   // Auth
@@ -8,6 +13,7 @@ export const API_ENDPOINTS = {
     SIGNUP: "/auth/signup",
     LOGOUT: "/auth/logout",
     ME: "/auth/me",
+    REFRESH: "/auth/refresh",
   },
 
   // Admin - Menu
@@ -35,6 +41,25 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/admin/deleteUser/${id}`,
   },
 
+  // Admin - Inventory
+  INVENTORY: {
+    GET_ALL: "/admin/inventory",
+    CREATE: "/admin/inventory",
+    UPDATE: (id: string) => `/admin/inventory/${id}`,
+    RESTOCK: (id: string) => `/admin/inventory/${id}/restock`,
+    ADJUST: (id: string) => `/admin/inventory/${id}/adjust`,
+    LOGS: (id: string) => `/admin/inventory/${id}/logs`,
+    DELETE: (id: string) => `/admin/inventory/${id}`,
+  },
+
+  // Admin - Reports
+  REPORTS: {
+    SUMMARY: "/admin/reports/summary",
+    TOP_ITEMS: "/admin/reports/top-items",
+    PAYMENTS: "/admin/reports/payments",
+    HOURLY: "/admin/reports/hourly",
+  },
+
   // Waiter - Tables
   WAITER: {
     ALLOCATE: (id: string) => `/waiter/allocate/${id}`,
@@ -49,5 +74,29 @@ export const API_ENDPOINTS = {
     SEND: (id: string) => `/waiter/orders/${id}/send`,
     SERVED: (id: string) => `/waiter/orders/${id}/served`,
     CANCEL: (id: string) => `/waiter/orders/${id}/cancel`,
+  },
+
+  // Chef - KOT
+  CHEF: {
+    GET_ALL: "/chef/kot",
+    GET_ONE: (id: string) => `/chef/kot/${id}`,
+    START: (id: string) => `/chef/kot/${id}/start`,
+    READY: (id: string) => `/chef/kot/${id}/ready`,
+    CANCEL: (id: string) => `/chef/kot/${id}/cancel`,
+  },
+
+  // Cashier
+  CASHIER: {
+    TAKEAWAY: "/cashier/takeaway-orders",
+    BILLS: "/cashier/bills",
+    BILL_PAY: (id: string) => `/cashier/bills/${id}/pay`,
+    INCOME: "/cashier/income",
+  },
+
+  // Public - QR menu (no auth)
+  PUBLIC: {
+    MENU: (tableId: string) => `/public/menu/${tableId}`,
+    ORDER: (tableId: string) => `/public/order/${tableId}`,
+    ORDER_STATUS: (orderId: string) => `/public/order/${orderId}/status`,
   },
 } as const;

@@ -55,7 +55,7 @@ export function SignInPresenter({
 }: SignInPresenterProps) {
   return (
     <div className="min-h-screen flex bg-kot-primary">
-      {/* ── Left Banner ── */}
+      {/* ── Left Banner — desktop only ── */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col justify-between p-10 xl:p-14 bg-kot-stats">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
@@ -130,7 +130,7 @@ export function SignInPresenter({
 
       {/* ── Right Form ── */}
       <div className="w-full lg:w-1/2 xl:w-[45%] flex items-center justify-center p-4 sm:p-6 xl:p-8 overflow-y-auto">
-        <div className="w-full max-w-sm xl:max-w-md">
+        <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-6 lg:hidden">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
@@ -141,7 +141,7 @@ export function SignInPresenter({
 
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 mb-6 sm:mb-8 text-sm font-medium text-kot-text hover:text-kot-darker transition-colors"
+            className="flex items-center gap-1.5 mb-6 text-sm font-medium text-kot-text hover:text-kot-darker transition-colors"
           >
             <svg
               className="w-4 h-4"
@@ -159,8 +159,8 @@ export function SignInPresenter({
             Back
           </button>
 
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl xl:text-4xl font-bold mb-1 text-kot-darker">
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1 text-kot-darker">
               Sign In
             </h1>
             <p className="text-sm text-kot-text">
@@ -186,6 +186,7 @@ export function SignInPresenter({
                 onChange={(e) => onFieldChange("username", e.target.value)}
                 placeholder="Enter your username"
                 className={`${inputBase} ${errors.username ? "border-red-500" : ""}`}
+                autoComplete="username"
               />
               {errors.username && (
                 <p className="mt-1 text-xs text-red-500">{errors.username}</p>
@@ -204,11 +205,12 @@ export function SignInPresenter({
                   onChange={(e) => onFieldChange("password", e.target.value)}
                   placeholder="••••••••"
                   className={`${inputBase} pr-11 ${errors.password ? "border-red-500" : ""}`}
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={onTogglePassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker transition-colors p-1"
                 >
                   <EyeIcon show={showPassword} />
                 </button>
@@ -241,7 +243,7 @@ export function SignInPresenter({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 sm:py-3.5 rounded-xl text-sm font-semibold text-white bg-kot-dark hover:bg-kot-darker transition-all duration-200 mt-2 disabled:opacity-60"
+              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-kot-dark hover:bg-kot-darker transition-all duration-200 disabled:opacity-60"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -272,7 +274,7 @@ export function SignInPresenter({
             </button>
           </form>
 
-          <p className="text-center text-sm mt-5 sm:mt-6 text-kot-text">
+          <p className="text-center text-sm mt-5 text-kot-text">
             Don't have an account?{" "}
             <button
               onClick={onSignUp}

@@ -1,4 +1,3 @@
-// src/pages/admin/reports/charts/RevenueTrendChart.tsx
 import { Line } from "react-chartjs-2";
 import type { ChartOptions } from "chart.js";
 import { Card, EmptyState } from "../UiComponents/Index";

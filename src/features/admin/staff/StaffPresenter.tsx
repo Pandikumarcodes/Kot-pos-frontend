@@ -11,12 +11,6 @@ import {
   Modal,
   Badge,
   StatCard,
-  TableWrapper,
-  Thead,
-  Th,
-  Tbody,
-  Tr,
-  Td,
   StatusBadge,
 } from "../../../UiComponents/Index";
 import {
@@ -50,9 +44,10 @@ export function StaffPresenter({
   return (
     <div className="min-h-screen bg-kot-primary">
       <main className="p-3 sm:p-4 lg:p-6 max-w-[2400px] mx-auto space-y-4">
+        {/* ── Header ── */}
         <PageHeader
-          title="Staff Management"
-          sub={`${users.length} staff members`}
+          title="Staff"
+          sub={`${users.length} members`}
           actions={
             isAdmin && (
               <Button
@@ -61,15 +56,16 @@ export function StaffPresenter({
                 className="flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4" />
-                Add Staff
+                <span className="hidden sm:inline">Add Staff</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             )
           }
         />
 
-        {/* Error banner */}
+        {/* ── Error ── */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3">
             <p className="text-sm text-red-600">{error}</p>
             <Button variant="secondary" size="sm" onClick={onRetry}>
               Retry
@@ -77,10 +73,10 @@ export function StaffPresenter({
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <StatCard
-            label="Total Staff"
+            label="Total"
             value={users.length}
             bg="bg-kot-white"
             loading={loading}
@@ -105,14 +101,14 @@ export function StaffPresenter({
           />
         </div>
 
-        {/* Search */}
+        {/* ── Search ── */}
         <SearchInput
           value={searchQuery}
           onChange={onSearchChange}
           placeholder="Search by username or role…"
         />
 
-        {/* Table */}
+        {/* ── Content ── */}
         {loading ? (
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -126,7 +122,6 @@ export function StaffPresenter({
                   <Pulse className="h-3 w-24" />
                 </div>
                 <Pulse className="h-6 w-16 rounded-full" />
-                <Pulse className="h-8 w-20 rounded-lg" />
               </div>
             ))}
           </div>
@@ -149,39 +144,39 @@ export function StaffPresenter({
             }
           />
         ) : (
-          <TableWrapper>
-            <Thead>
-              <tr>
-                <Th>Username</Th>
-                <Th>Role</Th>
-                <Th>Status</Th>
-                {isAdmin && <Th>Actions</Th>}
-              </tr>
-            </Thead>
-            <Tbody>
+          <>
+            {/* ── Mobile: card list ── */}
+            <div className="sm:hidden space-y-2">
               {filteredUsers.map((user) => (
-                <Tr key={user._id}>
-                  <Td>
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-kot-light flex items-center justify-center text-base flex-shrink-0">
+                <div
+                  key={user._id}
+                  className="bg-kot-white rounded-2xl p-4 shadow-kot"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    {/* Left: avatar + info */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-kot-light flex items-center justify-center text-lg flex-shrink-0">
                         {ROLE_EMOJI[user.role] ?? "👤"}
                       </div>
-                      <span className="font-mono text-sm text-kot-darker">
-                        @{user.username}
-                      </span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-kot-darker text-sm truncate">
+                          @{user.username}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Badge
+                            variant="neutral"
+                            className="capitalize text-xs"
+                          >
+                            {user.role}
+                          </Badge>
+                          <StatusBadge status={user.status} />
+                        </div>
+                      </div>
                     </div>
-                  </Td>
-                  <Td>
-                    <Badge variant="neutral" className="capitalize">
-                      {user.role}
-                    </Badge>
-                  </Td>
-                  <Td>
-                    <StatusBadge status={user.status} />
-                  </Td>
-                  {isAdmin && (
-                    <Td>
-                      <div className="flex gap-1">
+
+                    {/* Right: actions */}
+                    {isAdmin && (
+                      <div className="flex gap-1 flex-shrink-0">
                         <IconButton
                           onClick={() => onOpenModal(user)}
                           title="Edit Role"
@@ -196,15 +191,84 @@ export function StaffPresenter({
                           <Trash2 className="w-4 h-4" />
                         </IconButton>
                       </div>
-                    </Td>
-                  )}
-                </Tr>
+                    )}
+                  </div>
+                </div>
               ))}
-            </Tbody>
-          </TableWrapper>
+            </div>
+
+            {/* ── Desktop: table ── */}
+            <div className="hidden sm:block overflow-hidden rounded-xl border border-kot-chart bg-kot-white shadow-kot">
+              <table className="w-full">
+                <thead className="bg-kot-light border-b border-kot-chart">
+                  <tr>
+                    {[
+                      "Username",
+                      "Role",
+                      "Status",
+                      ...(isAdmin ? ["Actions"] : []),
+                    ].map((h, i) => (
+                      <th
+                        key={h}
+                        className={`px-4 py-3 text-xs font-semibold text-kot-text uppercase tracking-wide ${i === 3 ? "text-right" : "text-left"}`}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-kot-chart">
+                  {filteredUsers.map((user) => (
+                    <tr
+                      key={user._id}
+                      className="hover:bg-kot-primary transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-kot-light flex items-center justify-center text-base flex-shrink-0">
+                            {ROLE_EMOJI[user.role] ?? "👤"}
+                          </div>
+                          <span className="font-mono text-sm text-kot-darker">
+                            @{user.username}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="neutral" className="capitalize">
+                          {user.role}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={user.status} />
+                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1 justify-end">
+                            <IconButton
+                              onClick={() => onOpenModal(user)}
+                              title="Edit Role"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </IconButton>
+                            <IconButton
+                              variant="danger"
+                              onClick={() => onDelete(user)}
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </IconButton>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
-        {/* Modal */}
+        {/* ── Modal ── */}
         <Modal
           open={showModal}
           title={editingUser ? "Edit Staff Role" : "Add Staff Member"}

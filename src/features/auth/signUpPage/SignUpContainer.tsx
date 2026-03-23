@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { API_BASE_URL } from "../../../config/Api";
+import { API_V1_URL } from "../../../config/Api";
 import { SignUpPresenter } from "./SignUpPresenter";
 import type { SignUpFormData, SignUpFormErrors } from "./SignUp.types";
 
@@ -66,7 +66,7 @@ export default function SignUpContainer() {
     setErrors({});
     try {
       await axios.post(
-        `${API_BASE_URL}/auth/signup`,
+        `${API_V1_URL}/auth/signup`,
         {
           username: formData.username,
           password: formData.password,

@@ -1,5 +1,7 @@
-// src/components/organisms/Header/Header.tsx
+// src/design-system/organisms/Header.tsx
+import { Menu } from "lucide-react";
 import { Button } from "../../UiComponents/Button";
+import { InstallBanner } from "../../UiComponents/InstallBanner";
 
 export interface HeaderProps {
   title?: string;
@@ -11,6 +13,7 @@ export interface HeaderProps {
   actions?: React.ReactNode;
   showBackButton?: boolean;
   onBack?: () => void;
+  onMenuToggle?: () => void; // ← hamburger toggle
 }
 
 export const Header = ({
@@ -23,13 +26,24 @@ export const Header = ({
   actions,
   showBackButton = false,
   onBack,
+  onMenuToggle,
 }: HeaderProps) => {
   return (
-    <header className="bg-kot-header border-b border-kot-chart">
+    <header className="bg-kot-header border-b border-kot-chart sticky top-0 z-40">
       <div className="px-4 py-3 md:px-6">
-        <div className="flex items-center justify-between gap-4">
-          {/* Left Section - Title */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          {/* Left Section */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Hamburger — mobile only */}
+            <button
+              onClick={onMenuToggle}
+              className="md:hidden p-2 rounded-lg hover:bg-kot-light text-kot-text hover:text-kot-darker transition-colors flex-shrink-0"
+              aria-label="Open menu"
+            >
+              <Menu size={22} />
+            </button>
+
+            {/* Back button */}
             {showBackButton && (
               <button
                 onClick={onBack}
@@ -52,24 +66,30 @@ export const Header = ({
               </button>
             )}
 
+            {/* Title */}
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-kot-darker truncate">
+              <h1 className="text-base md:text-xl font-bold text-kot-darker truncate">
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-sm text-kot-text truncate">{subtitle}</p>
+                <p className="text-xs md:text-sm text-kot-text truncate hidden sm:block">
+                  {subtitle}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Right Section - Actions and User */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Right Section */}
+          <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
+            {/* Install Banner */}
+            <InstallBanner />
+
             {/* Custom Actions */}
             {actions && (
-              <div className="flex items-center gap-2">{actions}</div>
+              <div className="flex items-center gap-1 md:gap-2">{actions}</div>
             )}
 
-            {/* User Info */}
+            {/* User Info — hidden on small mobile */}
             {userName && (
               <button
                 onClick={onProfileClick}
@@ -80,22 +100,38 @@ export const Header = ({
                     {userName}
                   </p>
                   {userRole && (
-                    <p className="text-xs text-kot-text">{userRole}</p>
+                    <p className="text-xs text-kot-text capitalize">
+                      {userRole}
+                    </p>
                   )}
                 </div>
-                <div className="w-10 h-10 rounded-full bg-kot-primary text-white flex items-center justify-center font-semibold">
+                <div className="w-9 h-9 rounded-full bg-kot-dark text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
                   {userName.charAt(0).toUpperCase()}
                 </div>
               </button>
             )}
 
-            {/* Logout Button */}
+            {/* Avatar only on small screens */}
+            {userName && (
+              <button
+                onClick={onProfileClick}
+                className="md:hidden w-8 h-8 rounded-full bg-kot-dark text-white flex items-center justify-center font-semibold text-sm flex-shrink-0"
+              >
+                {userName.charAt(0).toUpperCase()}
+              </button>
+            )}
+
+            {/* Logout */}
             {onLogout && (
-              <Button variant="secondary" onClick={onLogout}>
+              <Button
+                variant="secondary"
+                onClick={onLogout}
+                className="text-xs md:text-sm px-2 md:px-4"
+              >
                 <span className="hidden sm:inline">Logout</span>
                 <span className="sm:hidden">
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

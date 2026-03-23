@@ -1,9 +1,11 @@
 import axios from "axios";
 import { globalToast } from "../services/globalToast";
 
+const BASE =
+  import.meta.env.VITE_API_URL || "https://kot-pos-backend.onrender.com";
+
 const api = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_URL || "https://kot-pos-backend.onrender.com",
+  baseURL: `${BASE}/api/v1`,
   withCredentials: true,
 });
 
@@ -54,12 +56,10 @@ api.interceptors.response.use(
 
     // ── 429 — Too Many Requests ───────────────────────────────
     if (status === 429) {
-      // Read how long to wait from backend (in seconds)
       const retryAfter: number =
         error.response?.data?.retryAfter ||
         parseInt(error.response?.headers?.["retry-after"] || "10", 10);
 
-      // Show toast once with countdown — suppress duplicates
       if (!rateLimitToastShown) {
         rateLimitToastShown = true;
 
@@ -67,10 +67,8 @@ api.interceptors.response.use(
           error.response?.data?.error ||
           "Too many requests. Please wait before refreshing.";
 
-        // Show initial warning
         globalToast.warning(`⏳ ${msg} Retrying in ${retryAfter}s...`);
 
-        // Auto-retry all queued requests after the window resets
         if (rateLimitRetryTimer) clearTimeout(rateLimitRetryTimer);
         rateLimitRetryTimer = setTimeout(() => {
           rateLimitToastShown = false;
@@ -80,8 +78,6 @@ api.interceptors.response.use(
         }, retryAfter * 1000);
       }
 
-      // Queue this request to be auto-retried after the window resets
-      // Returns a Promise that resolves when the retry completes
       return new Promise((resolve, reject) => {
         rateLimitQueue.push(async () => {
           try {

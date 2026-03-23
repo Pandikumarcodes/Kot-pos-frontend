@@ -5,12 +5,40 @@ import { useAppSelector } from "../../app/store/hooks";
 import { useLogout } from "../../hooks/useLogout";
 
 // ── Role config ───────────────────────────────────────────────
-const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  admin:   { label: "Admin",   color: "text-purple-700", bg: "bg-purple-100",  icon: "👑" },
-  manager: { label: "Manager", color: "text-blue-700",   bg: "bg-blue-100",    icon: "🏪" },
-  waiter:  { label: "Waiter",  color: "text-green-700",  bg: "bg-green-100",   icon: "🛎️" },
-  chef:    { label: "Chef",    color: "text-orange-700", bg: "bg-orange-100",  icon: "🧑‍🍳" },
-  cashier: { label: "Cashier", color: "text-teal-700",   bg: "bg-teal-100",    icon: "💰" },
+const ROLE_CONFIG: Record<
+  string,
+  { label: string; color: string; bg: string; icon: string }
+> = {
+  admin: {
+    label: "Admin",
+    color: "text-purple-700",
+    bg: "bg-purple-100",
+    icon: "👑",
+  },
+  manager: {
+    label: "Manager",
+    color: "text-blue-700",
+    bg: "bg-blue-100",
+    icon: "🏪",
+  },
+  waiter: {
+    label: "Waiter",
+    color: "text-green-700",
+    bg: "bg-green-100",
+    icon: "🛎️",
+  },
+  chef: {
+    label: "Chef",
+    color: "text-orange-700",
+    bg: "bg-orange-100",
+    icon: "🧑‍🍳",
+  },
+  cashier: {
+    label: "Cashier",
+    color: "text-teal-700",
+    bg: "bg-teal-100",
+    icon: "💰",
+  },
 };
 
 interface NavbarProps {
@@ -21,21 +49,25 @@ interface NavbarProps {
 }
 
 export function Navbar({ onMenuToggle, sidebarOpen }: NavbarProps) {
-  const { user }   = useAppSelector((s) => s.auth);
+  const { user } = useAppSelector((s) => s.auth);
   const handleLogout = useLogout();
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const role   = user?.role ?? "waiter";
-  const rc     = ROLE_CONFIG[role] ?? ROLE_CONFIG.waiter;
+  const role = user?.role ?? "waiter";
+  const rc = ROLE_CONFIG[role] ?? ROLE_CONFIG.waiter;
   const initials = user?.name
-    ? user.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+    ? user.name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
     : "?";
 
   return (
     <>
       <header className="bg-kot-white border-b border-kot-chart shadow-kot sticky top-0 z-30 h-14 sm:h-16">
         <div className="h-full px-3 sm:px-4 lg:px-6 flex items-center justify-between max-w-[2400px] mx-auto">
-
           {/* Left — hamburger + logo */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Hamburger (mobile only) */}
@@ -44,7 +76,11 @@ export function Navbar({ onMenuToggle, sidebarOpen }: NavbarProps) {
               className="lg:hidden p-1.5 rounded-lg text-kot-text hover:bg-kot-light hover:text-kot-darker transition-colors"
               aria-label="Toggle menu"
             >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {sidebarOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
 
             {/* Logo */}
@@ -60,7 +96,6 @@ export function Navbar({ onMenuToggle, sidebarOpen }: NavbarProps) {
 
           {/* Right — notifications + role badge + avatar + logout */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-
             {/* Notification bell */}
             <button className="relative p-1.5 sm:p-2 rounded-lg text-kot-text hover:bg-kot-light hover:text-kot-darker transition-colors">
               <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -69,7 +104,9 @@ export function Navbar({ onMenuToggle, sidebarOpen }: NavbarProps) {
             </button>
 
             {/* Role badge — hidden on very small screens */}
-            <span className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${rc.bg} ${rc.color}`}>
+            <span
+              className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${rc.bg} ${rc.color}`}
+            >
               <span>{rc.icon}</span>
               {rc.label}
             </span>
@@ -80,8 +117,12 @@ export function Navbar({ onMenuToggle, sidebarOpen }: NavbarProps) {
                 {initials}
               </div>
               <div className="hidden md:block">
-                <p className="text-xs font-semibold text-kot-darker leading-tight">{user?.name ?? "User"}</p>
-                <p className="text-[10px] text-kot-text leading-tight capitalize">{role}</p>
+                <p className="text-xs font-semibold text-kot-darker leading-tight">
+                  {user?.name ?? "User"}
+                </p>
+                <p className="text-[10px] text-kot-text leading-tight capitalize">
+                  {role}
+                </p>
               </div>
             </div>
 
@@ -103,8 +144,12 @@ export function Navbar({ onMenuToggle, sidebarOpen }: NavbarProps) {
           <div className="bg-kot-white rounded-2xl shadow-kot-lg p-6 w-full max-w-sm">
             <div className="text-center mb-5">
               <span className="text-4xl">👋</span>
-              <h2 className="text-lg font-bold text-kot-darker mt-2">Logging out?</h2>
-              <p className="text-sm text-kot-text mt-1">You will be redirected to the login page.</p>
+              <h2 className="text-lg font-bold text-kot-darker mt-2">
+                Logging out?
+              </h2>
+              <p className="text-sm text-kot-text mt-1">
+                You will be redirected to the login page.
+              </p>
             </div>
             <div className="flex gap-3">
               <button

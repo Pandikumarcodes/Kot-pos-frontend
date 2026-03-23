@@ -5,14 +5,12 @@ import {
   IconButton,
   Input,
   Select,
-  TextArea,
   Pulse,
   PageHeader,
   SearchInput,
   EmptyState,
   Modal,
   Badge,
-  TabBar,
 } from "../../../UiComponents/Index";
 import { CATEGORIES, type MenuPresenterProps } from "./menu.types";
 
@@ -49,8 +47,9 @@ export function MenuManagementPresenter({
   return (
     <div className="min-h-screen bg-kot-primary">
       <main className="p-3 sm:p-4 lg:p-6 max-w-[2400px] mx-auto space-y-4">
+        {/* ── Header ── */}
         <PageHeader
-          title="Menu Management"
+          title="Menu"
           sub={`${menuItems.length} items`}
           actions={
             isAdmin && (
@@ -60,15 +59,16 @@ export function MenuManagementPresenter({
                 className="flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4" />
-                Add Item
+                <span className="hidden sm:inline">Add Item</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             )
           }
         />
 
-        {/* Error banner */}
+        {/* ── Error ── */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3">
             <p className="text-sm text-red-600">{error}</p>
             <Button variant="secondary" size="sm" onClick={onRetry}>
               Retry
@@ -76,10 +76,10 @@ export function MenuManagementPresenter({
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {[
-            { label: "Total Items", value: menuItems.length },
+            { label: "Total", value: menuItems.length },
             {
               label: "Available",
               value: menuItems.filter((i) => i.available).length,
@@ -93,12 +93,14 @@ export function MenuManagementPresenter({
               value: new Set(menuItems.map((i) => i.category)).size,
             },
           ].map((s) => (
-            <Card key={s.label} className="p-4">
-              <p className="text-xs text-kot-text font-medium">{s.label}</p>
+            <Card key={s.label} className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-xs text-kot-text font-medium">
+                {s.label}
+              </p>
               {loading ? (
-                <Pulse className="h-7 w-12 mt-1" />
+                <Pulse className="h-6 w-10 mt-1" />
               ) : (
-                <p className="text-2xl font-bold text-kot-darker mt-1">
+                <p className="text-xl sm:text-2xl font-bold text-kot-darker mt-0.5">
                   {s.value}
                 </p>
               )}
@@ -106,29 +108,39 @@ export function MenuManagementPresenter({
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <SearchInput
-              value={searchQuery}
-              onChange={onSearchChange}
-              placeholder="Search menu items…"
-            />
+        {/* ── Search ── */}
+        <SearchInput
+          value={searchQuery}
+          onChange={onSearchChange}
+          placeholder="Search menu items…"
+        />
+
+        {/* ── Category tabs — horizontal scroll on mobile ── */}
+        <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-none">
+          <div className="flex gap-1.5 w-max sm:w-auto sm:flex-wrap">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => onCategoryChange(tab.key)}
+                className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                  selectedCategory === tab.key
+                    ? "bg-kot-dark text-white"
+                    : "bg-kot-white text-kot-text hover:bg-kot-light border border-kot-chart"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
-          <TabBar
-            tabs={tabs}
-            active={selectedCategory}
-            onChange={onCategoryChange}
-          />
         </div>
 
-        {/* Grid */}
+        {/* ── Grid ── */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i} className="overflow-hidden">
-                <Pulse className="w-full h-40" />
-                <div className="p-4 space-y-2">
+                <Pulse className="w-full h-28 sm:h-40" />
+                <div className="p-3 sm:p-4 space-y-2">
                   <Pulse className="h-4 w-3/4" />
                   <Pulse className="h-3 w-1/2" />
                   <Pulse className="h-3 w-full" />
@@ -155,49 +167,61 @@ export function MenuManagementPresenter({
             }
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {filteredItems.map((item) => (
               <Card key={item._id} className="overflow-hidden flex flex-col">
-                <div className="w-full h-40 bg-kot-light flex items-center justify-center text-4xl">
+                {/* Image placeholder */}
+                <div className="w-full h-28 sm:h-40 bg-kot-light flex items-center justify-center text-3xl sm:text-4xl flex-shrink-0">
                   🍽️
                 </div>
-                <div className="p-4 flex-1 flex flex-col gap-2">
-                  <div className="flex justify-between items-start gap-2">
-                    <h3 className="font-bold text-kot-darker text-sm leading-tight">
+
+                <div className="p-3 sm:p-4 flex-1 flex flex-col gap-1.5 sm:gap-2">
+                  {/* Name + badge */}
+                  <div className="flex justify-between items-start gap-1.5">
+                    <h3 className="font-bold text-kot-darker text-xs sm:text-sm leading-tight line-clamp-2">
                       {item.ItemName}
                     </h3>
                     <Badge
                       variant={item.available ? "success" : "danger"}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 text-[9px] sm:text-xs"
                     >
-                      {item.available ? "Available" : "Unavailable"}
+                      {item.available ? "✓" : "✕"}
                     </Badge>
                   </div>
-                  <p className="text-xs text-kot-text">
+
+                  {/* Category */}
+                  <p className="text-[10px] sm:text-xs text-kot-text">
                     {getCategoryLabel(item.category)}
                   </p>
+
+                  {/* Price + actions */}
                   <div className="flex items-center justify-between mt-auto pt-2 border-t border-kot-chart">
-                    <span className="text-base font-bold text-kot-darker">
+                    <span className="text-sm sm:text-base font-bold text-kot-darker">
                       ₹{item.price.toLocaleString("en-IN")}
                     </span>
                     {isAdmin && (
-                      <div className="flex gap-1">
+                      <div className="flex gap-0.5 sm:gap-1">
                         <IconButton
                           onClick={() => onToggle(item)}
                           title={item.available ? "Disable" : "Enable"}
+                          className="w-7 h-7 sm:w-8 sm:h-8"
                         >
                           <span className="text-xs">
                             {item.available ? "🔴" : "🟢"}
                           </span>
                         </IconButton>
-                        <IconButton onClick={() => onOpenModal(item)}>
-                          <Edit2 className="w-4 h-4" />
+                        <IconButton
+                          onClick={() => onOpenModal(item)}
+                          className="w-7 h-7 sm:w-8 sm:h-8"
+                        >
+                          <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </IconButton>
                         <IconButton
                           variant="danger"
                           onClick={() => onDelete(item)}
+                          className="w-7 h-7 sm:w-8 sm:h-8"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </IconButton>
                       </div>
                     )}
@@ -208,7 +232,7 @@ export function MenuManagementPresenter({
           </div>
         )}
 
-        {/* Modal */}
+        {/* ── Modal ── */}
         <Modal
           open={showModal}
           title={editingItem ? "Edit Menu Item" : "Add Menu Item"}
@@ -243,19 +267,13 @@ export function MenuManagementPresenter({
               error={formErrors.price}
               placeholder="0"
             />
-            <TextArea
-              label="Description"
-              value={formData.description ?? ""}
-              onChange={(e) => onFieldChange("description", e.target.value)}
-              rows={3}
-              placeholder="Short description…"
-            />
+
             <label className="flex items-center gap-3 p-3 rounded-xl bg-kot-light cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.available}
                 onChange={(e) => onFieldChange("available", e.target.checked)}
-                className="w-5 h-5 rounded accent-kot-dark"
+                className="w-5 h-5 rounded accent-kot-dark flex-shrink-0"
               />
               <div>
                 <p className="font-medium text-kot-darker text-sm">Available</p>

@@ -10,28 +10,21 @@ import AppRouter from "./Router/AppRouter";
 import Header from "./design-system/organisms/Header";
 import Sidebar from "./design-system/organisms/Sidebar";
 import api from "./services/apiClient";
-import { notificationService } from "./services/notificationServices";
-import { useToast } from "./Context/ToastContext";
 
 export default function App() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, user } = useAppSelector((s) => s.auth);
   const [slowLoad, setSlowLoad] = useState(false);
-  const toast = useToast();
 
-  useEffect(() => {
-    notificationService.setToast(toast);
-  }, [toast]);
+  // ── Mobile sidebar state ──────────────────────────────────
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated && user?.role) notificationService.connect(user.role);
-    else notificationService.disconnect();
-  }, [isAuthenticated, user?.role]);
-
+  // ── Boot: check if cookie session is valid ────────────────
   useEffect(() => {
     const controller = new AbortController();
     dispatch(setAuthLoading(true));
+
     const slowTimer = setTimeout(() => setSlowLoad(true), 5000);
     const maxTimer = setTimeout(() => {
       controller.abort();
@@ -46,8 +39,9 @@ export default function App() {
       })
       .then((res) => dispatch(setCredentials(res.data.user)))
       .catch((err) => {
-        if (err.name !== "CanceledError" && err.name !== "AbortError")
+        if (err.name !== "CanceledError" && err.name !== "AbortError") {
           dispatch(clearCredentials());
+        }
       })
       .finally(() => {
         clearTimeout(slowTimer);
@@ -63,19 +57,20 @@ export default function App() {
     };
   }, []);
 
+  // ── Logout ────────────────────────────────────────────────
   const handleLogout = async () => {
     try {
       await api.post("/auth/logout");
-    } catch (err) {
-      console.log(err);
+    } catch {
+      // clear anyway
     } finally {
-      notificationService.disconnect();
       dispatch(clearCredentials());
       navigate("/login");
     }
   };
 
-  if (isLoading)
+  // ── Loading screen ────────────────────────────────────────
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-kot-primary gap-4">
         <div className="flex items-center gap-3">
@@ -97,24 +92,29 @@ export default function App() {
         )}
       </div>
     );
+  }
 
   return (
     <>
       {isAuthenticated ? (
         <div className="flex flex-col min-h-screen">
+          {/* Header — passes hamburger toggle */}
           <Header
             userName={user?.name}
             userRole={user?.role}
             onLogout={handleLogout}
+            onMenuToggle={() => setSidebarOpen((prev) => !prev)}
           />
+
           <div className="flex flex-1 overflow-hidden">
-            <Sidebar />
-            {/*
-              pl-10 on mobile: offset content so it's not hidden under the
-              fixed hamburger button (w-9 + left-3 = ~48px ≈ pl-12).
-              md:pl-0: tablet icon-sidebar is in flow, no offset needed.
-            */}
-            <main className="flex-1 overflow-y-auto bg-kot-primary pl-12 md:pl-0">
+            {/* Sidebar — receives open state + close handler */}
+            <Sidebar
+              isOpen={sidebarOpen}
+              onClose={() => setSidebarOpen(false)}
+            />
+
+            {/* Main content */}
+            <main className="flex-1 overflow-y-auto bg-kot-primary">
               <AppRouter />
             </main>
           </div>

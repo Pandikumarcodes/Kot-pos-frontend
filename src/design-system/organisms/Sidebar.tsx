@@ -20,6 +20,7 @@ import {
   Rocket,
   Package,
   ClipboardList,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { getBranchesApi } from "../../services/adminApi/Branch.api";
@@ -46,22 +47,25 @@ const NAV_LINKS: NavLink[] = [
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ];
 
-export default function Sidebar() {
+// ── Props: accept isOpen + onClose from parent (App.tsx) ─────
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAppSelector((state) => state.auth);
   const role = user?.role as Role | undefined;
 
-  // ── super-admin detection ─────────────────────────────────
   const isSuperAdmin = role === "admin" && !user?.branchId;
 
-  // ── Branch switcher state (super-admin only) ──────────────
   const [branches, setBranches] = useState<Branch[]>([]);
   const [activeBranch, setActiveBranch] = useState<Branch | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch branches once for super-admin
   useEffect(() => {
     if (!isSuperAdmin) return;
     getBranchesApi()
@@ -72,7 +76,6 @@ export default function Sidebar() {
       .catch(() => {});
   }, [isSuperAdmin]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -86,18 +89,32 @@ export default function Sidebar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ── Filter nav links by role + permission ─────────────────
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    onClose();
+  }, [location.pathname]);
+
+  // Prevent body scroll when sidebar open on mobile
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   const visibleLinks = NAV_LINKS.filter((link) =>
     role ? (NAV_PERMISSIONS[link.label] ?? []).includes(role) : false,
   );
 
-  // ── Branch name to show for staff ─────────────────────────
   const staffBranchName =
     !isSuperAdmin && user?.branchId
       ? (activeBranch?.name ?? "My Branch")
       : null;
 
-  // Resolve staff branch name on mount
   useEffect(() => {
     if (isSuperAdmin || !user?.branchId) return;
     getBranchesApi()
@@ -108,20 +125,35 @@ export default function Sidebar() {
       .catch(() => {});
   }, [isSuperAdmin, user?.branchId]);
 
-  return (
-    <aside className="w-64 min-h-screen bg-kot-header border-r border-kot-chart flex-shrink-0 flex flex-col">
+  const handleNavigate = (to: string) => {
+    navigate(to);
+    onClose();
+  };
+
+  // ── Sidebar content ───────────────────────────────────────
+  const sidebarContent = (
+    <aside className="w-64 h-full bg-kot-header border-r border-kot-chart flex flex-col">
       <div className="p-4 flex flex-col h-full">
-        {/* ── Logo ── */}
-        <div className="mb-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-kot-dark flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">K</span>
+        {/* ── Logo + Close button (mobile) ── */}
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-kot-dark flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-sm">K</span>
+              </div>
+              <span className="font-bold text-lg text-kot-darker">KOT POS</span>
             </div>
-            <span className="font-bold text-lg text-kot-darker">KOT POS</span>
+            <p className="text-xs text-kot-text mt-1 ml-0.5 capitalize">
+              {role} Dashboard
+            </p>
           </div>
-          <p className="text-xs text-kot-text mt-1 ml-0.5 capitalize">
-            {role} Dashboard
-          </p>
+          {/* Close button — only visible on mobile */}
+          <button
+            onClick={onClose}
+            className="md:hidden p-2 rounded-lg hover:bg-kot-light text-kot-text hover:text-kot-darker transition-colors"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* ── Branch Selector (super-admin) ── */}
@@ -147,10 +179,8 @@ export default function Sidebar() {
               </div>
             </button>
 
-            {/* Dropdown */}
             {dropdownOpen && (
               <div className="absolute z-50 mt-1 w-56 bg-kot-white rounded-xl shadow-kot-lg border border-kot-chart overflow-hidden">
-                {/* All branches option */}
                 <button
                   onClick={() => {
                     setActiveBranch(null);
@@ -207,7 +237,6 @@ export default function Sidebar() {
                   </div>
                 )}
 
-                {/* Manage branches link */}
                 <div className="border-t border-kot-chart p-2">
                   <button
                     onClick={() => {
@@ -241,13 +270,13 @@ export default function Sidebar() {
         )}
 
         {/* ── Nav Links ── */}
-        <nav className="space-y-0.5 flex-1">
+        <nav className="space-y-0.5 flex-1 overflow-y-auto">
           {visibleLinks.map(({ label, to, icon: Icon }) => {
             const isActive = location.pathname === to;
             return (
               <button
                 key={to}
-                onClick={() => navigate(to)}
+                onClick={() => handleNavigate(to)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
                   isActive
                     ? "bg-kot-sidebar text-kot-darker font-medium shadow-kot"
@@ -261,7 +290,7 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* ── Active branch indicator at bottom ── */}
+        {/* ── Active branch indicator ── */}
         {isSuperAdmin && activeBranch && (
           <div className="mt-4 pt-4 border-t border-kot-chart">
             <div className="flex items-center gap-2 px-2">
@@ -277,5 +306,26 @@ export default function Sidebar() {
         )}
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* ── Desktop: always visible ───────────────────────── */}
+      <div className="hidden md:flex w-64 min-h-screen flex-shrink-0">
+        {sidebarContent}
+      </div>
+
+      {/* ── Mobile: slide-in drawer ───────────────────────── */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+          {/* Drawer */}
+          <div className="absolute left-0 top-0 h-full w-64 shadow-kot-lg">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
