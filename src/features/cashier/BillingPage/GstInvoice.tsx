@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../services/apiClient";
 import type { Bill } from "../../../services/CashierApi/cashier.api";
-
+import DOMPurify from "dompurify";
 interface RestaurantSettings {
   businessName: string;
   email: string;
@@ -437,7 +437,33 @@ export default function GSTInvoice({ bill, onClose }: GSTInvoiceProps) {
               fontSize: "12px",
               boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
             }}
-            dangerouslySetInnerHTML={{ __html: receiptHTML }}
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(receiptHTML, {
+                ALLOWED_TAGS: [
+                  "div",
+                  "span",
+                  "p",
+                  "br",
+                  "hr",
+                  "table",
+                  "tr",
+                  "td",
+                  "th",
+                  "thead",
+                  "tbody",
+                  "strong",
+                  "b",
+                  "em",
+                  "i",
+                  "small",
+                  "h1",
+                  "h2",
+                  "h3",
+                  "h4",
+                ],
+                ALLOWED_ATTR: ["style", "class", "align"],
+              }),
+            }}
           />
         )}
       </div>

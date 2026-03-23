@@ -50,9 +50,9 @@ const PAYMENT_COLORS: Record<string, string> = {
 
 function SkeletonStatCards() {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {[1, 2, 3, 4].map((i) => (
-        <Card key={i} className="p-4 sm:p-5">
+        <Card key={i} className="p-4">
           <div className="flex items-center justify-between mb-3">
             <Pulse className="h-3 w-20" />
             <Pulse className="w-9 h-9 rounded-xl" />
@@ -87,7 +87,8 @@ export function AdminDashboardPresenter({
 
   return (
     <div className="min-h-screen bg-kot-primary">
-      <main className="p-3 sm:p-4 lg:p-6 max-w-[2400px] mx-auto space-y-4 sm:space-y-5">
+      <main className="p-3 sm:p-4 lg:p-6 max-w-[2400px] mx-auto space-y-4">
+        {/* ── Header ── */}
         <PageHeader
           title="Admin Dashboard"
           sub={new Date().toLocaleDateString("en-IN", {
@@ -97,12 +98,15 @@ export function AdminDashboardPresenter({
             day: "numeric",
           })}
           actions={
-            <>
-              <RangePicker<RangeType>
-                ranges={["today", "week", "month"]}
-                active={range}
-                onChange={onRangeChange}
-              />
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Range picker — hidden on very small screens, shown from sm */}
+              <div className="hidden sm:block">
+                <RangePicker<RangeType>
+                  ranges={["today", "week", "month"]}
+                  active={range}
+                  onChange={onRangeChange}
+                />
+              </div>
               <Button
                 variant="secondary"
                 size="sm"
@@ -128,33 +132,43 @@ export function AdminDashboardPresenter({
                 </span>
               </Button>
               <Button size="sm" onClick={() => onNavigate("/waiter/tables")}>
-                + New Order
+                + Order
               </Button>
-            </>
+            </div>
           }
         />
 
+        {/* Range picker row — only on mobile (sm and below) */}
+        <div className="sm:hidden">
+          <RangePicker<RangeType>
+            ranges={["today", "week", "month"]}
+            active={range}
+            onChange={onRangeChange}
+          />
+        </div>
+
+        {/* ── Stat Cards ── */}
         {loading ? (
           <SkeletonStatCards />
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               {
-                label: "Total Revenue",
+                label: "Revenue",
                 value: `₹${(summary?.totalRevenue ?? 0).toLocaleString("en-IN")}`,
                 sub: `${summary?.totalBills ?? 0} bills paid`,
                 icon: "💰",
                 bg: "bg-kot-stats",
               },
               {
-                label: "Total Orders",
+                label: "Orders",
                 value: summary?.totalOrders ?? 0,
-                sub: `${summary?.dineInCount ?? 0} dine-in · ${summary?.takeawayCount ?? 0} takeaway`,
+                sub: `${summary?.dineInCount ?? 0} in · ${summary?.takeawayCount ?? 0} out`,
                 icon: "📋",
                 bg: "bg-blue-50",
               },
               {
-                label: "Avg Order Value",
+                label: "Avg Value",
                 value: `₹${(summary?.avgOrderValue ?? 0).toLocaleString("en-IN")}`,
                 sub: "per bill",
                 icon: "📊",
@@ -163,31 +177,34 @@ export function AdminDashboardPresenter({
               {
                 label: "Tables",
                 value: `${occupiedTables + billingTables}/${tables.length}`,
-                sub: `${availableTables} available · ${billingTables} billing`,
+                sub: `${availableTables} free`,
                 icon: "🪑",
                 bg: "bg-orange-50",
               },
             ].map((s) => (
-              <Card key={s.label} className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-kot-text">
+              <Card key={s.label} className="p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-kot-text leading-tight">
                     {s.label}
                   </p>
                   <span
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${s.bg}`}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-base sm:text-lg ${s.bg}`}
                   >
                     {s.icon}
                   </span>
                 </div>
-                <p className="text-2xl font-bold text-kot-darker mb-0.5">
+                <p className="text-xl sm:text-2xl font-bold text-kot-darker mb-0.5 truncate">
                   {s.value}
                 </p>
-                <p className="text-xs text-kot-text">{s.sub}</p>
+                <p className="text-[10px] sm:text-xs text-kot-text truncate">
+                  {s.sub}
+                </p>
               </Card>
             ))}
           </div>
         )}
 
+        {/* ── Tab Bar ── */}
         <TabBar<ViewType>
           tabs={[
             { key: "overview", label: "Overview" },
@@ -198,12 +215,13 @@ export function AdminDashboardPresenter({
           onChange={onViewChange}
         />
 
-        {/* OVERVIEW */}
+        {/* ── OVERVIEW ── */}
         {selectedView === "overview" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="lg:col-span-2 p-5">
-              <div className="flex justify-between items-center mb-5">
-                <h2 className="text-base font-bold text-kot-darker">
+            {/* Top Items */}
+            <Card className="lg:col-span-2 p-4 sm:p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-sm sm:text-base font-bold text-kot-darker">
                   Top Selling Items
                 </h2>
                 <span className="text-xs text-kot-text capitalize">
@@ -213,7 +231,7 @@ export function AdminDashboardPresenter({
               {loading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="flex items-center gap-4">
+                    <div key={i} className="flex items-center gap-3">
                       <Pulse className="w-7 h-7 rounded-full flex-shrink-0" />
                       <div className="flex-1">
                         <Pulse className="h-3 w-full mb-1" />
@@ -228,16 +246,16 @@ export function AdminDashboardPresenter({
               ) : (
                 <div className="space-y-3">
                   {topItems.slice(0, 6).map((item, i) => (
-                    <div key={item.name} className="flex items-center gap-4">
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-kot-light text-kot-dark flex-shrink-0">
+                    <div key={item.name} className="flex items-center gap-3">
+                      <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs font-bold bg-kot-light text-kot-dark flex-shrink-0">
                         {i + 1}
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
-                          <p className="text-sm font-medium text-kot-darker truncate">
+                          <p className="text-xs sm:text-sm font-medium text-kot-darker truncate">
                             {item.name}
                           </p>
-                          <p className="text-xs text-kot-text ml-2 flex-shrink-0">
+                          <p className="text-[10px] sm:text-xs text-kot-text ml-2 flex-shrink-0">
                             {item.quantity} orders
                           </p>
                         </div>
@@ -246,7 +264,7 @@ export function AdminDashboardPresenter({
                           max={topItems[0]?.quantity || 1}
                         />
                       </div>
-                      <p className="text-sm font-bold text-kot-darker flex-shrink-0">
+                      <p className="text-xs sm:text-sm font-bold text-kot-darker flex-shrink-0">
                         ₹{item.revenue.toLocaleString("en-IN")}
                       </p>
                     </div>
@@ -255,9 +273,11 @@ export function AdminDashboardPresenter({
               )}
             </Card>
 
+            {/* Right column */}
             <div className="space-y-4">
-              <Card className="p-5">
-                <h2 className="text-base font-bold mb-4 text-kot-darker">
+              {/* Payment Methods */}
+              <Card className="p-4 sm:p-5">
+                <h2 className="text-sm sm:text-base font-bold mb-4 text-kot-darker">
                   Payment Methods
                 </h2>
                 {loading ? (
@@ -297,11 +317,12 @@ export function AdminDashboardPresenter({
                 )}
               </Card>
 
-              <Card className="p-5">
-                <h2 className="text-base font-bold mb-4 text-kot-darker">
+              {/* Quick Actions */}
+              <Card className="p-4 sm:p-5">
+                <h2 className="text-sm sm:text-base font-bold mb-4 text-kot-darker">
                   Quick Actions
                 </h2>
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
                   {[
                     {
                       label: "New Order",
@@ -329,7 +350,7 @@ export function AdminDashboardPresenter({
                       variant={a.primary ? "primary" : "secondary"}
                       size="sm"
                       onClick={() => onNavigate(a.path)}
-                      className="w-full"
+                      className="w-full text-xs sm:text-sm"
                     >
                       {a.label}
                     </Button>
@@ -340,9 +361,10 @@ export function AdminDashboardPresenter({
           </div>
         )}
 
-        {/* TABLES */}
+        {/* ── TABLES ── */}
         {selectedView === "tables" && (
           <div className="space-y-4">
+            {/* Status badges */}
             <div className="flex flex-wrap gap-2">
               {[
                 {
@@ -369,38 +391,41 @@ export function AdminDashboardPresenter({
                 </span>
               ))}
             </div>
+
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Card key={i} className="p-4 border-l-4 border-kot-chart">
+                  <Card key={i} className="p-3 border-l-4 border-kot-chart">
                     <Pulse className="h-5 w-8 mb-2" />
-                    <Pulse className="h-5 w-14 rounded-full mb-2" />
-                    <Pulse className="h-3 w-16" />
+                    <Pulse className="h-4 w-14 rounded-full mb-2" />
+                    <Pulse className="h-3 w-12" />
                   </Card>
                 ))}
               </div>
             ) : tables.length === 0 ? (
               <EmptyState icon="🪑" title="No tables found" />
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                 {tables.map((t) => {
                   const ts = getTableStyle(t.status);
                   return (
                     <div
                       key={t._id}
-                      className={`bg-kot-white rounded-2xl p-4 border-l-4 shadow-kot ${ts.border}`}
+                      className={`bg-kot-white rounded-xl p-3 border-l-4 shadow-kot ${ts.border}`}
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-lg font-bold text-kot-darker">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-base font-bold text-kot-darker">
                           T{t.tableNumber}
                         </p>
                         <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${ts.badge}`}
+                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium capitalize w-fit ${ts.badge}`}
                         >
                           {t.status}
                         </span>
+                        <p className="text-[10px] text-kot-text">
+                          {t.capacity} seats
+                        </p>
                       </div>
-                      <p className="text-xs text-kot-text">Cap: {t.capacity}</p>
                     </div>
                   );
                 })}
@@ -409,12 +434,12 @@ export function AdminDashboardPresenter({
           </div>
         )}
 
-        {/* ANALYTICS */}
+        {/* ── ANALYTICS ── */}
         {selectedView === "analytics" && (
           <div className="space-y-4">
-            <Card className="p-5">
-              <div className="flex justify-between items-center mb-5">
-                <h2 className="text-base font-bold text-kot-darker">
+            <Card className="p-4 sm:p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-sm sm:text-base font-bold text-kot-darker">
                   Hourly Sales
                 </h2>
                 <span className="text-xs text-kot-text capitalize">
@@ -434,28 +459,33 @@ export function AdminDashboardPresenter({
               ) : hourly.length === 0 ? (
                 <EmptyState icon="📊" title="No sales data yet" />
               ) : (
-                <div className="flex items-end gap-1.5 h-40 overflow-x-auto pb-2">
-                  {hourly.map((h) => (
-                    <div
-                      key={h.hour}
-                      className="flex flex-col items-center gap-0.5 flex-shrink-0"
-                      style={{ minWidth: "36px" }}
-                    >
-                      <p className="text-[9px] font-medium text-kot-darker">
-                        {h.revenue >= 1000
-                          ? `${(h.revenue / 1000).toFixed(1)}k`
-                          : h.revenue}
-                      </p>
+                <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                  <div
+                    className="flex items-end gap-1.5 h-40 pb-2"
+                    style={{ minWidth: `${hourly.length * 44}px` }}
+                  >
+                    {hourly.map((h) => (
                       <div
-                        className="w-8 bg-kot-dark rounded-t-lg hover:bg-kot-darker transition-colors"
-                        style={{
-                          height: `${Math.max((h.revenue / maxRevenue) * 100, 4)}px`,
-                        }}
-                        title={`${h.hour}: ₹${h.revenue}`}
-                      />
-                      <p className="text-[9px] text-kot-text">{h.hour}</p>
-                    </div>
-                  ))}
+                        key={h.hour}
+                        className="flex flex-col items-center gap-0.5 flex-shrink-0"
+                        style={{ minWidth: "36px" }}
+                      >
+                        <p className="text-[9px] font-medium text-kot-darker">
+                          {h.revenue >= 1000
+                            ? `${(h.revenue / 1000).toFixed(1)}k`
+                            : h.revenue}
+                        </p>
+                        <div
+                          className="w-8 bg-kot-dark rounded-t-lg hover:bg-kot-darker transition-colors"
+                          style={{
+                            height: `${Math.max((h.revenue / maxRevenue) * 120, 4)}px`,
+                          }}
+                          title={`${h.hour}: ₹${h.revenue}`}
+                        />
+                        <p className="text-[9px] text-kot-text">{h.hour}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </Card>

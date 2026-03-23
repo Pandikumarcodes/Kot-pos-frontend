@@ -3,7 +3,7 @@ import type { LoginPresenterProps } from "./Login.types";
 export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
   return (
     <div className="min-h-screen flex bg-kot-primary">
-      {/* ── Left Banner ── */}
+      {/* ── Left Banner — desktop only ── */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col justify-between p-10 xl:p-14 bg-kot-stats">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
@@ -13,6 +13,7 @@ export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
             KOT POS
           </span>
         </div>
+
         <div className="flex-1 flex flex-col justify-center items-center text-center px-6 xl:px-8">
           <div className="relative mb-10">
             <div className="w-20 h-20 xl:w-24 xl:h-24 rounded-3xl flex items-center justify-center mx-auto bg-kot-light shadow-kot-lg">
@@ -53,6 +54,7 @@ export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
             time.
           </p>
         </div>
+
         <div>
           <p className="text-xs mb-3 font-medium uppercase tracking-widest text-kot-text">
             Station Access
@@ -72,34 +74,34 @@ export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
 
       {/* ── Right Panel ── */}
       <div className="w-full lg:w-1/2 xl:w-[45%] flex items-center justify-center p-4 sm:p-6 xl:p-8">
-        <div className="w-full max-w-sm xl:max-w-md">
-          {/* Mobile logo */}
-          <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
-              <span className="text-white font-bold text-sm">K</span>
+        <div className="w-full max-w-sm">
+          {/* Mobile: logo + brand strip */}
+          <div className="lg:hidden mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
+                <span className="text-white font-bold text-sm">K</span>
+              </div>
+              <span className="font-bold text-lg text-kot-darker">KOT POS</span>
             </div>
-            <span className="font-bold text-lg text-kot-darker">KOT POS</span>
-          </div>
-
-          {/* Mobile brand strip */}
-          <div className="lg:hidden mb-6 p-4 bg-kot-stats rounded-2xl">
-            <p className="text-xs font-medium uppercase tracking-widest text-kot-text mb-2">
-              Station Access
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {["⚙️ Admin", "💳 Cashier", "🍽️ Waiter", "👨‍🍳 Chef"].map((r) => (
-                <span
-                  key={r}
-                  className="bg-kot-white text-xs px-2.5 py-1 rounded-full font-medium text-kot-dark shadow-kot"
-                >
-                  {r}
-                </span>
-              ))}
+            <div className="p-3 bg-kot-stats rounded-2xl">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-kot-text mb-2">
+                Station Access
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {["⚙️ Admin", "💳 Cashier", "🍽️ Waiter", "👨‍🍳 Chef"].map((r) => (
+                  <span
+                    key={r}
+                    className="bg-kot-white text-xs px-2.5 py-1 rounded-full font-medium text-kot-dark shadow-kot"
+                  >
+                    {r}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
           <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl xl:text-4xl font-bold mb-2 text-kot-darker">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-kot-darker">
               Welcome back
             </h1>
             <p className="text-sm text-kot-text">
@@ -110,11 +112,11 @@ export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
           {/* Sign In Card */}
           <div
             onClick={() => onNavigate("signin")}
-            className="group bg-kot-white rounded-2xl p-4 sm:p-6 mb-3 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg"
+            className="group bg-kot-white rounded-2xl p-4 sm:p-6 mb-3 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg active:scale-[0.99]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center bg-kot-light flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-kot-light flex-shrink-0">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -157,11 +159,11 @@ export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
           {/* Sign Up Card */}
           <div
             onClick={() => onNavigate("signup")}
-            className="group bg-kot-white rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg"
+            className="group bg-kot-white rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg active:scale-[0.99]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center bg-kot-stats flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-kot-stats flex-shrink-0">
                   <svg
                     className="w-5 h-5"
                     fill="none"

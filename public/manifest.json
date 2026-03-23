@@ -1,0 +1,60 @@
+{
+  "name": "KOT POS",
+  "short_name": "KOT POS",
+  "description": "Restaurant Point of Sale System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E6F2EB",
+  "theme_color": "#4A5F52",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "KOT POS Dashboard"
+    },
+    {
+      "src": "/icons/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "label": "KOT POS Mobile"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Tables",
+      "short_name": "Tables",
+      "url": "/waiter/tables",
+      "icons": [{ "src": "/icons/icon.png", "sizes": "512x512" }]
+    },
+    {
+      "name": "Kitchen",
+      "short_name": "Kitchen",
+      "url": "/chef/kot",
+      "icons": [{ "src": "/icons/icon.png", "sizes": "512x512" }]
+    },
+    {
+      "name": "Billing",
+      "short_name": "Billing",
+      "url": "/cashier/billing",
+      "icons": [{ "src": "/icons/icon.png", "sizes": "512x512" }]
+    }
+  ]
+}

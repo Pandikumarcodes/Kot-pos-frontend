@@ -60,7 +60,7 @@ export function SignUpPresenter({
 }: SignUpPresenterProps) {
   return (
     <div className="min-h-screen flex bg-kot-primary">
-      {/* ── Left Banner ── */}
+      {/* ── Left Banner — desktop only ── */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col justify-between p-10 xl:p-14 bg-kot-stats">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
@@ -161,7 +161,7 @@ export function SignUpPresenter({
 
       {/* ── Right Form ── */}
       <div className="w-full lg:w-1/2 xl:w-[45%] flex items-center justify-center p-4 sm:p-6 xl:p-8 overflow-y-auto">
-        <div className="w-full max-w-sm xl:max-w-md py-4 sm:py-8">
+        <div className="w-full max-w-sm py-4">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-5 lg:hidden">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-kot-dark">
@@ -172,7 +172,7 @@ export function SignUpPresenter({
 
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 mb-5 sm:mb-8 text-sm font-medium text-kot-text hover:text-kot-darker transition-colors"
+            className="flex items-center gap-1.5 mb-5 text-sm font-medium text-kot-text hover:text-kot-darker transition-colors"
           >
             <svg
               className="w-4 h-4"
@@ -190,8 +190,8 @@ export function SignUpPresenter({
             Back
           </button>
 
-          <div className="mb-5 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl xl:text-4xl font-bold mb-1 text-kot-darker">
+          <div className="mb-5">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1 text-kot-darker">
               Create Account
             </h1>
             <p className="text-sm text-kot-text">
@@ -223,31 +223,34 @@ export function SignUpPresenter({
                 onChange={(e) => onFieldChange("username", e.target.value)}
                 placeholder="e.g. john_waiter"
                 className={`${inputBase} ${errors.username ? "border-red-500" : ""}`}
+                autoComplete="username"
               />
               {errors.username && (
                 <p className="mt-1 text-xs text-red-500">{errors.username}</p>
               )}
             </div>
 
-            {/* Role */}
+            {/* Role — pill grid, scrollable on tiny screens */}
             <div>
               <label className="block text-sm font-medium mb-1.5 text-kot-darker">
                 Role
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {SIGNUP_ROLES.map((r) => (
                   <button
                     key={r.value}
                     type="button"
                     onClick={() => onFieldChange("role", r.value)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all duration-150 ${
+                    className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border-2 text-xs font-medium transition-all duration-150 ${
                       formData.role === r.value
                         ? "border-kot-dark bg-kot-light text-kot-darker"
-                        : "border-kot-chart bg-kot-white text-kot-text hover:border-kot-dark hover:text-kot-darker"
+                        : "border-kot-chart bg-kot-white text-kot-text hover:border-kot-dark"
                     }`}
                   >
-                    <span className="text-base leading-none">{r.emoji}</span>
-                    <span className="truncate">{r.label}</span>
+                    <span className="text-lg leading-none">{r.emoji}</span>
+                    <span className="truncate w-full text-center">
+                      {r.label}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -268,11 +271,12 @@ export function SignUpPresenter({
                   onChange={(e) => onFieldChange("password", e.target.value)}
                   placeholder="Min. 8 characters"
                   className={`${inputBase} pr-11 ${errors.password ? "border-red-500" : ""}`}
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
                   onClick={onTogglePassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker transition-colors p-1"
                 >
                   <EyeIcon show={showPassword} />
                 </button>
@@ -318,11 +322,12 @@ export function SignUpPresenter({
                   }
                   placeholder="Re-enter password"
                   className={`${inputBase} pr-11 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
                   onClick={onToggleConfirm}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker transition-colors p-1"
                 >
                   <EyeIcon show={showConfirm} />
                 </button>
@@ -363,7 +368,7 @@ export function SignUpPresenter({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 sm:py-3.5 rounded-xl text-sm font-semibold text-white bg-kot-dark hover:bg-kot-darker transition-all duration-200 disabled:opacity-60"
+              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-kot-dark hover:bg-kot-darker transition-all duration-200 disabled:opacity-60"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">

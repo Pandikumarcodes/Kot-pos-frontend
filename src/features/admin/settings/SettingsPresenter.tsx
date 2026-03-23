@@ -5,7 +5,6 @@ import {
   Input,
   Pulse,
   PageHeader,
-  TabBar,
   Toggle,
 } from "../../../UiComponents/Index";
 import type {
@@ -40,9 +39,9 @@ export function SettingsPresenter({
     return (
       <div className="min-h-screen bg-kot-primary p-4 space-y-4">
         <Pulse className="h-8 w-48" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="flex gap-2 overflow-x-auto">
           {TABS.map((t) => (
-            <Pulse key={t.key} className="h-10 rounded-xl" />
+            <Pulse key={t.key} className="h-10 w-28 rounded-xl flex-shrink-0" />
           ))}
         </div>
         <Card className="p-5 space-y-4">
@@ -58,16 +57,16 @@ export function SettingsPresenter({
   }
 
   const s = settings as Partial<Settings>;
-  const tabs = TABS.map((t) => ({ key: t.key, label: `${t.icon} ${t.label}` }));
 
   return (
     <div className="min-h-screen bg-kot-primary">
       <main className="p-3 sm:p-4 lg:p-6 max-w-3xl mx-auto space-y-4">
+        {/* ── Header ── */}
         <PageHeader
           title="Settings"
           sub="Configure your restaurant"
           actions={
-            <>
+            <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
                 size="sm"
@@ -75,7 +74,7 @@ export function SettingsPresenter({
                 className="flex items-center gap-1.5"
               >
                 <RefreshCw className="w-4 h-4" />
-                Reset
+                <span className="hidden sm:inline">Reset</span>
               </Button>
               {isAdmin && (
                 <Button
@@ -88,13 +87,13 @@ export function SettingsPresenter({
                   {saving ? "Saving…" : saved ? "Saved ✓" : "Save"}
                 </Button>
               )}
-            </>
+            </div>
           }
         />
 
-        {/* Error banner */}
+        {/* ── Error ── */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3">
             <p className="text-sm text-red-600">{error}</p>
             <Button variant="secondary" size="sm" onClick={onRetry}>
               Retry
@@ -102,16 +101,30 @@ export function SettingsPresenter({
           </div>
         )}
 
-        <TabBar<SettingsTab>
-          tabs={tabs}
-          active={activeTab}
-          onChange={onTabChange}
-        />
+        {/* ── Tab bar — scrollable on mobile ── */}
+        <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-none">
+          <div className="flex gap-1.5 w-max sm:w-auto">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => onTabChange(tab.key)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                  activeTab === tab.key
+                    ? "bg-kot-dark text-white"
+                    : "bg-kot-white text-kot-text hover:bg-kot-light border border-kot-chart"
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-        {/* General */}
+        {/* ── General ── */}
         {activeTab === "general" && (
-          <Card className="p-5 space-y-4">
-            <h2 className="text-base font-bold text-kot-darker">
+          <Card className="p-4 sm:p-5 space-y-3 sm:space-y-4">
+            <h2 className="text-sm sm:text-base font-bold text-kot-darker">
               General Settings
             </h2>
             <Input
@@ -135,18 +148,20 @@ export function SettingsPresenter({
               value={s?.address ?? ""}
               onChange={(e) => onUpdate("address", e.target.value)}
             />
-            <Input
-              label="Currency"
-              value={s?.currency ?? "INR"}
-              onChange={(e) => onUpdate("currency", e.target.value)}
-            />
-            <Input
-              label="Timezone"
-              value={s?.timezone ?? ""}
-              onChange={(e) => onUpdate("timezone", e.target.value)}
-              placeholder="e.g. Asia/Kolkata"
-            />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Currency"
+                value={s?.currency ?? "INR"}
+                onChange={(e) => onUpdate("currency", e.target.value)}
+              />
+              <Input
+                label="Timezone"
+                value={s?.timezone ?? ""}
+                onChange={(e) => onUpdate("timezone", e.target.value)}
+                placeholder="e.g. Asia/Kolkata"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <Input
                 label="Opening Time"
                 type="time"
@@ -163,26 +178,30 @@ export function SettingsPresenter({
           </Card>
         )}
 
-        {/* Restaurant */}
+        {/* ── Restaurant ── */}
         {activeTab === "restaurant" && (
-          <Card className="p-5 space-y-4">
-            <h2 className="text-base font-bold text-kot-darker">
+          <Card className="p-4 sm:p-5 space-y-3 sm:space-y-4">
+            <h2 className="text-sm sm:text-base font-bold text-kot-darker">
               Restaurant Settings
             </h2>
-            <Input
-              label="Max Capacity"
-              type="number"
-              value={s?.maxCapacity ?? 0}
-              onChange={(e) => onUpdate("maxCapacity", Number(e.target.value))}
-            />
-            <Input
-              label="Avg Service Time (mins)"
-              type="number"
-              value={s?.avgServiceTime ?? 0}
-              onChange={(e) =>
-                onUpdate("avgServiceTime", Number(e.target.value))
-              }
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Max Capacity"
+                type="number"
+                value={s?.maxCapacity ?? 0}
+                onChange={(e) =>
+                  onUpdate("maxCapacity", Number(e.target.value))
+                }
+              />
+              <Input
+                label="Avg Service (mins)"
+                type="number"
+                value={s?.avgServiceTime ?? 0}
+                onChange={(e) =>
+                  onUpdate("avgServiceTime", Number(e.target.value))
+                }
+              />
+            </div>
             <Toggle
               checked={s?.takeawayEnabled ?? false}
               onChange={(v) => onUpdate("takeawayEnabled", v)}
@@ -198,10 +217,10 @@ export function SettingsPresenter({
           </Card>
         )}
 
-        {/* Billing */}
+        {/* ── Billing ── */}
         {activeTab === "billing" && (
-          <Card className="p-5 space-y-4">
-            <h2 className="text-base font-bold text-kot-darker">
+          <Card className="p-4 sm:p-5 space-y-3 sm:space-y-4">
+            <h2 className="text-sm sm:text-base font-bold text-kot-darker">
               Billing Settings
             </h2>
             <Input
@@ -210,31 +229,33 @@ export function SettingsPresenter({
               onChange={(e) => onUpdate("gstin", e.target.value)}
               placeholder="22AAAAA0000A1Z5"
             />
-            <Input
-              label="Tax Rate (%)"
-              type="number"
-              value={s?.taxRate ?? 0}
-              onChange={(e) => onUpdate("taxRate", Number(e.target.value))}
-            />
-            <Input
-              label="Service Charge (%)"
-              type="number"
-              value={s?.serviceCharge ?? 0}
-              onChange={(e) =>
-                onUpdate("serviceCharge", Number(e.target.value))
-              }
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Tax Rate (%)"
+                type="number"
+                value={s?.taxRate ?? 0}
+                onChange={(e) => onUpdate("taxRate", Number(e.target.value))}
+              />
+              <Input
+                label="Service Charge (%)"
+                type="number"
+                value={s?.serviceCharge ?? 0}
+                onChange={(e) =>
+                  onUpdate("serviceCharge", Number(e.target.value))
+                }
+              />
+            </div>
             <Toggle
               checked={s?.autoRoundOff ?? false}
               onChange={(v) => onUpdate("autoRoundOff", v)}
               label="Auto Round Off"
-              desc="Round off bill total automatically"
+              desc="Round off bill total"
             />
             <Toggle
               checked={s?.printReceipt ?? false}
               onChange={(v) => onUpdate("printReceipt", v)}
               label="Auto Print Receipt"
-              desc="Print receipt automatically after billing"
+              desc="Print after billing"
             />
             <div className="pt-2 border-t border-kot-chart">
               <h3 className="text-sm font-bold text-kot-darker mb-3">
@@ -254,10 +275,10 @@ export function SettingsPresenter({
           </Card>
         )}
 
-        {/* Notifications */}
+        {/* ── Notifications ── */}
         {activeTab === "notifications" && (
-          <Card className="p-5 space-y-4">
-            <h2 className="text-base font-bold text-kot-darker">
+          <Card className="p-4 sm:p-5 space-y-3 sm:space-y-4">
+            <h2 className="text-sm sm:text-base font-bold text-kot-darker">
               Notification Settings
             </h2>
             <Toggle
@@ -270,7 +291,7 @@ export function SettingsPresenter({
               checked={s?.lowStockAlerts ?? false}
               onChange={(v) => onUpdate("lowStockAlerts", v)}
               label="Low Stock Alerts"
-              desc="Get notified when menu items are low"
+              desc="Get notified when items are low"
             />
             <Toggle
               checked={s?.emailNotifications ?? false}
@@ -279,6 +300,21 @@ export function SettingsPresenter({
               desc="Send notifications via email"
             />
           </Card>
+        )}
+
+        {/* ── Save reminder on mobile ── */}
+        {isAdmin && (
+          <div className="sm:hidden pb-4">
+            <Button
+              size="md"
+              onClick={onSave}
+              disabled={saving}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
+            </Button>
+          </div>
         )}
       </main>
     </div>

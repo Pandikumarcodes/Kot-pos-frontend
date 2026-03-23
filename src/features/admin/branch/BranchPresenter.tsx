@@ -52,7 +52,7 @@ const FORM_FIELDS = [
   {
     key: "phone",
     label: "Phone",
-    placeholder: "+91 98765 43210",
+    placeholder: "+91 8838781206",
     type: "tel",
     required: false,
   },

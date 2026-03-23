@@ -4,7 +4,7 @@ const BASE =
   import.meta.env.VITE_API_URL || "https://kot-pos-backend.onrender.com";
 
 // Plain axios — NOT the authenticated apiClient
-const publicApi = axios.create({ baseURL: BASE });
+const publicApi = axios.create({ baseURL: `${BASE}/api/v1` });
 
 export interface PublicMenuItem {
   _id: string;
@@ -25,7 +25,7 @@ export interface QrMenuResponse {
     address: string;
     phone: string;
   };
-  menu: Record<string, PublicMenuItem[]>; // category → items
+  menu: Record<string, PublicMenuItem[]>;
   categories: string[];
 }
 
