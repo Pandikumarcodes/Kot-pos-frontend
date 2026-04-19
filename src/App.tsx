@@ -25,12 +25,17 @@ export default function App() {
     const controller = new AbortController();
     dispatch(setAuthLoading(true));
 
+    // ✅ Fix: Show slow load message after 5s
     const slowTimer = setTimeout(() => setSlowLoad(true), 5000);
+
+    // ✅ Fix: Increased from 10s to 60s — Render free tier cold start
+    // takes up to 50 seconds. 10s was too short and caused clearCredentials
+    // to fire before the server woke up, making sidebar lose user role.
     const maxTimer = setTimeout(() => {
       controller.abort();
       dispatch(clearCredentials());
       dispatch(setAuthLoading(false));
-    }, 10000);
+    }, 60000);
 
     api
       .get("/auth/me", {
@@ -86,7 +91,7 @@ export default function App() {
               Starting server, please wait...
             </p>
             <p className="text-xs text-kot-text/60 mt-1">
-              This may take up to 30 seconds
+              This may take up to 50 seconds on first load
             </p>
           </div>
         )}
