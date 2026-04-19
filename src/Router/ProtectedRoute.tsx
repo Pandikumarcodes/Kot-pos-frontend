@@ -1,4 +1,3 @@
-// src/Router/ProtectedRoute.tsx
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAppSelector } from "../Store/hooks";
 import type { UserRole } from "../Store/Slices/authSlice";
@@ -55,7 +54,6 @@ export function PublicRoute() {
     );
   }
 
-  // ✅ Already logged in → go to their home page
   if (isAuthenticated && user) {
     return <Navigate to={ROLE_HOME[user.role] ?? "/admin/dashboard"} replace />;
   }

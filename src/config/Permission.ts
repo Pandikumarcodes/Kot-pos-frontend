@@ -16,6 +16,7 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/waiter/order": ["admin", "manager", "waiter"],
   "/chef/kot": ["admin", "chef"],
   "/cashier/billing": ["admin", "cashier"],
+  "/admin/ai": ["admin", "manager"],
 };
 
 // ── Role home pages ───────────────────────────────────────────
@@ -37,10 +38,12 @@ export const NAV_PERMISSIONS: Record<string, Role[]> = {
   Tables: ["admin", "manager", "waiter"],
   Kitchen: ["admin", "chef"],
   Billing: ["admin", "cashier"],
+  Orders: ["admin", "manager"],
   Customers: ["admin", "manager"],
   Staff: ["admin"],
   Reports: ["admin", "manager"],
   Settings: ["admin"],
+  Bots: ["admin", "manager"],
 };
 
 // ── Feature-level permissions ─────────────────────────────────

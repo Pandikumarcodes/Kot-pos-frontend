@@ -1,4 +1,3 @@
-// ✅ After
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
@@ -7,7 +6,7 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
-  note?: string; // special instruction per item
+  note?: string;
 }
 
 interface CartState {

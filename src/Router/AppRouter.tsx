@@ -50,7 +50,9 @@ const InventoryPage = lazy(
   () => import("../features/admin/inventory/InventoryContainer"),
 );
 const QrMenuPage = lazy(() => import("../features/qrCode/QrMenuContainer"));
-
+const AiInsightsPage = lazy(
+  () => import("../features/admin/aiAssitent/AiInsightscontainer"),
+);
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen bg-kot-primary">
     <div className="animate-spin rounded-full h-10 w-10 border-4 border-kot-dark border-t-transparent" />
@@ -131,7 +133,9 @@ export default function AppRouter() {
         >
           <Route path="/admin/inventory" element={<InventoryPage />} />
         </Route>
-
+        <Route element={<ProtectedRoute allowedRoles={r("/admin/ai")} />}>
+          <Route path="/admin/ai" element={<AiInsightsPage />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
