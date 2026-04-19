@@ -21,6 +21,7 @@ import {
   Package,
   ClipboardList,
   X,
+  Bot,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { getBranchesApi } from "../../services/adminApi/Branch.api";
@@ -45,6 +46,7 @@ const NAV_LINKS: NavLink[] = [
   { label: "Staff", to: "/admin/staff", icon: Users },
   { label: "Reports", to: "/admin/reports", icon: BarChart3 },
   { label: "Settings", to: "/admin/settings", icon: Settings },
+  { label: "Bots", to: "/admin/ai", icon: Bot },
 ];
 
 // ── Props: accept isOpen + onClose from parent (App.tsx) ─────

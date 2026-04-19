@@ -209,6 +209,7 @@ export function SignInPresenter({
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   onClick={onTogglePassword}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker transition-colors p-1"
                 >
