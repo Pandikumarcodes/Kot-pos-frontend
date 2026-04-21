@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Bot,
   RefreshCw,
@@ -9,13 +10,12 @@ import {
   TrendingUp,
   Clock,
   ShoppingBag,
-  Send,
   Sparkles,
   User,
 } from "lucide-react";
 
 import type { AiInsightsPresenterProps } from "./AiInsights.types";
-import { QUICK_QUESTIONS } from "./AiInsights.types";
+import { CATEGORIZED_QUESTIONS } from "./AiInsights.types";
 
 const LEVEL_CONFIG = {
   critical: {
@@ -48,6 +48,13 @@ const LEVEL_CONFIG = {
   },
 };
 
+const CHAT_CATEGORIES = [
+  { id: "sales", emoji: "📊", label: "Sales" },
+  { id: "menu", emoji: "🍽️", label: "Menu" },
+  { id: "ops", emoji: "⏰", label: "Ops" },
+  { id: "staff", emoji: "👥", label: "Staff" },
+];
+
 export function AiInsightsPresenter({
   activeTab,
   onTabChange,
@@ -65,9 +72,7 @@ export function AiInsightsPresenter({
   onRetryAlerts,
   onRefresh,
   messages,
-  chatInput,
   chatLoading,
-  onChatInputChange,
   onChatSend,
   messagesEndRef,
 }: AiInsightsPresenterProps) {
@@ -75,6 +80,8 @@ export function AiInsightsPresenter({
     filterLevel === "all"
       ? alerts
       : alerts.filter((a) => a.level === filterLevel);
+
+  const [chatCategory, setChatCategory] = useState("sales");
 
   return (
     <div className="min-h-screen bg-kot-primary">
@@ -94,7 +101,6 @@ export function AiInsightsPresenter({
               </p>
             </div>
           </div>
-          {/* Refresh hidden on chat tab — nothing to reload */}
           {activeTab !== "chat" && (
             <button
               onClick={onRefresh}
@@ -242,13 +248,7 @@ export function AiInsightsPresenter({
                               >
                                 <div className="flex items-center gap-2">
                                   <span
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                                      i === 0
-                                        ? "bg-yellow-500"
-                                        : i === 1
-                                          ? "bg-gray-400"
-                                          : "bg-orange-500"
-                                    }`}
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${i === 0 ? "bg-yellow-500" : i === 1 ? "bg-gray-400" : "bg-orange-500"}`}
                                   >
                                     {i + 1}
                                   </span>
@@ -490,11 +490,34 @@ export function AiInsightsPresenter({
         )}
 
         {/* ════════════════════════════════════════════════════
-            TAB 3 — AI CHAT
+            TAB 3 — AI CHAT (no text input — category tabs only)
         ════════════════════════════════════════════════════ */}
         {activeTab === "chat" && (
-          <div className="space-y-4">
-            <div className="bg-kot-white rounded-2xl shadow-kot flex flex-col h-[500px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* ── Left: Chat Window ────────────────────────── */}
+            <div className="bg-kot-white rounded-2xl shadow-kot flex flex-col h-[520px]">
+              {/* Chat header */}
+              <div className="px-4 py-3 border-b border-kot-chart flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-kot-dark flex items-center justify-center">
+                  <Bot size={14} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-kot-darker">
+                    KOT Assistant
+                  </p>
+                  <p className="text-[10px] text-emerald-600 font-medium">
+                    ● Active
+                  </p>
+                </div>
+                <div className="ml-auto flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-medium text-emerald-700">
+                    Online
+                  </span>
+                </div>
+              </div>
+
+              {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map((msg) => (
                   <div
@@ -502,30 +525,22 @@ export function AiInsightsPresenter({
                     className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        msg.role === "ai" ? "bg-kot-dark" : "bg-kot-stats"
-                      }`}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === "ai" ? "bg-kot-dark" : "bg-kot-stats"}`}
                     >
                       {msg.role === "ai" ? (
-                        <Bot size={16} className="text-white" />
+                        <Bot size={14} className="text-white" />
                       ) : (
-                        <User size={16} className="text-kot-darker" />
+                        <User size={14} className="text-kot-darker" />
                       )}
                     </div>
-                    <div className="flex flex-col gap-1 max-w-[75%]">
+                    <div className="flex flex-col gap-1 max-w-[80%]">
                       <div
-                        className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                          msg.role === "ai"
-                            ? "bg-kot-light text-kot-darker rounded-tl-none"
-                            : "bg-kot-dark text-white rounded-tr-none"
-                        }`}
+                        className={`px-3 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === "ai" ? "bg-kot-light text-kot-darker rounded-tl-none" : "bg-kot-dark text-white rounded-tr-none"}`}
                       >
                         {msg.text}
                       </div>
                       <span
-                        className={`text-[10px] text-kot-text ${
-                          msg.role === "user" ? "text-right" : ""
-                        }`}
+                        className={`text-[10px] text-kot-text ${msg.role === "user" ? "text-right" : ""}`}
                       >
                         {msg.timestamp.toLocaleTimeString("en-IN", {
                           hour: "2-digit",
@@ -536,23 +551,24 @@ export function AiInsightsPresenter({
                   </div>
                 ))}
 
+                {/* Loading indicator */}
                 {chatLoading && (
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-kot-dark flex items-center justify-center flex-shrink-0">
-                      <Bot size={16} className="text-white" />
+                    <div className="w-7 h-7 rounded-full bg-kot-dark flex items-center justify-center flex-shrink-0">
+                      <Bot size={14} className="text-white" />
                     </div>
-                    <div className="px-4 py-3 rounded-2xl rounded-tl-none bg-kot-light">
-                      <div className="flex gap-1 items-center">
+                    <div className="px-3 py-2.5 rounded-2xl rounded-tl-none bg-kot-light">
+                      <div className="flex gap-1 items-center h-4">
                         <div
-                          className="w-2 h-2 rounded-full bg-kot-dark animate-bounce"
+                          className="w-1.5 h-1.5 rounded-full bg-kot-dark animate-bounce"
                           style={{ animationDelay: "0ms" }}
                         />
                         <div
-                          className="w-2 h-2 rounded-full bg-kot-dark animate-bounce"
+                          className="w-1.5 h-1.5 rounded-full bg-kot-dark animate-bounce"
                           style={{ animationDelay: "150ms" }}
                         />
                         <div
-                          className="w-2 h-2 rounded-full bg-kot-dark animate-bounce"
+                          className="w-1.5 h-1.5 rounded-full bg-kot-dark animate-bounce"
                           style={{ animationDelay: "300ms" }}
                         />
                       </div>
@@ -562,54 +578,73 @@ export function AiInsightsPresenter({
                 <div ref={messagesEndRef} />
               </div>
 
-              <div className="border-t border-kot-chart p-4">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => onChatInputChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        onChatSend(chatInput);
-                      }
-                    }}
-                    placeholder="Ask about sales, orders, staff, menu..."
-                    disabled={chatLoading}
-                    className="flex-1 px-4 py-3 rounded-xl border-2 border-kot-chart bg-kot-white text-kot-darker text-sm focus:outline-none focus:border-kot-dark placeholder:text-kot-text/50 disabled:opacity-50"
-                  />
-                  <button
-                    onClick={() => onChatSend(chatInput)}
-                    disabled={chatLoading || !chatInput.trim()}
-                    className="px-4 py-3 bg-kot-dark hover:bg-kot-darker text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send size={18} />
-                  </button>
-                </div>
-                <p className="text-xs text-kot-text mt-2 text-center">
-                  Press Enter to send · AI analyzes your live restaurant data
+              {/* Bottom hint — replaces text input */}
+              <div className="px-4 py-3 border-t border-kot-chart">
+                <p className="text-xs text-kot-text text-center">
+                  👉 Select a question from the panel to get started
                 </p>
               </div>
             </div>
 
-            <div className="bg-kot-white rounded-2xl p-5 shadow-kot">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles size={16} className="text-kot-dark" />
-                <p className="text-sm font-semibold text-kot-darker">
-                  Quick Questions
+            {/* ── Right: Question Panel ────────────────────── */}
+            <div className="bg-kot-white rounded-2xl shadow-kot flex flex-col h-[520px]">
+              {/* Panel header */}
+              <div className="px-4 py-3 border-b border-kot-chart">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={15} className="text-kot-dark" />
+                  <p className="text-sm font-semibold text-kot-darker">
+                    Quick Questions
+                  </p>
+                </div>
+                <p className="text-xs text-kot-text mt-0.5">
+                  Click any question to get instant AI insights
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {QUICK_QUESTIONS.map((q) => (
+
+              {/* Category tabs */}
+              <div className="flex border-b border-kot-chart">
+                {CHAT_CATEGORIES.map((cat) => (
                   <button
-                    key={q}
-                    onClick={() => onChatSend(q)}
-                    disabled={chatLoading}
-                    className="px-3 py-1.5 bg-kot-light hover:bg-kot-stats rounded-xl text-xs font-medium text-kot-darker border border-kot-chart transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    key={cat.id}
+                    onClick={() => setChatCategory(cat.id)}
+                    className={`flex-1 py-2.5 text-xs font-medium transition-colors flex flex-col items-center gap-0.5 ${
+                      chatCategory === cat.id
+                        ? "text-kot-darker border-b-2 border-kot-dark bg-kot-light"
+                        : "text-kot-text hover:text-kot-darker hover:bg-kot-light/50"
+                    }`}
                   >
-                    {q}
+                    <span className="text-base">{cat.emoji}</span>
+                    <span>{cat.label}</span>
                   </button>
                 ))}
+              </div>
+
+              {/* Questions list */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {CATEGORIZED_QUESTIONS[chatCategory]?.map((question) => (
+                  <button
+                    key={question}
+                    onClick={() => onChatSend(question)}
+                    disabled={chatLoading}
+                    className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                      chatLoading
+                        ? "opacity-50 cursor-not-allowed border-kot-chart text-kot-text bg-kot-light/50"
+                        : "border-kot-chart text-kot-darker bg-kot-white hover:border-kot-dark hover:bg-kot-light hover:shadow-sm active:scale-[0.98]"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-kot-dark font-bold">→</span>
+                      {question}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Panel footer */}
+              <div className="px-4 py-3 border-t border-kot-chart bg-kot-light/50 rounded-b-2xl">
+                <p className="text-[10px] text-kot-text text-center">
+                  AI analyzes your live restaurant data in real time
+                </p>
               </div>
             </div>
           </div>

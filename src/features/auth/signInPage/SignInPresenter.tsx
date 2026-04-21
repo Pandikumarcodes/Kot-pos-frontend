@@ -46,15 +46,119 @@ export function SignInPresenter({
   isLoading,
   rememberMe,
   showPassword,
+  showForgotModal,
   onFieldChange,
   onTogglePassword,
   onToggleRemember,
   onSubmit,
   onBack,
   onSignUp,
+  onForgotPassword,
+  onCloseForgotModal,
 }: SignInPresenterProps) {
   return (
     <div className="min-h-screen flex bg-kot-primary">
+      {/* ── Forgot Password Modal ─────────────────────────── */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-kot-white rounded-2xl p-6 w-full max-w-sm shadow-kot-lg">
+            {/* Modal header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-kot-stats flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 text-kot-dark"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-bold text-kot-darker">
+                  Forgot Password?
+                </h2>
+              </div>
+              <button
+                onClick={onCloseForgotModal}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-kot-text hover:bg-kot-light hover:text-kot-darker transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-kot-chart mb-4" />
+
+            {/* Info */}
+            <div className="bg-kot-stats rounded-xl p-4 mb-4">
+              <p className="text-sm text-kot-darker leading-relaxed">
+                🔐 Password resets for KOT POS are managed by your restaurant
+                admin.
+              </p>
+            </div>
+
+            {/* Steps */}
+            <div className="space-y-3 mb-5">
+              {[
+                { step: "1", text: "Contact your restaurant admin or manager" },
+                {
+                  step: "2",
+                  text: "Ask them to reset your password from Staff Management",
+                },
+                { step: "3", text: "Use your new password to sign in" },
+              ].map((item) => (
+                <div key={item.step} className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-kot-dark flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-white text-xs font-bold">
+                      {item.step}
+                    </span>
+                  </div>
+                  <p className="text-sm text-kot-text">{item.text}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Admin info box */}
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-5 flex items-start gap-2">
+              <span className="text-emerald-600 text-base flex-shrink-0">
+                💡
+              </span>
+              <p className="text-xs text-emerald-700 leading-relaxed">
+                Admin can reset passwords from the{" "}
+                <span className="font-semibold">Staff Management</span> page
+                under the Admin dashboard.
+              </p>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={onCloseForgotModal}
+              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-kot-dark hover:bg-kot-darker transition-all"
+            >
+              Got it, thanks!
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Left Banner — desktop only ── */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col justify-between p-10 xl:p-14 bg-kot-stats">
         <div className="flex items-center gap-3">
@@ -221,7 +325,7 @@ export function SignInPresenter({
               )}
             </div>
 
-            {/* Remember me */}
+            {/* Remember me + Forgot password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -232,8 +336,10 @@ export function SignInPresenter({
                 />
                 <span className="text-xs text-kot-text">Remember me</span>
               </label>
+              {/* ✅ Fixed: now calls onForgotPassword */}
               <button
                 type="button"
+                onClick={onForgotPassword}
                 className="text-xs font-medium text-kot-dark hover:text-kot-darker transition-colors"
               >
                 Forgot password?

@@ -27,7 +27,6 @@ export default function AiInsightsContainer() {
   const [filterLevel, setFilterLevel] = useState<AlertFilterLevel>("all");
 
   // ── Track which tabs have already been fetched ────────────
-
   const fetchedTabs = useRef<Set<ActiveTab>>(new Set());
 
   // ── Chat state ────────────────────────────────────────────
@@ -35,11 +34,10 @@ export default function AiInsightsContainer() {
     {
       id: "welcome",
       role: "ai",
-      text: "Hi! I'm your KOT POS AI assistant. Ask me anything about your sales, orders, staff or menu performance.",
+      text: "Hi! I'm your KOT POS AI assistant. Click any question from the panel to get instant insights about your restaurant data.",
       timestamp: new Date(),
     },
   ]);
-  const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -75,26 +73,20 @@ export default function AiInsightsContainer() {
     }
   }, []);
 
-  // ── Tab change — fetch only on first visit, not every switch
+  // ── Tab change ────────────────────────────────────────────
   const handleTabChange = useCallback(
     (tab: ActiveTab) => {
       setActiveTab(tab);
-
-      // Chat tab needs no fetch
       if (tab === "chat") return;
-
-      // Already fetched this tab — don't call Gemini again
       if (fetchedTabs.current.has(tab)) return;
-
       fetchedTabs.current.add(tab);
-
       if (tab === "summary") fetchSummary();
       else if (tab === "inventory") fetchAlerts();
     },
     [fetchSummary, fetchAlerts],
   );
 
-  // ── Refresh — force re-fetch current tab only ─────────────
+  // ── Refresh ───────────────────────────────────────────────
   const handleRefresh = useCallback(() => {
     if (activeTab === "summary") {
       fetchedTabs.current.delete("summary");
@@ -107,10 +99,10 @@ export default function AiInsightsContainer() {
     }
   }, [activeTab, fetchSummary, fetchAlerts]);
 
-  // ── Chat send ─────────────────────────────────────────────
+  // ── Chat send — triggered by clicking a question button ───
   const handleChatSend = useCallback(
-    async (messageText: string) => {
-      const trimmed = messageText.trim();
+    async (question: string) => {
+      const trimmed = question.trim();
       if (!trimmed || chatLoading) return;
 
       const userMsg: Message = {
@@ -120,13 +112,14 @@ export default function AiInsightsContainer() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, userMsg]);
-      setChatInput("");
       setChatLoading(true);
 
-      try {
-        // Use already-loaded summaryData from state — no extra API call
-        const context = summaryData ?? {};
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
 
+      try {
+        const context = summaryData ?? {};
         const { data } = await api.post("/ai/chat", {
           message: trimmed,
           context,
@@ -178,9 +171,7 @@ export default function AiInsightsContainer() {
       onRetryAlerts={fetchAlerts}
       onRefresh={handleRefresh}
       messages={messages}
-      chatInput={chatInput}
       chatLoading={chatLoading}
-      onChatInputChange={setChatInput}
       onChatSend={handleChatSend}
       messagesEndRef={messagesEndRef}
     />

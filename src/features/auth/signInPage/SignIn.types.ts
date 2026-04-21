@@ -15,10 +15,13 @@ export interface SignInPresenterProps {
   isLoading: boolean;
   rememberMe: boolean;
   showPassword: boolean;
+  showForgotModal: boolean;
   onFieldChange: (field: keyof SignInFormData, value: string) => void;
   onTogglePassword: () => void;
   onToggleRemember: (v: boolean) => void;
   onSubmit: (e: React.FormEvent) => void;
   onBack: () => void;
   onSignUp: () => void;
+  onForgotPassword: () => void;
+  onCloseForgotModal: () => void;
 }

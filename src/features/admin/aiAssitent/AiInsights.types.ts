@@ -1,3 +1,5 @@
+import React from "react";
+
 export interface InventoryAlert {
   _id: string;
   name: string;
@@ -32,6 +34,7 @@ export interface SummaryData {
   avgOrderValue: string;
   criticalStockItems: string[];
 }
+
 export interface Message {
   id: string;
   role: "user" | "ai";
@@ -68,12 +71,42 @@ export interface AiInsightsPresenterProps {
 
   // Chat
   messages: Message[];
-  chatInput: string;
   chatLoading: boolean;
-  onChatInputChange: (value: string) => void;
   onChatSend: (text: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
 }
+
+// ── Categorized questions for chat tab ────────────────────────
+export const CATEGORIZED_QUESTIONS: Record<string, string[]> = {
+  sales: [
+    "What was my total revenue yesterday?",
+    "What is my average order value?",
+    "Which payment method is most used?",
+    "Compare today's sales with yesterday",
+    "How many orders did I get this week?",
+  ],
+  menu: [
+    "Which item sold the most today?",
+    "What are my top 5 best selling items?",
+    "Which items are selling slow?",
+    "What is the most popular category?",
+    "Which item generates most revenue?",
+  ],
+  ops: [
+    "What are my peak hours?",
+    "How many dine-in vs takeaway orders?",
+    "What is the busiest day of the week?",
+    "What time do most customers arrive?",
+  ],
+  staff: [
+    "Which waiter had the most orders?",
+    "Who is the top performing staff today?",
+    "How many orders per waiter on average?",
+    "Which shift is most productive?",
+  ],
+};
+
+// kept for backward compat — no longer used in chat tab
 export const QUICK_QUESTIONS = [
   "What was my total revenue yesterday?",
   "Which item sold the most today?",

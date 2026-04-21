@@ -27,6 +27,7 @@ export default function SignInContainer() {
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const handleFieldChange = (field: keyof SignInFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -75,12 +76,15 @@ export default function SignInContainer() {
       isLoading={isLoading}
       rememberMe={rememberMe}
       showPassword={showPassword}
+      showForgotModal={showForgotModal}
       onFieldChange={handleFieldChange}
       onTogglePassword={() => setShowPassword((v) => !v)}
       onToggleRemember={setRememberMe}
       onSubmit={handleSubmit}
       onBack={() => navigate("/login")}
       onSignUp={() => navigate("/signup")}
+      onForgotPassword={() => setShowForgotModal(true)}
+      onCloseForgotModal={() => setShowForgotModal(false)}
     />
   );
 }
