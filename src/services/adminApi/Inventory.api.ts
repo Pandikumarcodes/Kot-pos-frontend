@@ -30,7 +30,7 @@ export interface InventoryItem {
   costPerUnit: number;
   supplier: string;
   isActive: boolean;
-  isLowStock: boolean; // virtual from backend
+  isLowStock: boolean;
   createdAt: string;
   updatedAt: string;
 }
