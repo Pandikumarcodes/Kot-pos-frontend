@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   getSummaryApi,
   getTopItemsApi,
@@ -25,27 +25,17 @@ export default function ReportsPageContainer() {
   const [payments, setPayments] = useState<PaymentStat[]>([]);
   const [hourly, setHourly] = useState<HourlyStat[]>([]);
 
-  const customDatesRef = useRef({ from, to });
-  useEffect(() => {
-    customDatesRef.current = { from, to };
-  }, [from, to]);
-
-  // ✅ Only depends on `range` — not from/to
   const fetchAll = useCallback(
-    async (showRefresh = false) => {
+    async (nextRange: DateRange, customFrom?: string, customTo?: string) => {
       try {
-        if (showRefresh) setRefreshing(true);
-        else setLoading(true);
-
-        // Read latest custom dates from ref at call time
-        const f = range === "custom" ? customDatesRef.current.from : undefined;
-        const t = range === "custom" ? customDatesRef.current.to : undefined;
+        const f = nextRange === "custom" ? customFrom : undefined;
+        const t = nextRange === "custom" ? customTo : undefined;
 
         const [sRes, tRes, pRes, hRes] = await Promise.all([
-          getSummaryApi(range, f, t),
-          getTopItemsApi(range, f, t),
-          getPaymentsApi(range, f, t),
-          getHourlyApi(range, f, t),
+          getSummaryApi(nextRange, f, t),
+          getTopItemsApi(nextRange, f, t),
+          getPaymentsApi(nextRange, f, t),
+          getHourlyApi(nextRange, f, t),
         ]);
         setSummary(sRes.data);
         setTopItems(tRes.data.topItems);
@@ -58,13 +48,56 @@ export default function ReportsPageContainer() {
         setRefreshing(false);
       }
     },
-    [range], // ✅ from/to removed — no more keystroke re-fires
+    [],
   );
 
-  // ✅ Only auto-fetch for preset ranges, not custom
   useEffect(() => {
-    if (range !== "custom") fetchAll();
-  }, [fetchAll, range]);
+    let ignore = false;
+    Promise.all([
+      getSummaryApi("today"),
+      getTopItemsApi("today"),
+      getPaymentsApi("today"),
+      getHourlyApi("today"),
+    ])
+      .then(([sRes, tRes, pRes, hRes]) => {
+        if (ignore) return;
+        setSummary(sRes.data);
+        setTopItems(tRes.data.topItems);
+        setPayments(pRes.data.payments);
+        setHourly(hRes.data.hourly);
+      })
+      .catch((err) => {
+        if (!ignore) console.error(err);
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const handleRangeChange = (nextRange: DateRange) => {
+    setRange(nextRange);
+    if (nextRange !== "custom") {
+      setLoading(true);
+      void fetchAll(nextRange);
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    void fetchAll(range, from, to);
+  };
+
+  const handleApplyCustom = () => {
+    if (!from || !to) return;
+    setLoading(true);
+    void fetchAll("custom", from, to);
+  };
 
   return (
     <ReportsPresenter
@@ -77,11 +110,11 @@ export default function ReportsPageContainer() {
       range={range}
       from={from}
       to={to}
-      onRangeChange={setRange}
+      onRangeChange={handleRangeChange}
       onFromChange={setFrom}
       onToChange={setTo}
-      onRefresh={() => fetchAll(true)}
-      onApplyCustom={() => from && to && fetchAll()} // ✅ manual trigger only
+      onRefresh={handleRefresh}
+      onApplyCustom={handleApplyCustom}
     />
   );
 }

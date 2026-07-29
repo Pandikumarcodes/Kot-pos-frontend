@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import {
   getPublicMenuApi,
@@ -30,6 +30,7 @@ export default function QrMenuContainer() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState("");
+  const placingRef = useRef(false);
 
   // ── Confirmed ────────────────────────────────────────────
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -62,9 +63,12 @@ export default function QrMenuContainer() {
 
   useEffect(() => {
     if (step !== "confirmed" || !orderId) return;
-    pollStatus();
-    const id = setInterval(pollStatus, 10_000);
-    return () => clearInterval(id);
+    const initialPollId = setTimeout(pollStatus, 0);
+    const intervalId = setInterval(pollStatus, 10_000);
+    return () => {
+      clearTimeout(initialPollId);
+      clearInterval(intervalId);
+    };
   }, [step, orderId, pollStatus]);
 
   // ── Cart helpers ──────────────────────────────────────────
@@ -106,7 +110,9 @@ export default function QrMenuContainer() {
 
   // ── Place order ───────────────────────────────────────────
   const handlePlaceOrder = async () => {
-    if (!tableId || cart.length === 0) return;
+    if (!tableId || cart.length === 0 || placingRef.current) return;
+
+    placingRef.current = true;
     setOrderError("");
     try {
       setPlacing(true);
@@ -115,15 +121,26 @@ export default function QrMenuContainer() {
         customerPhone: customerPhone.trim() || undefined,
         items: cart.map((c) => ({ itemId: c.itemId, quantity: c.quantity })),
       });
-      setOrderId(data.orderId);
+      const confirmedOrderId = data.orderId?.trim();
+      if (!confirmedOrderId) {
+        throw new Error("Order creation did not return a reference.");
+      }
+
+      setOrderId(confirmedOrderId);
       setCart([]);
       setStep("confirmed");
     } catch (err) {
-      const e = err as { response?: { data?: { error?: string } } };
+      const e = err as {
+        message?: string;
+        response?: { data?: { error?: string } };
+      };
       setOrderError(
-        e?.response?.data?.error || "Failed to place order. Try again.",
+        e?.response?.data?.error ||
+          e.message ||
+          "Failed to place order. Try again.",
       );
     } finally {
+      placingRef.current = false;
       setPlacing(false);
     }
   };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAppSelector } from "../../../Store/hooks";
 import {
   getMenuItemsApi,
@@ -10,7 +10,7 @@ import type {
   MenuItem,
   CreateMenuPayload,
 } from "../../../services/adminApi/Menu.api";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import {
   validateMenuItem,
   hasErrors,
@@ -38,10 +38,8 @@ export default function MenuManagementContainer() {
     available: true,
   });
 
-  const fetchMenuItems = async () => {
+  const fetchMenuItems = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const { data } = await getMenuItemsApi();
       setMenuItems(data.menuItems);
     } catch (err) {
@@ -50,11 +48,32 @@ export default function MenuManagementContainer() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchMenuItems();
+    let ignore = false;
+    getMenuItemsApi()
+      .then(({ data }) => {
+        if (!ignore) setMenuItems(data.menuItems);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        const e = err as { response?: { data?: { error?: string } } };
+        setError(e?.response?.data?.error || "Failed to load menu items");
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    void fetchMenuItems();
+  };
 
   // Derived — computed in container
   const filteredItems = (
@@ -180,7 +199,7 @@ export default function MenuManagementContainer() {
       onSubmit={handleSubmit}
       onDelete={handleDelete}
       onToggle={handleToggle}
-      onRetry={fetchMenuItems}
+      onRetry={handleRetry}
     />
   );
 }

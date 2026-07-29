@@ -8,7 +8,7 @@ import {
   markBillPaidApi,
 } from "../../../services/CashierApi/cashier.api";
 import type { Bill } from "../../../services/CashierApi/cashier.api";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { usePrint } from "../../../hooks/usePrint";
 import { getSettingsApi } from "../../../services/adminApi/Settings.api";
@@ -38,7 +38,7 @@ export default function BillingContainer() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [menuLoading, setMenuLoading] = useState(false);
+  const [menuLoading, setMenuLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [kotSent, setKotSent] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
@@ -72,27 +72,28 @@ export default function BillingContainer() {
 
   // ── Fetch menu on mount ───────────────────────────────────
   useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        setMenuLoading(true);
-        const res = await api.get<{ menuItems: MenuItem[] }>(
-          "/admin/menuItems",
-        );
-        setMenuItems(res.data.menuItems.filter((i) => i.available));
-      } catch {
+    let ignore = false;
+    api
+      .get<{ menuItems: MenuItem[] }>("/admin/menuItems")
+      .then((res) => {
+        if (!ignore) {
+          setMenuItems(res.data.menuItems.filter((i) => i.available));
+        }
+      })
+      .catch(() => {
         /* silently fail */
-      } finally {
-        setMenuLoading(false);
-      }
+      })
+      .finally(() => {
+        if (!ignore) setMenuLoading(false);
+      });
+    return () => {
+      ignore = true;
     };
-    fetchMenu();
   }, []);
 
   // ── Fetch bills when switching to bills tab ───────────────
   const fetchBills = async () => {
     try {
-      setBillsLoading(true);
-      setBillsError(null);
       const res = await getBillsApi();
       setBills(res.data.myBills);
     } catch (err) {
@@ -105,9 +106,20 @@ export default function BillingContainer() {
     }
   };
 
-  useEffect(() => {
-    if (activeTab === "bills") fetchBills();
-  }, [activeTab]);
+  const handleTabChange = (nextTab: Tab) => {
+    setActiveTab(nextTab);
+    if (nextTab === "bills") {
+      setBillsLoading(true);
+      setBillsError(null);
+      void fetchBills();
+    }
+  };
+
+  const handleRetryBills = () => {
+    setBillsLoading(true);
+    setBillsError(null);
+    void fetchBills();
+  };
 
   // ── Derived ───────────────────────────────────────────────
   const categories = [
@@ -251,7 +263,7 @@ export default function BillingContainer() {
   return (
     <BillingPresenter
       activeTab={activeTab}
-      onTabChange={setActiveTab}
+      onTabChange={handleTabChange}
       step={step}
       customerForm={customerForm}
       onCustomerChange={(f, v) => setCustomerForm((p) => ({ ...p, [f]: v }))}
@@ -288,7 +300,7 @@ export default function BillingContainer() {
       invoiceBill={invoiceBill}
       onSetInvoiceBill={setInvoiceBill}
       onMarkPaid={handleMarkPaid}
-      onRetryBills={fetchBills}
+      onRetryBills={handleRetryBills}
       onPrintBill={handlePrintBill}
     />
   );

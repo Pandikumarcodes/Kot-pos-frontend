@@ -38,12 +38,22 @@ const THERMAL_CSS = `
   .col3 .amt   { min-width: 52px; text-align: right; }
 `;
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function openPrint(html: string) {
   const win = window.open("", "_blank", "width=420,height=640");
   if (!win) {
     alert("Please allow popups to enable printing.");
     return;
   }
+  win.opener = null;
   win.document.write(html);
   win.document.close();
   setTimeout(() => {
@@ -71,8 +81,8 @@ function kotHtml(kot: Kot, s?: Partial<Settings>): string {
     .map(
       (i) => `
     <div class="row mb1">
-      <span class="b">${i.quantity}x</span>
-      <span style="flex:1;padding:0 4px">${i.name}</span>
+      <span class="b">${escapeHtml(i.quantity)}x</span>
+      <span style="flex:1;padding:0 4px">${escapeHtml(i.name)}</span>
     </div>
   `,
     )
@@ -82,20 +92,20 @@ function kotHtml(kot: Kot, s?: Partial<Settings>): string {
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>KOT</title><style>${THERMAL_CSS}</style></head><body><div class="wrap">
-    <div class="c b lg mb1">${s?.businessName || "KOT POS"}</div>
+    <div class="c b lg mb1">${escapeHtml(s?.businessName || "KOT POS")}</div>
     <div class="c sm mb2">KITCHEN ORDER TICKET</div>
     <div class="solid"></div>
     <div class="row b mb1">
-      <span>KOT #${(kot as unknown as { kotNumber?: string | number }).kotNumber || kot._id.slice(-4)}</span>
-      <span class="badge">${kot.orderType === "dine-in" ? `TABLE ${kot.tableNumber}` : "TAKEAWAY"}</span>
+      <span>KOT #${escapeHtml((kot as unknown as { kotNumber?: string | number }).kotNumber || kot._id.slice(-4))}</span>
+      <span class="badge">${kot.orderType === "dine-in" ? `TABLE ${escapeHtml(kot.tableNumber)}` : "TAKEAWAY"}</span>
     </div>
-    <div class="row sm mb1"><span>${dt}</span><span>${tm}</span></div>
-    ${kot.customerName ? `<div class="sm mb1">Customer: <span class="b">${kot.customerName}</span></div>` : ""}
-    ${kot.createdBy ? `<div class="sm mb2">By: <span class="b">${kot.createdBy}</span></div>` : ""}
+    <div class="row sm mb1"><span>${escapeHtml(dt)}</span><span>${escapeHtml(tm)}</span></div>
+    ${kot.customerName ? `<div class="sm mb1">Customer: <span class="b">${escapeHtml(kot.customerName)}</span></div>` : ""}
+    ${kot.createdBy ? `<div class="sm mb2">By: <span class="b">${escapeHtml(kot.createdBy)}</span></div>` : ""}
     <div class="dash"></div>
     <div class="mt1 mb2">${items}</div>
     <div class="solid"></div>
-    <div class="c sm mt1">Total items: <b>${totalQty}</b></div>
+    <div class="c sm mt1">Total items: <b>${escapeHtml(totalQty)}</b></div>
     <div class="c sm mt1 mb2">— Please prepare promptly —</div>
   </div></body></html>`;
 }
@@ -137,9 +147,9 @@ function billHtml(bill: Bill, s?: Partial<Settings>): string {
     .map(
       (i) => `
     <div class="col3 mb1">
-      <span class="name">${i.name}</span>
-      <span class="qty">${i.quantity}</span>
-      <span class="amt">${cur}${(i.total ?? i.price * i.quantity).toFixed(2)}</span>
+      <span class="name">${escapeHtml(i.name)}</span>
+      <span class="qty">${escapeHtml(i.quantity)}</span>
+      <span class="amt">${escapeHtml(cur)}${escapeHtml((i.total ?? i.price * i.quantity).toFixed(2))}</span>
     </div>
   `,
     )
@@ -147,16 +157,16 @@ function billHtml(bill: Bill, s?: Partial<Settings>): string {
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Receipt</title><style>${THERMAL_CSS}</style></head><body><div class="wrap">
-    <div class="c b xl mb1">${s?.businessName || "KOT POS"}</div>
-    ${s?.address ? `<div class="c sm mb1">${s.address}</div>` : ""}
-    ${s?.phone ? `<div class="c sm mb1">Ph: ${s.phone}</div>` : ""}
-    ${s?.gstin ? `<div class="c sm mb2">GSTIN: ${s.gstin}</div>` : ""}
+    <div class="c b xl mb1">${escapeHtml(s?.businessName || "KOT POS")}</div>
+    ${s?.address ? `<div class="c sm mb1">${escapeHtml(s.address)}</div>` : ""}
+    ${s?.phone ? `<div class="c sm mb1">Ph: ${escapeHtml(s.phone)}</div>` : ""}
+    ${s?.gstin ? `<div class="c sm mb2">GSTIN: ${escapeHtml(s.gstin)}</div>` : ""}
     <div class="solid"></div>
     <div class="row sm mb1">
-      <span>Bill: <b>${bill.billNumber || "—"}</b></span>
-      <span>${dt} ${tm}</span>
+      <span>Bill: <b>${escapeHtml(bill.billNumber || "—")}</b></span>
+      <span>${escapeHtml(dt)} ${escapeHtml(tm)}</span>
     </div>
-    ${bill.customerName ? `<div class="row sm mb1"><span>Customer: <b>${bill.customerName}</b></span>${bill.customerPhone ? `<span>${bill.customerPhone}</span>` : ""}</div>` : ""}
+    ${bill.customerName ? `<div class="row sm mb1"><span>Customer: <b>${escapeHtml(bill.customerName)}</b></span>${bill.customerPhone ? `<span>${escapeHtml(bill.customerPhone)}</span>` : ""}</div>` : ""}
     <div class="dash"></div>
     <div class="col3 sm b mb1">
       <span class="name">Item</span><span class="qty">Qty</span><span class="amt">Amt</span>
@@ -164,16 +174,16 @@ function billHtml(bill: Bill, s?: Partial<Settings>): string {
     <div class="dash"></div>
     <div class="mb1">${items}</div>
     <div class="dash"></div>
-    <div class="row mb1"><span>Subtotal</span><span>${cur}${subtotal.toFixed(2)}</span></div>
-    ${taxAmt > 0 ? `<div class="row sm mb1"><span>GST (${taxRate}%)</span><span>${cur}${taxAmt.toFixed(2)}</span></div>` : ""}
-    ${svcAmt > 0 ? `<div class="row sm mb1"><span>Service (${svcRate}%)</span><span>${cur}${svcAmt.toFixed(2)}</span></div>` : ""}
-    ${roundDiff !== 0 ? `<div class="row sm mb1"><span>Round Off</span><span>${roundDiff > 0 ? "+" : ""}${roundDiff.toFixed(2)}</span></div>` : ""}
+    <div class="row mb1"><span>Subtotal</span><span>${escapeHtml(cur)}${escapeHtml(subtotal.toFixed(2))}</span></div>
+    ${taxAmt > 0 ? `<div class="row sm mb1"><span>GST (${escapeHtml(taxRate)}%)</span><span>${escapeHtml(cur)}${escapeHtml(taxAmt.toFixed(2))}</span></div>` : ""}
+    ${svcAmt > 0 ? `<div class="row sm mb1"><span>Service (${escapeHtml(svcRate)}%)</span><span>${escapeHtml(cur)}${escapeHtml(svcAmt.toFixed(2))}</span></div>` : ""}
+    ${roundDiff !== 0 ? `<div class="row sm mb1"><span>Round Off</span><span>${roundDiff > 0 ? "+" : ""}${escapeHtml(roundDiff.toFixed(2))}</span></div>` : ""}
     <div class="solid"></div>
-    <div class="row b lg mt1 mb2"><span>TOTAL</span><span>${cur}${finalTotal.toFixed(2)}</span></div>
-    ${bill.paymentMethod ? `<div class="c sm mb2">Paid via: <b>${pmEmoji[bill.paymentMethod] || bill.paymentMethod.toUpperCase()}</b></div>` : ""}
+    <div class="row b lg mt1 mb2"><span>TOTAL</span><span>${escapeHtml(cur)}${escapeHtml(finalTotal.toFixed(2))}</span></div>
+    ${bill.paymentMethod ? `<div class="c sm mb2">Paid via: <b>${escapeHtml(pmEmoji[bill.paymentMethod] || bill.paymentMethod.toUpperCase())}</b></div>` : ""}
     <div class="dash"></div>
     <div class="c sm mt1">Thank you for visiting!</div>
-    ${s?.businessName ? `<div class="c sm mb1">— ${s.businessName} —</div>` : ""}
+    ${s?.businessName ? `<div class="c sm mb1">— ${escapeHtml(s.businessName)} —</div>` : ""}
   </div></body></html>`;
 }
 

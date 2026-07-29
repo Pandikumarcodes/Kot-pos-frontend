@@ -5,7 +5,7 @@ import {
   ROLE_HOME,
   NAV_PERMISSIONS,
 } from "../../config/Permission";
-import type { Role, FeatureKey } from "../../config/Permission";
+import type { Role } from "../../config/Permission";
 
 // ─── hasPermission — admin ────────────────────────────────────────────────────
 describe("hasPermission — admin", () => {

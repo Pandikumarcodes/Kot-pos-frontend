@@ -33,17 +33,15 @@ export default function AdminDashboardContainer() {
   const [payments, setPayments] = useState<PaymentMethod[]>([]);
 
   const fetchData = useCallback(
-    async (isRefresh = false) => {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
+    async (nextRange: RangeType) => {
       try {
         const [summaryRes, topItemsRes, tablesRes, hourlyRes, paymentsRes] =
           await Promise.all([
-            getDashboardSummaryApi(range),
-            getTopItemsApi(range),
+            getDashboardSummaryApi(nextRange),
+            getTopItemsApi(nextRange),
             getDashboardTablesApi(),
-            getHourlySalesApi(range),
-            getPaymentMethodsApi(range),
+            getHourlySalesApi(nextRange),
+            getPaymentMethodsApi(nextRange),
           ]);
         setSummary(summaryRes.data);
         setTopItems(topItemsRes.data.topItems || []);
@@ -57,12 +55,52 @@ export default function AdminDashboardContainer() {
         setRefreshing(false);
       }
     },
-    [range],
+    [],
   );
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    let ignore = false;
+    Promise.all([
+      getDashboardSummaryApi("today"),
+      getTopItemsApi("today"),
+      getDashboardTablesApi(),
+      getHourlySalesApi("today"),
+      getPaymentMethodsApi("today"),
+    ])
+      .then(
+        ([summaryRes, topItemsRes, tablesRes, hourlyRes, paymentsRes]) => {
+          if (ignore) return;
+          setSummary(summaryRes.data);
+          setTopItems(topItemsRes.data.topItems || []);
+          setTables(tablesRes.data.tables || []);
+          setHourly(hourlyRes.data.hourly || []);
+          setPayments(paymentsRes.data.payments || []);
+        },
+      )
+      .catch((err) => {
+        if (!ignore) console.error("Dashboard fetch error:", err);
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const handleRangeChange = (nextRange: RangeType) => {
+    setRange(nextRange);
+    setLoading(true);
+    void fetchData(nextRange);
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    void fetchData(range);
+  };
 
   return (
     <AdminDashboardPresenter
@@ -75,9 +113,9 @@ export default function AdminDashboardContainer() {
       refreshing={refreshing}
       range={range}
       selectedView={selectedView}
-      onRangeChange={setRange}
+      onRangeChange={handleRangeChange}
       onViewChange={setSelectedView}
-      onRefresh={() => fetchData(true)}
+      onRefresh={handleRefresh}
       onNavigate={navigate}
     />
   );

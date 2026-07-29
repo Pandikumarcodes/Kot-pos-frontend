@@ -1,21 +1,8 @@
 /// <reference types="node" />
 import { test as setup, expect } from "@playwright/test";
 import { AUTH_STATE } from "../helpers/authState";
+import { E2E_CREDENTIALS } from "../helpers/testCredentials";
 import fs from "fs";
-
-// ─────────────────────────────────────────────────────────────
-// CREDENTIALS — must match your seeded DB exactly
-// ─────────────────────────────────────────────────────────────
-const CREDENTIALS: Record<
-  keyof typeof AUTH_STATE,
-  { username: string; password: string }
-> = {
-  admin: { username: "admin", password: "Admin@1234" },
-  manager: { username: "manager", password: "Manager@1234" },
-  waiter: { username: "waiter", password: "Waiter@1234" },
-  cashier: { username: "cashier", password: "Cashier@1234" },
-  chef: { username: "chef", password: "Chef@1234" },
-};
 
 // ─────────────────────────────────────────────────────────────
 // Role → expected landing URL after login
@@ -43,7 +30,7 @@ function ensureAuthDir(): void {
 // ─────────────────────────────────────────────────────────────
 async function loginAs(
   page: import("@playwright/test").Page,
-  role: keyof typeof CREDENTIALS,
+  role: keyof typeof E2E_CREDENTIALS,
   statePath: string,
 ): Promise<void> {
   console.log(`\n[auth.setup] Logging in as: ${role}`);
@@ -65,8 +52,8 @@ async function loginAs(
   await expect(usernameInput).toBeVisible({ timeout: 5_000 });
   await expect(passwordInput).toBeVisible({ timeout: 5_000 });
 
-  await usernameInput.fill(CREDENTIALS[role].username);
-  await passwordInput.fill(CREDENTIALS[role].password);
+  await usernameInput.fill(E2E_CREDENTIALS[role].username);
+  await passwordInput.fill(E2E_CREDENTIALS[role].password);
 
   // Step 4 — Submit
   await page.getByRole("button", { name: "Sign In" }).click();
@@ -87,8 +74,7 @@ async function loginAs(
 
     throw new Error(
       `[auth.setup] Login FAILED for role "${role}".\n` +
-        `  Username : ${CREDENTIALS[role].username}\n` +
-        `  Password : ${CREDENTIALS[role].password}\n` +
+        `  Username : ${E2E_CREDENTIALS[role].username}\n` +
         `  Still on : ${currentUrl}\n` +
         `  Page says: ${errorText ?? "(no error text visible)"}\n\n` +
         `  → Make sure your DB is seeded with the credentials above.\n` +

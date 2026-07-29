@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import {
   getInventoryApi,
   createInventoryApi,
@@ -55,13 +55,16 @@ export default function InventoryContainer() {
   const [logsLoading, setLogsLoading] = useState(false);
 
   // ── Fetch ─────────────────────────────────────────────────
-  const fetchItems = useCallback(async () => {
-    setLoading(true);
+  const fetchItems = useCallback(async (
+    nextFilterLow = false,
+    nextFilterCat: InventoryCategory | "" = "",
+    nextSearch = "",
+  ) => {
     try {
       const { data } = await getInventoryApi({
-        lowStock: filterLow || undefined,
-        category: filterCat || undefined,
-        search: search || undefined,
+        lowStock: nextFilterLow || undefined,
+        category: nextFilterCat || undefined,
+        search: nextSearch || undefined,
       });
       setItems(data.items);
       setLowStockCount(data.lowStockCount);
@@ -70,11 +73,50 @@ export default function InventoryContainer() {
     } finally {
       setLoading(false);
     }
-  }, [filterLow, filterCat, search]);
+  }, [toast]);
 
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    let ignore = false;
+    getInventoryApi({})
+      .then(({ data }) => {
+        if (ignore) return;
+        setItems(data.items);
+        setLowStockCount(data.lowStockCount);
+      })
+      .catch(() => {
+        if (!ignore) toast.error("Failed to load inventory");
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [toast]);
+
+  const handleSearchChange = (nextSearch: string) => {
+    setSearch(nextSearch);
+    setLoading(true);
+    void fetchItems(filterLow, filterCat, nextSearch);
+  };
+
+  const handleFilterLowToggle = () => {
+    const nextFilterLow = !filterLow;
+    setFilterLow(nextFilterLow);
+    setLoading(true);
+    void fetchItems(nextFilterLow, filterCat, search);
+  };
+
+  const handleFilterCatChange = (nextFilterCat: InventoryCategory | "") => {
+    setFilterCat(nextFilterCat);
+    setLoading(true);
+    void fetchItems(filterLow, nextFilterCat, search);
+  };
+
+  const handleRefresh = () => {
+    setLoading(true);
+    void fetchItems(filterLow, filterCat, search);
+  };
 
   // ── Modal handlers ────────────────────────────────────────
   const handleOpenCreate = () => {
@@ -265,10 +307,10 @@ export default function InventoryContainer() {
       search={search}
       filterLow={filterLow}
       filterCat={filterCat}
-      onSearchChange={setSearch}
-      onFilterLowToggle={() => setFilterLow((p) => !p)}
-      onFilterCatChange={setFilterCat}
-      onRefresh={fetchItems}
+      onSearchChange={handleSearchChange}
+      onFilterLowToggle={handleFilterLowToggle}
+      onFilterCatChange={handleFilterCatChange}
+      onRefresh={handleRefresh}
       // Create / Edit modal
       showModal={showModal}
       editingItem={editingItem}

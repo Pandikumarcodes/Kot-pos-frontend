@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "./Store/hooks";
 import {
@@ -57,7 +57,7 @@ export default function App() {
       clearTimeout(slowTimer);
       clearTimeout(maxTimer);
     };
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -78,6 +78,8 @@ export default function App() {
       navigate("/login");
     }
   };
+
+  const handleSidebarClose = useCallback(() => setSidebarOpen(false), []);
 
   // ── Loading screen ────────────────────────────────────────
   if (isLoading) {
@@ -120,7 +122,7 @@ export default function App() {
             {/* Sidebar — receives open state + close handler */}
             <Sidebar
               isOpen={sidebarOpen}
-              onClose={() => setSidebarOpen(false)}
+              onClose={handleSidebarClose}
             />
 
             {/* Main content */}

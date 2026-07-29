@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../../Store/hooks";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import {
   getTablesApi,
   createTableApi,
@@ -31,10 +31,8 @@ export default function TablesContainer() {
   const [allocateForm, setAllocateForm] = useState({ name: "", phone: "" });
   const [, setTick] = useState(0);
 
-  const fetchTables = async () => {
+  const fetchTables = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const { data } = await getTablesApi();
       setTables(data.tables);
     } catch (err) {
@@ -43,11 +41,32 @@ export default function TablesContainer() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchTables();
+    let ignore = false;
+    getTablesApi()
+      .then(({ data }) => {
+        if (!ignore) setTables(data.tables);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        const e = err as { response?: { data?: { error?: string } } };
+        setError(e?.response?.data?.error || "Failed to load tables");
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
+
+  const handleRefresh = () => {
+    setLoading(true);
+    setError(null);
+    void fetchTables();
+  };
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 60000);
     return () => clearInterval(id);
@@ -138,7 +157,7 @@ export default function TablesContainer() {
             {error}
           </p>
           <button
-            onClick={fetchTables}
+            onClick={handleRefresh}
             className="px-4 py-2 bg-kot-dark text-white rounded-lg hover:bg-kot-darker"
           >
             Retry
@@ -173,7 +192,7 @@ export default function TablesContainer() {
       onFilterChange={setFilter}
       onTableClick={handleTableClick}
       onDeleteTable={handleDeleteTable}
-      onRefresh={fetchTables}
+      onRefresh={handleRefresh}
     />
   );
 }

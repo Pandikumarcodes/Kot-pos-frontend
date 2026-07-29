@@ -101,28 +101,15 @@ test.describe("QR Code — public ordering flow", () => {
   });
 
   test("customer can place an order", async ({ page }) => {
-    // ── KNOWN BACKEND BUG ──────────────────────────────────────
-    // The QR order submission fails with:
-    // "Kot validation failed: branchId: Path `branchId` is required."
-    // The table document fetched by the QR menu does not include branchId,
-    // so the frontend cannot pass it when creating the KOT.
-    //
-    // FIX NEEDED in backend: Ensure the public QR table lookup endpoint
-    // returns branchId, OR populate branchId from the table's branchId field
-    // before creating the KOT in the QR order route.
-    //
-    // This test verifies the full UI flow works up to the order screen.
-    // ──────────────────────────────────────────────────────────
-
     await page.goto(`/menu/${TEST_TABLE_ID}`);
     await page.waitForLoadState("domcontentloaded");
     await page.waitForTimeout(2_000);
 
     const addButton = page.getByRole("button", { name: /^add$/i }).first();
-    const hasItems = await addButton
-      .isVisible({ timeout: 5_000 })
-      .catch(() => false);
-    test.skip(!hasItems, "No Add buttons visible — seed menu items first");
+    await expect(
+      addButton,
+      "The QR test table must have at least one available menu item",
+    ).toBeVisible({ timeout: 10_000 });
 
     // Step 1 — Add item
     await addButton.click();
@@ -146,35 +133,35 @@ test.describe("QR Code — public ordering flow", () => {
       .first();
     await expect(placeOrderButton).toBeVisible({ timeout: 5_000 });
 
-    // Step 4 — Click Place Order
+    // Step 4 — Click Place Order and require successful order creation
+    const orderResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname ===
+          `/api/v1/public/order/${TEST_TABLE_ID}`,
+      { timeout: 15_000 },
+    );
+
     await placeOrderButton.click();
-    await page.waitForTimeout(3_000);
-
-    // Step 5 — Accept success OR the known branchId validation error
-    // Both mean the UI flow worked correctly up to the API call
-    const pageText = await page
-      .locator("body")
-      .innerText()
-      .catch(() => "");
-    const postUrl = page.url();
-
-    const orderSucceeded =
-      /order placed|kitchen|notified|success|thank you|confirmed|received|submitted/i.test(
-        pageText,
-      );
-
-    const knownBackendError =
-      /branchId|branch.*required|validation failed|kot.*failed/i.test(pageText);
-
-    const navigationSuccess =
-      postUrl.includes("success") ||
-      postUrl.includes("confirm") ||
-      !postUrl.includes(`/menu/${TEST_TABLE_ID}`);
-
-    // Pass if: order succeeded OR known backend bug shown OR navigated away
+    const orderResponse = await orderResponsePromise;
+    const orderResponseBody = await orderResponse.text();
     expect(
-      orderSucceeded || knownBackendError || navigationSuccess,
+      orderResponse.ok(),
+      `Order creation failed with HTTP ${orderResponse.status()}: ${orderResponseBody}`,
     ).toBeTruthy();
+
+    const order = JSON.parse(orderResponseBody) as { orderId?: string };
+    expect(order.orderId, "Order creation must return an orderId").toBeTruthy();
+
+    // Step 5 — Require the UI to display the confirmed order reference
+    await expect(page.getByText("Order Reference")).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(
+      page.getByText(`#${order.orderId!.slice(-8).toUpperCase()}`, {
+        exact: true,
+      }),
+    ).toBeVisible();
   });
 
   test.skip("customer can check order status", async () => {

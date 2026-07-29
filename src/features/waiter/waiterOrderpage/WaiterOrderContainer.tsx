@@ -1,7 +1,7 @@
 //WaiterorderContainer
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import {
   getMenuApi,
   createOrderApi,
@@ -53,10 +53,9 @@ export default function WaiterOrderContainer() {
   const [sendingToCashier, setSendingToCashier] = useState(false);
 
   // ── Fetch existing orders for this table ──────────────────────
-  const fetchTableOrders = async () => {
+  const fetchTableOrders = useCallback(async () => {
     if (!tableId) return;
     try {
-      setHistoryLoading(true);
       const { data } = await getTableOrdersApi(tableId);
       setAllItems(data.allItems ?? []);
       setGrandTotal(data.grandTotal ?? 0);
@@ -68,13 +67,12 @@ export default function WaiterOrderContainer() {
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, [tableId]);
 
   // ── Fetch menu when switching to menu view ────────────────────
-  const fetchMenu = async () => {
+  const fetchMenu = useCallback(async () => {
     if (menuItems.length > 0) return;
     try {
-      setMenuLoading(true);
       const { data } = await getMenuApi();
       setMenuItems(data.menuItems.filter((i) => i.available));
     } catch (err) {
@@ -83,14 +81,39 @@ export default function WaiterOrderContainer() {
     } finally {
       setMenuLoading(false);
     }
-  };
+  }, [menuItems.length, toast]);
 
   useEffect(() => {
-    fetchTableOrders();
+    if (!tableId) return;
+    let ignore = false;
+    getTableOrdersApi(tableId)
+      .then(({ data }) => {
+        if (ignore) return;
+        setAllItems(data.allItems ?? []);
+        setGrandTotal(data.grandTotal ?? 0);
+        setRoundCount(data.orders?.length ?? 0);
+      })
+      .catch(() => {
+        if (ignore) return;
+        setAllItems([]);
+        setGrandTotal(0);
+        setRoundCount(0);
+      })
+      .finally(() => {
+        if (!ignore) setHistoryLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [tableId]);
-  useEffect(() => {
-    if (view === "menu") fetchMenu();
-  }, [view]);
+
+  const handleSwitchToMenu = () => {
+    setView("menu");
+    if (menuItems.length === 0) {
+      setMenuLoading(true);
+      void fetchMenu();
+    }
+  };
 
   // ── Derived ───────────────────────────────────────────────────
   const categories = [
@@ -199,7 +222,7 @@ export default function WaiterOrderContainer() {
       tableNumber={tableNumber}
       roundCount={roundCount}
       view={view}
-      onSwitchToMenu={() => setView("menu")}
+      onSwitchToMenu={handleSwitchToMenu}
       onSwitchToHistory={() => {
         setView("history");
         setOrderItems([]);

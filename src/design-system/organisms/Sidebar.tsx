@@ -94,7 +94,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   // Close sidebar on route change (mobile)
   useEffect(() => {
     onClose();
-  }, [location.pathname]);
+  }, [location.pathname, onClose]);
 
   // Prevent body scroll when sidebar open on mobile
   useEffect(() => {

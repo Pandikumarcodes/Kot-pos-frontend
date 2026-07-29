@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAppSelector } from "../../../Store/hooks";
 import {
   getUsersApi,
@@ -10,7 +10,7 @@ import type {
   StaffUser,
   CreateUserPayload,
 } from "../../../services/adminApi/Staff.api";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import {
   validateStaff,
   hasErrors,
@@ -38,10 +38,8 @@ export default function StaffManagementContainer() {
     status: "active",
   });
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const { data } = await getUsersApi();
       setUsers(data.users);
     } catch (err) {
@@ -50,11 +48,32 @@ export default function StaffManagementContainer() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchUsers();
+    let ignore = false;
+    getUsersApi()
+      .then(({ data }) => {
+        if (!ignore) setUsers(data.users);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        const e = err as { response?: { data?: { error?: string } } };
+        setError(e?.response?.data?.error || "Failed to load staff");
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    void fetchUsers();
+  };
 
   // Derived
   const filteredUsers = searchQuery
@@ -99,15 +118,7 @@ export default function StaffManagementContainer() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errors = validateStaff(
-      {
-        name: formData.username,
-        username: formData.username,
-        password: formData.password,
-        role: formData.role,
-      },
-      !!editingUser,
-    );
+    const errors = validateStaff(formData, !!editingUser);
     if (hasErrors(errors)) {
       setFormErrors(errors);
       return;
@@ -165,7 +176,7 @@ export default function StaffManagementContainer() {
       onFieldChange={handleFieldChange}
       onSubmit={handleSubmit}
       onDelete={handleDelete}
-      onRetry={fetchUsers}
+      onRetry={handleRetry}
     />
   );
 }

@@ -7,11 +7,13 @@ import { resolve } from "path";
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   test: {
+    include: ["src/__tests__/**/*.test.{ts,tsx}"],
+
     // Use jsdom to simulate a browser environment for React components
     environment: "jsdom",
 
     // Run this setup file before every test suite
-    setupFiles: ["./src/__tests__/setup/setupTests.ts"],
+    setupFiles: ["./src/__tests__/setup/Setuptests.ts"],
 
     // Globally available APIs — no need to import describe/it/expect in every file
     globals: true,

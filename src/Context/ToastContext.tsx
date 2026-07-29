@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   CheckCircle,
   XCircle,
@@ -14,6 +8,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { registerGlobalToastHandler } from "../services/globalToast";
+import {
+  ToastContext,
+  type ToastContextValue,
+} from "./toastContext";
 
 // ── Types ─────────────────────────────────────────────────────
 type ToastType = "success" | "error" | "warning" | "info";
@@ -24,16 +22,7 @@ interface Toast {
   message: string;
 }
 
-interface ToastContextValue {
-  success: (message: string) => void;
-  error: (message: string) => void;
-  warning: (message: string) => void;
-  info: (message: string) => void;
-}
-
 // ── Context ───────────────────────────────────────────────────
-const ToastContext = createContext<ToastContextValue | null>(null);
-
 // ── Config ────────────────────────────────────────────────────
 const TOAST_CONFIG: Record<
   ToastType,
@@ -87,12 +76,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     registerGlobalToastHandler(addToast);
   }, [addToast]);
 
-  const value: ToastContextValue = {
-    success: (msg) => addToast("success", msg),
-    error: (msg) => addToast("error", msg),
-    warning: (msg) => addToast("warning", msg),
-    info: (msg) => addToast("info", msg),
-  };
+  const value = useMemo<ToastContextValue>(
+    () => ({
+      success: (msg) => addToast("success", msg),
+      error: (msg) => addToast("error", msg),
+      warning: (msg) => addToast("warning", msg),
+      info: (msg) => addToast("info", msg),
+    }),
+    [addToast],
+  );
 
   return (
     <ToastContext.Provider value={value}>
@@ -127,8 +119,3 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 // ── Hook ──────────────────────────────────────────────────────
-export function useToast() {
-  const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used inside ToastProvider");
-  return ctx;
-}

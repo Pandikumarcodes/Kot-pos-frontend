@@ -1,7 +1,6 @@
 // Service Worker for KOT POS
 
 const CACHE_NAME = "kot-pos-v1";
-const API_CACHE = "kot-pos-api-v1";
 
 // Assets to pre-cache on install
 const PRECACHE_URLS = ["/", "/offline.html"];
@@ -24,7 +23,7 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key !== CACHE_NAME && key !== API_CACHE)
+            .filter((key) => key !== CACHE_NAME)
             .map((key) => caches.delete(key)),
         ),
       ),
@@ -41,9 +40,8 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   if (url.protocol === "chrome-extension:") return;
 
-  // ── API calls → Network First ──────────────────────────────
+  // Authenticated API responses bypass the service worker and Cache Storage.
   if (url.pathname.startsWith("/api/")) {
-    event.respondWith(networkFirst(request, API_CACHE, 60));
     return;
   }
 
@@ -73,33 +71,4 @@ async function cacheFirst(request, cacheName) {
     cache.put(request, response.clone());
   }
   return response;
-}
-
-// ── Network First strategy ────────────────────────────────────
-// Falls back to cache if network fails
-async function networkFirst(request, cacheName, maxAgeSeconds) {
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(cacheName);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    const cached = await caches.match(request);
-    if (cached) {
-      // Check if cache is still fresh enough
-      const dateHeader = cached.headers.get("date");
-      if (dateHeader) {
-        const age = (Date.now() - new Date(dateHeader).getTime()) / 1000;
-        if (age < maxAgeSeconds) return cached;
-      }
-      return cached;
-    }
-    // Return empty 503 if nothing cached
-    return new Response(JSON.stringify({ error: "You are offline" }), {
-      status: 503,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
 }

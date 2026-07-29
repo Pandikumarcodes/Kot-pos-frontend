@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAppSelector } from "../../../Store/hooks";
 import {
   getSettingsApi,
   updateSettingsApi,
 } from "../../../services/adminApi/Settings.api";
 import type { Settings } from "../../../services/adminApi/Settings.api";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import { SettingsPresenter } from "./SettingsPresenter";
 import type { SettingsTab } from "./settings.types";
 
@@ -21,10 +21,8 @@ export default function SettingsContainer() {
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<Partial<Settings>>({});
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const { data } = await getSettingsApi();
       setSettings(data.settings);
     } catch (err) {
@@ -33,11 +31,32 @@ export default function SettingsContainer() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchSettings();
+    let ignore = false;
+    getSettingsApi()
+      .then(({ data }) => {
+        if (!ignore) setSettings(data.settings);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        const e = err as { response?: { data?: { error?: string } } };
+        setError(e?.response?.data?.error || "Failed to load settings");
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
+
+  const handleReload = () => {
+    setLoading(true);
+    setError(null);
+    void fetchSettings();
+  };
 
   const handleSave = async () => {
     try {
@@ -78,8 +97,8 @@ export default function SettingsContainer() {
       onUpdate={handleUpdate}
       onUpdatePayment={handleUpdatePayment}
       onSave={handleSave}
-      onRetry={fetchSettings}
-      onReset={fetchSettings}
+      onRetry={handleReload}
+      onReset={handleReload}
     />
   );
 }

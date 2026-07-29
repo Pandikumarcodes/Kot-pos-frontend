@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import {
   getBranchesApi,
   createBranchApi,
@@ -47,22 +47,24 @@ export default function BranchContainer() {
   const [assigningId, setAssigningId] = useState<string | null>(null);
 
   // ── Fetch branches on mount ───────────────────────────────
-  const fetchBranches = async () => {
-    try {
-      setLoading(true);
-      const { data } = await getBranchesApi();
-      setBranches(data.branches);
-    } catch (err) {
-      const e = err as { response?: { data?: { error?: string } } };
-      toast.error(e?.response?.data?.error || "Failed to load branches");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchBranches();
-  }, []);
+    let ignore = false;
+    getBranchesApi()
+      .then(({ data }) => {
+        if (!ignore) setBranches(data.branches);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        const e = err as { response?: { data?: { error?: string } } };
+        toast.error(e?.response?.data?.error || "Failed to load branches");
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [toast]);
 
   // ── Modal handlers ────────────────────────────────────────
   const handleOpenCreate = () => {

@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import { test, expect } from "@playwright/test";
 import { AUTH_STATE } from "../helpers/authState";
+import { E2E_CREDENTIALS } from "../helpers/testCredentials";
 
 // ── Landing page (/login) ────────────────────────────────────
 test.describe("Login landing page", () => {
@@ -143,8 +144,12 @@ test.describe("Sign In form", () => {
   });
 
   test("shows loading state while signing in", async ({ page }) => {
-    await page.getByPlaceholder("Enter your username").fill("admin");
-    await page.getByPlaceholder("••••••••").fill("Admin@1234");
+    await page
+      .getByPlaceholder("Enter your username")
+      .fill(E2E_CREDENTIALS.admin.username);
+    await page
+      .getByPlaceholder("••••••••")
+      .fill(E2E_CREDENTIALS.admin.password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page.getByText(/signing in/i))

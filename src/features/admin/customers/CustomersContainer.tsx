@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAppSelector } from "../../../Store/hooks";
 import {
   getCustomersApi,
@@ -8,7 +8,7 @@ import {
 } from "../../../services/adminApi/Customer.api";
 import type { Customer } from "../../../services/adminApi/Customer.api";
 import type { CreateCustomerPayload } from "./customers.types";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import { CustomerPresenter } from "./CustomersPresenter";
 
 export default function CustomerPageContainer() {
@@ -29,10 +29,8 @@ export default function CustomerPageContainer() {
     address: "",
   });
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const { data } = await getCustomersApi();
       setCustomers(data.customers);
     } catch (err) {
@@ -41,11 +39,32 @@ export default function CustomerPageContainer() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchCustomers();
+    let ignore = false;
+    getCustomersApi()
+      .then(({ data }) => {
+        if (!ignore) setCustomers(data.customers);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        const e = err as { response?: { data?: { error?: string } } };
+        setError(e?.response?.data?.error || "Failed to load customers");
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    void fetchCustomers();
+  };
 
   // Derived / filtered — computed in container, passed as prop
   const filteredCustomers = searchQuery
@@ -143,7 +162,7 @@ export default function CustomerPageContainer() {
       onFormChange={handleFormChange}
       onSubmit={handleSubmit}
       onDelete={handleDelete}
-      onRetry={fetchCustomers}
+      onRetry={handleRetry}
     />
   );
 }

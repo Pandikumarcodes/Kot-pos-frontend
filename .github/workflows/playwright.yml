@@ -19,6 +19,17 @@ jobs:
       run: npx playwright install --with-deps
     - name: Run Playwright tests
       run: npx playwright test
+      env:
+        E2E_ADMIN_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
+        E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+        E2E_MANAGER_USERNAME: ${{ secrets.E2E_MANAGER_USERNAME }}
+        E2E_MANAGER_PASSWORD: ${{ secrets.E2E_MANAGER_PASSWORD }}
+        E2E_WAITER_USERNAME: ${{ secrets.E2E_WAITER_USERNAME }}
+        E2E_WAITER_PASSWORD: ${{ secrets.E2E_WAITER_PASSWORD }}
+        E2E_CASHIER_USERNAME: ${{ secrets.E2E_CASHIER_USERNAME }}
+        E2E_CASHIER_PASSWORD: ${{ secrets.E2E_CASHIER_PASSWORD }}
+        E2E_CHEF_USERNAME: ${{ secrets.E2E_CHEF_USERNAME }}
+        E2E_CHEF_PASSWORD: ${{ secrets.E2E_CHEF_PASSWORD }}
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:

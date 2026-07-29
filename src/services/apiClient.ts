@@ -42,6 +42,33 @@ const processQueue = (error: unknown) => {
   failedQueue = [];
 };
 
+interface RefreshDecision {
+  status?: number;
+  url?: string;
+  isRetry: boolean;
+  isAuthPage: boolean;
+  skipRefresh: boolean;
+}
+
+export function shouldAttemptTokenRefresh({
+  status,
+  url,
+  isRetry,
+  isAuthPage,
+  skipRefresh,
+}: RefreshDecision): boolean {
+  const requestPath = url?.split("?")[0].replace(/\/+$/, "");
+  const isRefreshRequest = requestPath?.endsWith("/auth/refresh") ?? false;
+
+  return (
+    status === 401 &&
+    !isRetry &&
+    !isAuthPage &&
+    !skipRefresh &&
+    !isRefreshRequest
+  );
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -94,10 +121,13 @@ api.interceptors.response.use(
 
     // ── 401 — Auto token refresh ──────────────────────────────
     if (
-      status === 401 &&
-      !originalRequest._retry &&
-      !isAuthPage &&
-      !skipRefresh
+      shouldAttemptTokenRefresh({
+        status,
+        url: originalRequest.url,
+        isRetry: Boolean(originalRequest._retry),
+        isAuthPage,
+        skipRefresh: Boolean(skipRefresh),
+      })
     ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {

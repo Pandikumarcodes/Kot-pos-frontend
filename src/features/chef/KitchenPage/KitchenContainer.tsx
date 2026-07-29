@@ -6,7 +6,7 @@ import {
   cancelKotApi,
 } from "../../../services/chefApi/chef.api";
 import type { Kot } from "../../../services/chefApi/chef.api";
-import { useToast } from "../../../Context/ToastContext";
+import { useToast } from "../../../Context/toastContext";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { KitchenPresenter } from "./KitchenPresenter";
 import type { TabFilter } from "./Kitchen.types";
@@ -28,11 +28,8 @@ export default function KitchenContainer() {
     return () => clearInterval(id);
   }, []);
 
-  const fetchKots = useCallback(async (showRefresh = false) => {
+  const fetchKots = useCallback(async () => {
     try {
-      if (showRefresh) setRefreshing(true);
-      else setLoading(true);
-      setError(null);
       const res = await getKotOrdersApi();
       setKots(res.data.KotOrders);
     } catch (err) {
@@ -45,8 +42,38 @@ export default function KitchenContainer() {
   }, []);
 
   useEffect(() => {
-    fetchKots();
-  }, [fetchKots]);
+    let ignore = false;
+    getKotOrdersApi()
+      .then((res) => {
+        if (!ignore) setKots(res.data.KotOrders);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        const e = err as { response?: { data?: { error?: string } } };
+        setError(e?.response?.data?.error || "Failed to load orders");
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    void fetchKots();
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setError(null);
+    void fetchKots();
+  };
 
   const isConnected = useNotifications({
     "order:new": (kot: unknown) => {
@@ -132,7 +159,7 @@ export default function KitchenContainer() {
         <div className="text-center">
           <p className="text-red-600 font-medium mb-3">{error}</p>
           <button
-            onClick={() => fetchKots()}
+            onClick={handleRetry}
             className="px-4 py-2 bg-kot-dark text-white rounded-lg"
           >
             Retry
@@ -152,7 +179,7 @@ export default function KitchenContainer() {
       activeTab={activeTab}
       updatingId={updatingId}
       onTabChange={setActiveTab}
-      onRefresh={() => fetchKots(true)}
+      onRefresh={handleRefresh}
       onStart={handleStart}
       onReady={handleReady}
       onCancel={handleCancel}
