@@ -10,6 +10,7 @@ import AppRouter from "./Router/AppRouter";
 import Header from "./design-system/organisms/Header";
 import Sidebar from "./design-system/organisms/Sidebar";
 import api from "./services/apiClient";
+import { notificationService } from "./services/notificationServices";
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -25,12 +26,8 @@ export default function App() {
     const controller = new AbortController();
     dispatch(setAuthLoading(true));
 
-    // ✅ Fix: Show slow load message after 5s
     const slowTimer = setTimeout(() => setSlowLoad(true), 5000);
 
-    // ✅ Fix: Increased from 10s to 60s — Render free tier cold start
-    // takes up to 50 seconds. 10s was too short and caused clearCredentials
-    // to fire before the server woke up, making sidebar lose user role.
     const maxTimer = setTimeout(() => {
       controller.abort();
       dispatch(clearCredentials());
@@ -61,6 +58,14 @@ export default function App() {
       clearTimeout(maxTimer);
     };
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      notificationService.connect(user.role);
+    } else {
+      notificationService.disconnect();
+    }
+  }, [isAuthenticated, user]);
 
   // ── Logout ────────────────────────────────────────────────
   const handleLogout = async () => {

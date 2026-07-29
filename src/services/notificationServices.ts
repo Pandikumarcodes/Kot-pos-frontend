@@ -250,6 +250,9 @@ class NotificationService {
       console.log(`🔌 NotificationService connected | joining room: "${room}"`);
       this._publish("connect", null);
     });
+    this.socket.on("connect_error", (err) => {
+      console.error("🔴 NotificationService connect_error:", err.message);
+    });
 
     this.socket.on("room:joined", ({ room }: { room: string }) => {
       console.log(`✅ NotificationService joined room: "${room}"`);
