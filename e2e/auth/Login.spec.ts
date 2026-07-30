@@ -49,18 +49,10 @@ test.describe("Sign In form", () => {
     // Wait longer — backend may be slow to respond
     await page.waitForTimeout(8_000);
 
-    // Debug: log exactly what text is on the page
     const bodyText = await page
       .locator("body")
       .innerText()
       .catch(() => "");
-    console.log(
-      "[debug] Page text after wrong password:",
-      bodyText.slice(0, 600),
-    );
-
-    const allButtons = await page.getByRole("button").allInnerTexts();
-    console.log("[debug] Buttons visible:", allButtons);
 
     // Check for any alert/error element
     const hasAnyAlert = await page
@@ -84,15 +76,6 @@ test.describe("Sign In form", () => {
         bodyText,
       );
 
-    console.log(
-      "[debug] hasAnyAlert:",
-      hasAnyAlert,
-      "| hasErrorText:",
-      hasErrorText,
-      "| pageHasError:",
-      pageHasError,
-    );
-
     expect(hasAnyAlert || hasErrorText || pageHasError).toBeTruthy();
   });
 
@@ -107,11 +90,6 @@ test.describe("Sign In form", () => {
       .locator("body")
       .innerText()
       .catch(() => "");
-    console.log(
-      "[debug] Page text after non-existent user:",
-      bodyText.slice(0, 600),
-    );
-
     const hasAnyAlert = await page
       .locator(
         "[role='alert'], .error, .alert, .toast, [class*='error'], [class*='alert'], [class*='toast'], [class*='message'], [class*='notification']",
@@ -130,15 +108,6 @@ test.describe("Sign In form", () => {
       /wrong|invalid|incorrect|error|fail|denied|credential|unauthorized|sorry|try again/i.test(
         bodyText,
       );
-
-    console.log(
-      "[debug] hasAnyAlert:",
-      hasAnyAlert,
-      "| hasErrorText:",
-      hasErrorText,
-      "| pageHasError:",
-      pageHasError,
-    );
 
     expect(hasAnyAlert || hasErrorText || pageHasError).toBeTruthy();
   });

@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppSelector } from "../../../Store/hooks";
-import { useToast } from "../../../Context/toastContext";
+import { useAppSelector } from "../../../state/hooks";
+import { useToast } from "../../../contexts/toastContext";
 import {
   getTablesApi,
   createTableApi,
   deleteTableApi,
   allocateTableApi,
-} from "../../../services/waiterApi/Table.api";
-import type { Table } from "../../../services/waiterApi/Table.api";
-import { TablesPresenter } from "./TablePresenter";
-import type { FilterValue } from "./Table.types";
+} from "../../../services/waiter/table.api";
+import type { Table } from "../../../services/waiter/table.api";
+import { TablesPresenter } from "./TablesPresenter";
+import type { FilterValue } from "./Tables.types";
 
 export default function TablesContainer() {
   const toast = useToast();
@@ -156,7 +156,7 @@ export default function TablesContainer() {
           <p className="text-red-600 font-medium mb-3 text-sm sm:text-base">
             {error}
           </p>
-          <button
+          <button type="button"
             onClick={handleRefresh}
             className="px-4 py-2 bg-kot-dark text-white rounded-lg hover:bg-kot-darker"
           >

@@ -1,43 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   notificationService,
   type NotificationEvent,
-} from "../services/notificationServices";
+} from "../services/notificationService";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type EventHandlers = Partial<Record<NotificationEvent, (payload: any) => void>>;
+type EventHandlers = Partial<
+  Record<NotificationEvent, (payload: unknown) => void>
+>;
+
+const NOTIFICATION_EVENTS: NotificationEvent[] = [
+  "order:new",
+  "kot:updated",
+  "table:updated",
+  "billing:created",
+  "room:joined",
+  "connect",
+  "disconnect",
+];
 
 export const useNotifications = (handlers: EventHandlers = {}): boolean => {
+  const handlersRef = useRef(handlers);
   const [isConnected, setIsConnected] = useState(
     notificationService.isConnected(),
   );
 
   useEffect(() => {
-    const unsubs: (() => void)[] = [];
+    handlersRef.current = handlers;
+  }, [handlers]);
 
-    // ── Track connection state for UI indicators ──────────────
-    unsubs.push(notificationService.on("connect", () => setIsConnected(true)));
-    unsubs.push(
-      notificationService.on("disconnect", () => setIsConnected(false)),
+  useEffect(() => {
+    const unsubs = NOTIFICATION_EVENTS.map((event) =>
+      notificationService.on(event, (payload) => {
+        if (event === "connect") setIsConnected(true);
+        if (event === "disconnect") setIsConnected(false);
+        handlersRef.current[event]?.(payload);
+      }),
     );
 
-    // ── Register all caller-provided handlers ─────────────────
-    Object.entries(handlers).forEach(([event, handler]) => {
-      if (handler) {
-        unsubs.push(
-          notificationService.on(event as NotificationEvent, handler),
-        );
-      }
-    });
-
-    // ── Cleanup all on unmount ────────────────────────────────
     return () => unsubs.forEach((unsub) => unsub());
-
-    // handlers is an object literal — exhaustive deps would cause
-    // infinite re-renders, so we disable the rule here intentionally
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Returns live connection status — use for Wifi indicator in UI
   return isConnected;
 };

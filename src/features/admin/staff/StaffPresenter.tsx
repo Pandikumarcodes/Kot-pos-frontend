@@ -12,7 +12,7 @@ import {
   Badge,
   StatCard,
   StatusBadge,
-} from "../../../UiComponents/Index";
+} from "../../../components/ui/index";
 import {
   ALLOWED_ROLES,
   ROLE_EMOJI,

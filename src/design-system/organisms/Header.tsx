@@ -1,7 +1,7 @@
 // src/design-system/organisms/Header.tsx
 import { Menu } from "lucide-react";
-import { Button } from "../../UiComponents/Button";
-import { InstallBanner } from "../../UiComponents/InstallBanner";
+import { Button } from "../../components/ui/Button";
+import { InstallBanner } from "../../components/ui/InstallBanner";
 
 export interface HeaderProps {
   title?: string;
@@ -13,7 +13,7 @@ export interface HeaderProps {
   actions?: React.ReactNode;
   showBackButton?: boolean;
   onBack?: () => void;
-  onMenuToggle?: () => void; // ← hamburger toggle
+  onMenuToggle?: () => void;
 }
 
 export const Header = ({
@@ -36,6 +36,7 @@ export const Header = ({
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {/* Hamburger — mobile only */}
             <button
+              type="button"
               onClick={onMenuToggle}
               className="md:hidden p-2 rounded-lg hover:bg-kot-light text-kot-text hover:text-kot-darker transition-colors flex-shrink-0"
               aria-label="Open menu"
@@ -46,6 +47,7 @@ export const Header = ({
             {/* Back button */}
             {showBackButton && (
               <button
+                type="button"
                 onClick={onBack}
                 className="p-2 hover:bg-kot-light rounded-lg transition-colors flex-shrink-0"
                 aria-label="Go back"
@@ -92,7 +94,9 @@ export const Header = ({
             {/* User Info — hidden on small mobile */}
             {userName && (
               <button
+                type="button"
                 onClick={onProfileClick}
+                aria-label={`Open profile for ${userName}`}
                 className="hidden md:flex items-center gap-3 px-3 py-2 hover:bg-kot-light rounded-lg transition-colors"
               >
                 <div className="text-right">
@@ -114,7 +118,9 @@ export const Header = ({
             {/* Avatar only on small screens */}
             {userName && (
               <button
+                type="button"
                 onClick={onProfileClick}
+                aria-label={`Open profile for ${userName}`}
                 className="md:hidden w-8 h-8 rounded-full bg-kot-dark text-white flex items-center justify-center font-semibold text-sm flex-shrink-0"
               >
                 {userName.charAt(0).toUpperCase()}
@@ -126,6 +132,7 @@ export const Header = ({
               <Button
                 variant="secondary"
                 onClick={onLogout}
+                aria-label="Log out"
                 className="text-xs md:text-sm px-2 md:px-4"
               >
                 <span className="hidden sm:inline">Logout</span>

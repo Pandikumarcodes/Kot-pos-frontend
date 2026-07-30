@@ -6,8 +6,8 @@ import cartReducer, {
   updateQuantity,
   setItemNote,
   clearCart,
-} from "../../Store/Slices/cartSlice";
-import type { CartItem } from "../../Store/Slices/cartSlice";
+} from "../../state/slices/cartSlice";
+import type { CartItem } from "../../state/slices/cartSlice";
 
 // addItem takes Omit<CartItem, "quantity"> — no quantity field
 const PIZZA: Omit<CartItem, "quantity"> = {

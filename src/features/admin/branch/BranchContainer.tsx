@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useToast } from "../../../Context/toastContext";
+import { useToast } from "../../../contexts/toastContext";
 import {
   getBranchesApi,
   createBranchApi,
@@ -8,12 +8,9 @@ import {
   getBranchStaffApi,
   getBranchSummaryApi,
   assignStaffToBranchApi,
-} from "../../../services/adminApi/Branch.api";
-import type {
-  Branch,
-  BranchSummary,
-} from "../../../services/adminApi/Branch.api";
-import { getUsersApi } from "../../../services/adminApi/Staff.api";
+} from "../../../services/admin/branch.api";
+import type { Branch, BranchSummary } from "../../../services/admin/branch.api";
+import { getUsersApi } from "../../../services/admin/staff.api";
 import { BranchPresenter } from "./BranchPresenter";
 import type { BranchFormData, StaffUser } from "./Branch.types";
 

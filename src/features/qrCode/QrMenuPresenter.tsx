@@ -114,7 +114,7 @@ export function QrMenuPresenter({
           </p>
 
           {(orderStatus === "served" || orderStatus === "cancelled") && (
-            <button
+            <button type="button"
               onClick={onOrderMore}
               className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-2xl text-sm transition-colors"
             >
@@ -132,7 +132,7 @@ export function QrMenuPresenter({
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
-          <button
+          <button type="button"
             onClick={onBackToMenu}
             className="text-gray-400 hover:text-gray-600 p-1"
           >
@@ -169,7 +169,7 @@ export function QrMenuPresenter({
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
+                    <button type="button"
                       onClick={() => onRemoveItem(item.itemId)}
                       className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
                     >
@@ -178,7 +178,7 @@ export function QrMenuPresenter({
                     <span className="w-6 text-center text-sm font-bold text-gray-800">
                       {item.quantity}
                     </span>
-                    <button
+                    <button type="button"
                       onClick={() =>
                         onAddItem({
                           _id: item.itemId,
@@ -236,7 +236,7 @@ export function QrMenuPresenter({
             </div>
           )}
 
-          <button
+          <button type="button"
             onClick={onPlaceOrder}
             disabled={placing || cart.length === 0}
             className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl disabled:opacity-60 transition-colors text-base"
@@ -271,7 +271,7 @@ export function QrMenuPresenter({
       <div className="bg-white border-b border-gray-100 sticky top-[65px] z-10 overflow-x-auto">
         <div className="flex gap-1 px-3 py-2 min-w-max">
           {menuData.categories.map((cat) => (
-            <button
+            <button type="button"
               key={cat}
               onClick={() => onCategoryChange(cat)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
@@ -307,7 +307,7 @@ export function QrMenuPresenter({
                 </p>
               </div>
               {qty === 0 ? (
-                <button
+                <button type="button"
                   onClick={() => onAddItem(item)}
                   className="flex items-center gap-1 px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold rounded-xl text-sm hover:bg-emerald-100 transition-colors"
                 >
@@ -315,7 +315,7 @@ export function QrMenuPresenter({
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <button
+                  <button type="button"
                     onClick={() => onRemoveItem(item._id)}
                     className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
                   >
@@ -324,7 +324,7 @@ export function QrMenuPresenter({
                   <span className="w-6 text-center font-bold text-gray-800 text-sm">
                     {qty}
                   </span>
-                  <button
+                  <button type="button"
                     onClick={() => onAddItem(item)}
                     className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center"
                   >
@@ -340,7 +340,7 @@ export function QrMenuPresenter({
       {/* Cart FAB */}
       {cartCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-20">
-          <button
+          <button type="button"
             onClick={onProceedToCheckout}
             className="w-full max-w-sm mx-auto flex items-center justify-between bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl px-5 py-4 transition-colors"
           >

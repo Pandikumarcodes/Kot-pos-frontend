@@ -6,10 +6,10 @@ import {
   Pulse,
   PageHeader,
   StatCard,
-} from "../../../UiComponents/Index";
+} from "../../../components/ui/index";
 import { RevenueTrendChart } from "../../../charts/RevenueTrendChart";
-import { OrdersByHourChart } from "../../../charts/Ordersbyhourchart";
-import { PaymentBreakdownChart } from "../../../charts/Paymentbreakdownchart";
+import { OrdersByHourChart } from "../../../charts/OrdersByHour";
+import { PaymentBreakdownChart } from "../../../charts/PaymentBreakdown";
 import { TopItemsChart } from "../../../charts/TopItemsChart";
 import type { ReportsPresenterProps, DateRange } from "./reports.types";
 
@@ -64,7 +64,7 @@ export function ReportsPresenter({
         <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-none">
           <div className="flex gap-1.5 w-max sm:w-auto">
             {RANGES.map((r) => (
-              <button
+              <button type="button"
                 key={r.key}
                 onClick={() => onRangeChange(r.key)}
                 className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
@@ -85,10 +85,14 @@ export function ReportsPresenter({
             <div className="flex flex-wrap items-end gap-3">
               {(["from", "to"] as const).map((key) => (
                 <div key={key} className="flex-1 min-w-[120px]">
-                  <label className="block text-xs font-semibold text-kot-darker mb-1 capitalize">
+                  <label
+                    htmlFor={`reports-${key}`}
+                    className="block text-xs font-semibold text-kot-darker mb-1 capitalize"
+                  >
                     {key}
                   </label>
                   <input
+                    id={`reports-${key}`}
                     type="date"
                     value={key === "from" ? from : to}
                     onChange={(e) =>

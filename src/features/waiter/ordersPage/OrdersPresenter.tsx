@@ -6,7 +6,7 @@ import {
   ChevronRight,
   RefreshCw,
 } from "lucide-react";
-import type { OrdersPresenterProps, Order } from "./Order.types";
+import type { OrdersPresenterProps, Order } from "./Orders.types";
 
 const STATUSES = [
   { value: "all", label: "All", color: "text-kot-text", bg: "bg-kot-light" },
@@ -116,8 +116,18 @@ function OrderDetailPanel({
   const st = statusStyle(order.status);
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-      <div className="fixed bottom-0 sm:bottom-auto sm:top-0 sm:right-0 sm:h-full left-0 right-0 sm:left-auto sm:w-96 bg-kot-white z-50 flex flex-col rounded-t-3xl sm:rounded-none shadow-kot-lg max-h-[85vh] sm:max-h-none">
+      <button
+        type="button"
+        className="fixed inset-0 bg-black/40 z-40"
+        onClick={onClose}
+        aria-label="Close order details"
+      />
+      <div
+        className="fixed bottom-0 sm:bottom-auto sm:top-0 sm:right-0 sm:h-full left-0 right-0 sm:left-auto sm:w-96 bg-kot-white z-50 flex flex-col rounded-t-3xl sm:rounded-none shadow-kot-lg max-h-[85vh] sm:max-h-none"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Order details"
+      >
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
           <div className="w-10 h-1 rounded-full bg-kot-chart" />
         </div>
@@ -128,9 +138,10 @@ function OrderDetailPanel({
               {formatDate(order.createdAt)} · {formatTime(order.createdAt)}
             </p>
           </div>
-          <button
+          <button type="button"
             onClick={onClose}
             className="p-1.5 text-kot-text hover:text-kot-darker hover:bg-kot-light rounded-lg transition-colors"
+            aria-label="Close order details"
           >
             <X size={18} />
           </button>
@@ -261,7 +272,7 @@ export function OrdersPresenter({
                 : `${total.toLocaleString()} orders found`}
             </p>
           </div>
-          <button
+          <button type="button"
             onClick={onRefresh}
             disabled={refreshing}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-kot-chart text-kot-dark bg-kot-white hover:bg-kot-light text-sm disabled:opacity-50"
@@ -287,7 +298,7 @@ export function OrdersPresenter({
                 className="w-full pl-9 pr-4 py-2.5 border-2 border-kot-chart rounded-xl bg-kot-primary text-kot-darker text-sm focus:outline-none focus:border-kot-dark placeholder:text-kot-text/50"
               />
               {search && (
-                <button
+                <button type="button"
                   onClick={() => onSearchChange("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker"
                 >
@@ -295,7 +306,7 @@ export function OrdersPresenter({
                 </button>
               )}
             </div>
-            <button
+            <button type="button"
               onClick={onToggleFilters}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 text-sm font-medium transition-all flex-shrink-0 ${
                 showFilters || activeFilterCount > 0
@@ -316,7 +327,7 @@ export function OrdersPresenter({
           {/* Status pills */}
           <div className="flex gap-1.5 overflow-x-auto pb-1">
             {STATUSES.map((s) => (
-              <button
+              <button type="button"
                 key={s.value}
                 onClick={() => onStatusChange(s.value)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all border-2 ${
@@ -335,10 +346,11 @@ export function OrdersPresenter({
             <div className="pt-2 border-t border-kot-chart space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="orders-from-date" className="block text-xs font-semibold text-kot-darker mb-1">
                     From Date
                   </label>
                   <input
+                    id="orders-from-date"
                     type="date"
                     value={from}
                     onChange={(e) => onFromChange(e.target.value)}
@@ -346,10 +358,11 @@ export function OrdersPresenter({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="orders-to-date" className="block text-xs font-semibold text-kot-darker mb-1">
                     To Date
                   </label>
                   <input
+                    id="orders-to-date"
                     type="date"
                     value={to}
                     onChange={(e) => onToChange(e.target.value)}
@@ -357,10 +370,11 @@ export function OrdersPresenter({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="orders-table-number" className="block text-xs font-semibold text-kot-darker mb-1">
                     Table Number
                   </label>
                   <input
+                    id="orders-table-number"
                     type="number"
                     min="1"
                     placeholder="e.g. 5"
@@ -371,7 +385,7 @@ export function OrdersPresenter({
                 </div>
               </div>
               {activeFilterCount > 0 && (
-                <button
+                <button type="button"
                   onClick={onClearFilters}
                   className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
                 >
@@ -439,7 +453,7 @@ export function OrdersPresenter({
                 : "Orders will appear here once placed"}
             </p>
             {(search || activeFilterCount > 0) && (
-              <button
+              <button type="button"
                 onClick={onClearFilters}
                 className="mt-4 px-4 py-2 bg-kot-dark text-white text-sm font-semibold rounded-lg hover:bg-kot-darker"
               >
@@ -481,6 +495,14 @@ export function OrdersPresenter({
                       <tr
                         key={order._id}
                         onClick={() => onSelectOrder(order)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onSelectOrder(order);
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
                         className="hover:bg-kot-primary transition-colors cursor-pointer"
                       >
                         <td className="px-4 py-3">
@@ -540,10 +562,11 @@ export function OrdersPresenter({
               {orders.map((order) => {
                 const st = statusStyle(order.status);
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={order._id}
                     onClick={() => onSelectOrder(order)}
-                    className="bg-kot-white rounded-xl shadow-kot p-3.5 cursor-pointer hover:shadow-kot-lg transition-all"
+                    className="w-full text-left bg-kot-white rounded-xl shadow-kot p-3.5 cursor-pointer hover:shadow-kot-lg transition-all"
                   >
                     <div className="flex items-start justify-between mb-1.5">
                       <div>
@@ -582,7 +605,7 @@ export function OrdersPresenter({
                         <span>{formatDate(order.createdAt)}</span>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -599,7 +622,7 @@ export function OrdersPresenter({
                   </span>
                 </p>
                 <div className="flex gap-2">
-                  <button
+                  <button type="button"
                     onClick={() => onPageChange(page - 1)}
                     disabled={page <= 1}
                     className="p-2 rounded-lg border-2 border-kot-chart text-kot-darker disabled:opacity-40 hover:bg-kot-light transition-colors"
@@ -617,7 +640,7 @@ export function OrdersPresenter({
                               ? totalPages - 4 + i
                               : page - 2 + i;
                       return (
-                        <button
+                        <button type="button"
                           key={pg}
                           onClick={() => onPageChange(pg)}
                           className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
@@ -631,7 +654,7 @@ export function OrdersPresenter({
                       );
                     })}
                   </div>
-                  <button
+                  <button type="button"
                     onClick={() => onPageChange(page + 1)}
                     disabled={page >= totalPages}
                     className="p-2 rounded-lg border-2 border-kot-chart text-kot-darker disabled:opacity-40 hover:bg-kot-light transition-colors"

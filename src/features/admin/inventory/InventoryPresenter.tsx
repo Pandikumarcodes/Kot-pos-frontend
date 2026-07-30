@@ -87,13 +87,13 @@ export function InventoryPresenter({
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button
+            <button type="button"
               onClick={onRefresh}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-kot-chart text-kot-dark bg-kot-white hover:bg-kot-light text-sm transition-colors"
             >
               <RefreshCw size={14} />
             </button>
-            <button
+            <button type="button"
               onClick={onFilterLowToggle}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 text-sm font-medium transition-colors ${
                 filterLow
@@ -104,7 +104,7 @@ export function InventoryPresenter({
               <AlertTriangle size={14} />
               Low Stock {lowStockCount > 0 && `(${lowStockCount})`}
             </button>
-            <button
+            <button type="button"
               onClick={onOpenCreate}
               className="flex items-center gap-1.5 px-4 py-2 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-xl text-sm transition-colors"
             >
@@ -128,7 +128,7 @@ export function InventoryPresenter({
               className="w-full pl-9 pr-9 py-2.5 border-2 border-kot-chart rounded-xl bg-kot-white text-kot-darker text-sm focus:outline-none focus:border-kot-dark placeholder:text-kot-text/50"
             />
             {search && (
-              <button
+              <button type="button"
                 onClick={() => onSearchChange("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text"
               >
@@ -183,7 +183,7 @@ export function InventoryPresenter({
             <p className="text-sm text-kot-text mt-1">
               Add items to start tracking stock
             </p>
-            <button
+            <button type="button"
               onClick={onOpenCreate}
               className="mt-4 px-5 py-2.5 bg-kot-dark text-white rounded-xl text-sm font-semibold hover:bg-kot-darker"
             >
@@ -250,34 +250,34 @@ export function InventoryPresenter({
                 </div>
                 {/* Actions */}
                 <div className="flex gap-1.5">
-                  <button
+                  <button type="button"
                     onClick={() => onOpenRestock(item)}
                     className="flex-1 py-1.5 bg-kot-dark hover:bg-kot-darker text-white rounded-lg text-xs font-semibold transition-colors"
                   >
                     + Restock
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => onOpenAdjust(item)}
                     title="Adjust"
                     className="px-2.5 py-1.5 border border-kot-chart text-kot-text hover:bg-kot-light rounded-lg text-xs transition-colors"
                   >
                     ±
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => onOpenLogs(item)}
                     title="History"
                     className="px-2.5 py-1.5 border border-kot-chart text-kot-text hover:bg-kot-light rounded-lg text-xs transition-colors"
                   >
                     <History size={13} />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => onOpenEdit(item)}
                     title="Edit"
                     className="px-2.5 py-1.5 border border-kot-chart text-kot-text hover:bg-kot-light rounded-lg text-xs transition-colors"
                   >
                     <Edit2 size={13} />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => onDelete(item)}
                     title="Remove"
                     className="px-2.5 py-1.5 border border-red-200 text-red-500 hover:bg-red-50 rounded-lg text-xs transition-colors"
@@ -299,7 +299,7 @@ export function InventoryPresenter({
               <h2 className="text-base font-bold text-kot-darker">
                 {editingItem ? "Edit Item" : "Add Inventory Item"}
               </h2>
-              <button
+              <button type="button"
                 onClick={onCloseModal}
                 className="text-kot-text hover:text-kot-darker p-1"
               >
@@ -309,10 +309,11 @@ export function InventoryPresenter({
             <form onSubmit={onSave} className="p-4 sm:p-5 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="inventory-name" className="block text-xs font-semibold text-kot-darker mb-1">
                     Item Name *
                   </label>
                   <input
+                    id="inventory-name"
                     type="text"
                     required
                     value={formData.name}
@@ -322,10 +323,11 @@ export function InventoryPresenter({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="inventory-unit" className="block text-xs font-semibold text-kot-darker mb-1">
                     Unit
                   </label>
                   <select
+                    id="inventory-unit"
                     value={formData.unit}
                     onChange={(e) =>
                       onFormChange("unit", e.target.value as InventoryUnit)
@@ -340,10 +342,11 @@ export function InventoryPresenter({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="inventory-category" className="block text-xs font-semibold text-kot-darker mb-1">
                     Category
                   </label>
                   <select
+                    id="inventory-category"
                     value={formData.category}
                     onChange={(e) =>
                       onFormChange(
@@ -362,10 +365,11 @@ export function InventoryPresenter({
                 </div>
                 {!editingItem && (
                   <div>
-                    <label className="block text-xs font-semibold text-kot-darker mb-1">
+                    <label htmlFor="inventory-opening-stock" className="block text-xs font-semibold text-kot-darker mb-1">
                       Opening Stock
                     </label>
                     <input
+                      id="inventory-opening-stock"
                       type="number"
                       min="0"
                       value={formData.currentStock}
@@ -377,10 +381,11 @@ export function InventoryPresenter({
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="inventory-low-stock" className="block text-xs font-semibold text-kot-darker mb-1">
                     Low Stock Alert At
                   </label>
                   <input
+                    id="inventory-low-stock"
                     type="number"
                     min="0"
                     value={formData.lowStockThreshold}
@@ -391,10 +396,11 @@ export function InventoryPresenter({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="inventory-cost" className="block text-xs font-semibold text-kot-darker mb-1">
                     Cost / Unit (₹)
                   </label>
                   <input
+                    id="inventory-cost"
                     type="number"
                     min="0"
                     step="0.01"
@@ -406,10 +412,11 @@ export function InventoryPresenter({
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="inventory-supplier" className="block text-xs font-semibold text-kot-darker mb-1">
                     Supplier
                   </label>
                   <input
+                    id="inventory-supplier"
                     type="text"
                     value={formData.supplier}
                     onChange={(e) => onFormChange("supplier", e.target.value)}
@@ -418,13 +425,14 @@ export function InventoryPresenter({
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-kot-darker mb-1">
+                  <label htmlFor="inventory-menu-item" className="block text-xs font-semibold text-kot-darker mb-1">
                     Linked MenuItem ID
                     <span className="text-kot-text font-normal ml-1">
                       (optional — auto-disables when stock = 0)
                     </span>
                   </label>
                   <input
+                    id="inventory-menu-item"
                     type="text"
                     value={formData.menuItemId}
                     onChange={(e) => onFormChange("menuItemId", e.target.value)}
@@ -466,7 +474,7 @@ export function InventoryPresenter({
                   {restockItem.unit}
                 </p>
               </div>
-              <button
+              <button type="button"
                 onClick={onCloseRestock}
                 className="text-kot-text hover:text-kot-darker p-1"
               >
@@ -475,10 +483,11 @@ export function InventoryPresenter({
             </div>
             <form onSubmit={onRestock} className="p-4 space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-kot-darker mb-1">
+                <label htmlFor="restock-quantity" className="block text-xs font-semibold text-kot-darker mb-1">
                   Quantity to Add ({restockItem.unit})
                 </label>
                 <input
+                  id="restock-quantity"
                   type="number"
                   min="1"
                   required
@@ -490,10 +499,11 @@ export function InventoryPresenter({
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-kot-darker mb-1">
+                <label htmlFor="restock-note" className="block text-xs font-semibold text-kot-darker mb-1">
                   Note (optional)
                 </label>
                 <input
+                  id="restock-note"
                   type="text"
                   value={restockNote}
                   onChange={(e) => onRestockNoteChange(e.target.value)}
@@ -547,7 +557,7 @@ export function InventoryPresenter({
                   {adjustItem.unit}
                 </p>
               </div>
-              <button
+              <button type="button"
                 onClick={onCloseAdjust}
                 className="text-kot-text hover:text-kot-darker p-1"
               >
@@ -556,13 +566,14 @@ export function InventoryPresenter({
             </div>
             <form onSubmit={onAdjust} className="p-4 space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-kot-darker mb-1">
+                <label htmlFor="adjust-quantity" className="block text-xs font-semibold text-kot-darker mb-1">
                   Quantity{" "}
                   <span className="text-kot-text font-normal">
                     (use negative to remove, e.g. -5)
                   </span>
                 </label>
                 <input
+                  id="adjust-quantity"
                   type="number"
                   required
                   value={adjustQty}
@@ -573,10 +584,11 @@ export function InventoryPresenter({
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-kot-darker mb-1">
+                <label htmlFor="adjust-reason" className="block text-xs font-semibold text-kot-darker mb-1">
                   Reason *
                 </label>
                 <input
+                  id="adjust-reason"
                   type="text"
                   required
                   value={adjustNote}
@@ -624,19 +636,27 @@ export function InventoryPresenter({
       {/* ── Stock Logs Panel ── */}
       {logsItem && (
         <>
-          <div
+          <button
+            type="button"
             className="fixed inset-0 bg-black/40 z-40"
             onClick={onCloseLogs}
+            aria-label="Close stock history"
           />
-          <div className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-96 bg-kot-white shadow-kot-lg flex flex-col">
+          <div
+            className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-96 bg-kot-white shadow-kot-lg flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Stock history for ${logsItem.name}`}
+          >
             <div className="flex items-center justify-between p-4 border-b border-kot-chart">
               <div>
                 <h3 className="font-bold text-kot-darker">{logsItem.name}</h3>
                 <p className="text-xs text-kot-text mt-0.5">Stock history</p>
               </div>
-              <button
+              <button type="button"
                 onClick={onCloseLogs}
                 className="text-kot-text hover:text-kot-darker p-1"
+                aria-label="Close stock history"
               >
                 <X size={20} />
               </button>

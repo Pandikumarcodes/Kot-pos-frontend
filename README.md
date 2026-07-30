@@ -153,16 +153,12 @@ backend API. API requests use the `/api/v1` contract represented in
 | Frontend | React 19, React DOM, Lucide React, Chart.js, QRCode React |
 | State Management | Redux Toolkit and React Redux for global state; React hooks for feature-local state |
 | Data Fetching | Axios for REST APIs, Socket.IO Client for live events, interval polling for QR order status |
-| Routing | React Router DOM 7 with lazy-loaded protected routes |
+| Routing | React router DOM 7 with lazy-loaded protected routes |
 | Styling | Tailwind CSS 4, shared theme tokens, and reusable UI components |
 | Forms | Controlled React inputs with repository-local validation utilities |
 | Testing | Vitest, jsdom, Testing Library, and Playwright |
 | Build Tool | Vite 7 through the `rolldown-vite` package alias |
 | Language | TypeScript 5.9 in strict mode |
-
-`@tanstack/react-query` is installed, but the application does not currently
-create a `QueryClient` or use React Query hooks. Current server-state fetching
-is implemented with Axios and feature-local React state.
 
 ## Project Structure
 
@@ -179,23 +175,22 @@ is implemented with Axios and feature-local React state.
 ├── src/
 │   ├── __tests__/           # Vitest unit tests and shared test setup
 │   ├── charts/              # Dashboard and report charts
-│   ├── config/              # API endpoints, permissions, and constants
-│   ├── Context/             # Toast context and provider
+│   ├── components/          # Shared application and UI components
+│   ├── config/              # API endpoints and permissions
+│   ├── contexts/            # Toast context and provider
 │   ├── design-system/       # Application shell components
 │   ├── errorBoundary/       # Top-level React error boundary
 │   ├── features/            # Role- and domain-oriented feature modules
-│   ├── hooks/               # Notifications, printing, permissions, and PWA hooks
-│   ├── Router/              # Route definitions and access guards
+│   ├── hooks/               # Notifications, printing, and PWA hooks
+│   ├── routing/             # Route definitions and access guards
 │   ├── services/            # Axios clients and domain API modules
-│   ├── Store/               # Redux store, typed hooks, and slices
-│   ├── UiComponents/        # Reusable UI primitives
+│   ├── state/               # Redux store, typed hooks, and slices
 │   ├── utils/               # Form validation utilities
 │   ├── App.tsx              # Session bootstrap and authenticated app shell
 │   └── main.tsx             # React entry point and providers
-├── tests/                   # Standalone Playwright example outside the e2e config
 ├── package.json             # Dependencies and executable scripts
 ├── playwright.config.ts     # Browser-test configuration
-├── Vitest.config.ts         # Unit-test and coverage configuration
+├── vitest.config.mts        # Unit-test and coverage configuration
 └── vite.config.ts           # Vite, React, and Tailwind integration
 ```
 
@@ -251,7 +246,8 @@ Every script below is defined in `package.json`.
 | `npm run dev` | Starts the Vite development server with hot module replacement. |
 | `npm run build` | Creates an optimized production build in `dist/`. |
 | `npm run preview` | Serves the production build locally for inspection. |
-| `npm test` | Starts Vitest in its default interactive/watch mode. |
+| `npm test` | Runs the Vitest unit suite once. |
+| `npm run test:watch` | Starts Vitest in interactive/watch mode. |
 | `npm run typecheck` | Runs the TypeScript project build in no-emit mode. |
 | `npm run lint` | Runs ESLint across the repository. |
 | `npm run e2e` | Runs the Playwright setup project and browser test suite. |
@@ -259,12 +255,6 @@ Every script below is defined in `package.json`.
 | `npm run e2e:debug` | Runs Playwright in debug mode. |
 | `npm run e2e:report` | Opens the generated Playwright HTML report. |
 | `npm run e2e:headed` | Runs Playwright with a visible browser window. |
-
-For a one-time, non-watch unit-test run, pass Vitest's `--run` option:
-
-```bash
-npm test -- --run
-```
 
 ## Environment Variables
 
@@ -307,7 +297,7 @@ kept separate from rendering.
 
 `src/services/apiClient.ts` creates the authenticated Axios client with an
 `/api/v1` base path and `withCredentials: true`. Domain modules define typed
-requests for admin, waiter, chef, cashier, authentication, and public QR APIs.
+requests for admin, waiter, chef, cashier, and public QR APIs.
 The public QR client intentionally uses a separate Axios instance without the
 authenticated interceptor chain.
 
@@ -326,13 +316,6 @@ Redux Toolkit owns cross-cutting client state. The configured store contains:
 Current feature screens keep most form, list, filter, and cart state locally
 with React hooks. In practice, authentication is the primary Redux-backed flow;
 the active ordering screens currently use their own local cart state.
-
-### React Query
-
-React Query is present in `package.json` but is not wired into `main.tsx` and is
-not used by the feature modules. There is no `QueryClientProvider`, query cache,
-or React Query mutation flow. Axios calls are coordinated with `useEffect`,
-`useCallback`, local state, and explicit refresh functions.
 
 ### Redux Toolkit
 
@@ -408,7 +391,7 @@ current unit suites cover:
 Run the unit suite once:
 
 ```bash
-npm test -- --run
+npm test
 ```
 
 ### Integration and End-to-End Tests
@@ -431,11 +414,11 @@ npm run e2e
 
 ### Current Test Status
 
-Status verified on July 29, 2026:
+Status verified on July 30, 2026:
 
 | Check | Result |
 | --- | --- |
-| `npm test -- --run` | Passed: 4 files, 122 tests |
+| `npm test` | Passed: 4 files, 122 tests |
 | `npm run typecheck` | Passed |
 | `npm run lint` | Passed |
 | `npm run build` | Passed |
@@ -453,7 +436,7 @@ successful browser-suite run.
 | Build | Verified Vite production build completes successfully. |
 | Unit tests | 122 tests pass across 4 suites. |
 | Browser tests | Auth, RBAC, operational, and QR specs exist; a credentialed seeded environment is required to validate them. |
-| Automation | GitHub Actions runs Playwright for pushes and pull requests to `main` or `master`. |
+| Automation | GitHub Actions runs lint, typecheck, unit tests, build, and Playwright for pushes and pull requests to `main` or `master`. |
 
 The frontend is build-ready, but a complete release assessment must also
 validate the external API, its authorization rules, production environment
@@ -465,8 +448,6 @@ configuration, and the credentialed Playwright suite.
   can run independently of shared backend state.
 - Expand unit and integration coverage to feature containers, forms, printing,
   service-worker behavior, and Socket.IO event handling.
-- Either adopt React Query with a shared query client and cache policy or remove
-  the currently unused dependency.
 - Add production error reporting, performance monitoring, and operational
   dashboards.
 - Add privacy-aware product analytics and auditable administrative activity
@@ -476,4 +457,8 @@ configuration, and the credentialed Playwright suite.
 
 ## License
 
-MIT. A standalone `LICENSE` file is not currently included in this repository.
+This project is available under the terms in [LICENSE](LICENSE).
+
+Contribution and vulnerability-reporting guidance is available in
+[CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Release
+history is recorded in [CHANGELOG.md](CHANGELOG.md).

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { API_V1_URL } from "../../../config/Api";
+import { API_V1_URL } from "../../../config/apiEndpoints";
 import { SignUpPresenter } from "./SignUpPresenter";
 import type { SignUpFormData, SignUpFormErrors } from "./SignUp.types";
 

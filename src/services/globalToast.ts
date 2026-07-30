@@ -7,6 +7,9 @@ let _handler: ToastHandler | null = null;
 // Called once by ToastProvider to register itself
 export function registerGlobalToastHandler(handler: ToastHandler) {
   _handler = handler;
+  return () => {
+    if (_handler === handler) _handler = null;
+  };
 }
 
 // Called by apiClient (or anywhere outside React)

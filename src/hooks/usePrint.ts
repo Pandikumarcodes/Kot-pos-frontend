@@ -1,6 +1,6 @@
-import type { Settings } from "../services/adminApi/Settings.api";
-import type { Kot } from "../services/chefApi/chef.api";
-import type { Bill } from "../services/CashierApi/cashier.api";
+import type { Settings } from "../services/admin/settings.api";
+import type { Kot } from "../services/chef/chef.api";
+import type { Bill } from "../services/cashier/cashier.api";
 
 // ── Shared 80mm thermal CSS ───────────────────────────────────
 const THERMAL_CSS = `

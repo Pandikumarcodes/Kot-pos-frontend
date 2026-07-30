@@ -1,4 +1,4 @@
-import type { Settings } from "../../../services/adminApi/Settings.api";
+import type { Settings } from "../../../services/admin/settings.api";
 
 export type { Settings };
 export type SettingsTab =

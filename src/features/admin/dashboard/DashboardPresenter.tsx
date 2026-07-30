@@ -7,7 +7,7 @@ import {
   RangePicker,
   ProgressBar,
   EmptyState,
-} from "../../../UiComponents/Index";
+} from "../../../components/ui/index";
 import type {
   AdminDashboardPresenterProps,
   RangeType,

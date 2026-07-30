@@ -4,14 +4,14 @@ import {
   getTopItemsApi,
   getPaymentsApi,
   getHourlyApi,
-} from "../../../services/adminApi/Reports.api";
+} from "../../../services/admin/reports.api";
 import type {
   DateRange,
   SummaryStats,
   TopItem,
   PaymentStat,
   HourlyStat,
-} from "../../../services/adminApi/Reports.api";
+} from "../../../services/admin/reports.api";
 import { ReportsPresenter } from "./ReportsPresenter";
 
 export default function ReportsPageContainer() {

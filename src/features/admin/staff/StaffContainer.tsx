@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAppSelector } from "../../../Store/hooks";
+import { useAppSelector } from "../../../state/hooks";
 import {
   getUsersApi,
   createUserApi,
   updateUserRoleApi,
   deleteUserApi,
-} from "../../../services/adminApi/Staff.api";
+} from "../../../services/admin/staff.api";
 import type {
   StaffUser,
   CreateUserPayload,
-} from "../../../services/adminApi/Staff.api";
-import { useToast } from "../../../Context/toastContext";
+} from "../../../services/admin/staff.api";
+import { useToast } from "../../../contexts/toastContext";
 import {
   validateStaff,
   hasErrors,

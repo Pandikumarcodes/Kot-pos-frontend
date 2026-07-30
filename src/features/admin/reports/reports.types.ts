@@ -4,7 +4,7 @@ import type {
   TopItem,
   PaymentStat,
   HourlyStat,
-} from "../../../services/adminApi/Reports.api";
+} from "../../../services/admin/reports.api";
 
 export type { DateRange, SummaryStats, TopItem, PaymentStat, HourlyStat };
 

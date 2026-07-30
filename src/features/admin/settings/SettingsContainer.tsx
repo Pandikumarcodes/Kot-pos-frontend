@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAppSelector } from "../../../Store/hooks";
+import { useAppSelector } from "../../../state/hooks";
 import {
   getSettingsApi,
   updateSettingsApi,
-} from "../../../services/adminApi/Settings.api";
-import type { Settings } from "../../../services/adminApi/Settings.api";
-import { useToast } from "../../../Context/toastContext";
+} from "../../../services/admin/settings.api";
+import type { Settings } from "../../../services/admin/settings.api";
+import { useToast } from "../../../contexts/toastContext";
 import { SettingsPresenter } from "./SettingsPresenter";
 import type { SettingsTab } from "./settings.types";
 

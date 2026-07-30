@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAppSelector } from "../../../Store/hooks";
+import { useAppSelector } from "../../../state/hooks";
 import {
   getMenuItemsApi,
   createMenuItemApi,
   updateMenuItemApi,
   deleteMenuItemApi,
-} from "../../../services/adminApi/Menu.api";
+} from "../../../services/admin/menu.api";
 import type {
   MenuItem,
   CreateMenuPayload,
-} from "../../../services/adminApi/Menu.api";
-import { useToast } from "../../../Context/toastContext";
+} from "../../../services/admin/menu.api";
+import { useToast } from "../../../contexts/toastContext";
 import {
   validateMenuItem,
   hasErrors,

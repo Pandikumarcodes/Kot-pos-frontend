@@ -170,7 +170,7 @@ export function SignUpPresenter({
             <span className="font-bold text-lg text-kot-darker">KOT POS</span>
           </div>
 
-          <button
+          <button type="button"
             onClick={onBack}
             className="flex items-center gap-1.5 mb-5 text-sm font-medium text-kot-text hover:text-kot-darker transition-colors"
           >
@@ -196,7 +196,7 @@ export function SignUpPresenter({
             </h1>
             <p className="text-sm text-kot-text">
               Already have an account?{" "}
-              <button
+              <button type="button"
                 onClick={onSignIn}
                 className="font-semibold text-kot-dark hover:text-kot-darker transition-colors"
               >
@@ -214,10 +214,13 @@ export function SignUpPresenter({
           <form onSubmit={onSubmit} className="space-y-3 sm:space-y-4">
             {/* Username */}
             <div>
-              <label className="block text-sm font-medium mb-1.5 text-kot-darker">
+              <label htmlFor="signup-username" className="block text-sm font-medium mb-1.5 text-kot-darker">
                 Username
               </label>
               <input
+                id="signup-username"
+                aria-invalid={Boolean(errors.username)}
+                aria-describedby={errors.username ? "signup-username-error" : undefined}
                 type="text"
                 value={formData.username}
                 onChange={(e) => onFieldChange("username", e.target.value)}
@@ -226,16 +229,16 @@ export function SignUpPresenter({
                 autoComplete="username"
               />
               {errors.username && (
-                <p className="mt-1 text-xs text-red-500">{errors.username}</p>
+                <p id="signup-username-error" className="mt-1 text-xs text-red-500" role="alert">{errors.username}</p>
               )}
             </div>
 
             {/* Role — pill grid, scrollable on tiny screens */}
             <div>
-              <label className="block text-sm font-medium mb-1.5 text-kot-darker">
+              <p id="signup-role-label" className="block text-sm font-medium mb-1.5 text-kot-darker">
                 Role
-              </label>
-              <div className="grid grid-cols-3 gap-2">
+              </p>
+              <div className="grid grid-cols-3 gap-2" role="group" aria-labelledby="signup-role-label">
                 {SIGNUP_ROLES.map((r) => (
                   <button
                     key={r.value}
@@ -261,11 +264,14 @@ export function SignUpPresenter({
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium mb-1.5 text-kot-darker">
+              <label htmlFor="signup-password" className="block text-sm font-medium mb-1.5 text-kot-darker">
                 Password
               </label>
               <div className="relative">
                 <input
+                  id="signup-password"
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={errors.password ? "signup-password-error" : undefined}
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) => onFieldChange("password", e.target.value)}
@@ -276,13 +282,14 @@ export function SignUpPresenter({
                 <button
                   type="button"
                   onClick={onTogglePassword}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker transition-colors p-1"
                 >
                   <EyeIcon show={showPassword} />
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-xs text-red-500">{errors.password}</p>
+                <p id="signup-password-error" className="mt-1 text-xs text-red-500" role="alert">{errors.password}</p>
               )}
               {formData.password && (
                 <div className="mt-2 space-y-1.5">
@@ -310,11 +317,14 @@ export function SignUpPresenter({
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium mb-1.5 text-kot-darker">
+              <label htmlFor="signup-confirm-password" className="block text-sm font-medium mb-1.5 text-kot-darker">
                 Confirm Password
               </label>
               <div className="relative">
                 <input
+                  id="signup-confirm-password"
+                  aria-invalid={Boolean(errors.confirmPassword)}
+                  aria-describedby={errors.confirmPassword ? "signup-confirm-error" : undefined}
                   type={showConfirm ? "text" : "password"}
                   value={formData.confirmPassword}
                   onChange={(e) =>
@@ -327,13 +337,18 @@ export function SignUpPresenter({
                 <button
                   type="button"
                   onClick={onToggleConfirm}
+                  aria-label={showConfirm ? "Hide password" : "Show password"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker transition-colors p-1"
                 >
                   <EyeIcon show={showConfirm} />
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-xs text-red-500">
+                <p
+                  id="signup-confirm-error"
+                  className="mt-1 text-xs text-red-500"
+                  role="alert"
+                >
                   {errors.confirmPassword}
                 </p>
               )}

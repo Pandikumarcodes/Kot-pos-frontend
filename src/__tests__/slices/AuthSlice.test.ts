@@ -3,8 +3,8 @@ import authReducer, {
   setCredentials,
   clearCredentials,
   setAuthLoading,
-} from "../../Store/Slices/authSlice";
-import type { AuthUser, UserRole } from "../../Store/Slices/authSlice";
+} from "../../state/slices/authSlice";
+import type { AuthUser, UserRole } from "../../state/slices/authSlice";
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 const adminUser: AuthUser = {

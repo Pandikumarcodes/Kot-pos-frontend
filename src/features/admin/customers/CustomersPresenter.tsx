@@ -24,7 +24,7 @@ import {
   Tbody,
   Tr,
   Td,
-} from "../../../UiComponents/Index";
+} from "../../../components/ui/index";
 import type { CustomerPresenterProps } from "./customers.types";
 
 export function CustomerPresenter({

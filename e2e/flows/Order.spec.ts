@@ -247,10 +247,6 @@ test.describe("Cashier — billing", () => {
       await page.waitForTimeout(1_000);
     }
 
-    // Log all buttons before clicking bill
-    const buttonsBefore = await page.getByRole("button").allInnerTexts();
-    console.log("[debug] All buttons on billing page:", buttonsBefore);
-
     // Click the unpaid bill card
     const unpaidBillBtn = page
       .getByRole("button")
@@ -264,19 +260,6 @@ test.describe("Cashier — billing", () => {
 
     await unpaidBillBtn.click();
     await page.waitForTimeout(2_000);
-
-    // Log URL and all buttons/text after clicking
-    console.log("[debug] URL after clicking bill:", page.url());
-    const buttonsAfter = await page.getByRole("button").allInnerTexts();
-    console.log("[debug] Buttons after clicking unpaid bill:", buttonsAfter);
-    const pageText = await page
-      .locator("body")
-      .innerText()
-      .catch(() => "");
-    console.log(
-      "[debug] Page text after clicking bill:",
-      pageText.slice(0, 400),
-    );
 
     // Try to find pay button — check all possible labels
     const payButton = page
@@ -297,7 +280,6 @@ test.describe("Cashier — billing", () => {
         .isVisible({ timeout: 3_000 })
         .catch(() => false);
 
-      console.log("[debug] Any pay text visible:", anyPayText);
       test.skip(
         !anyPayText,
         "No pay button found after clicking bill — check UI flow in headed mode",

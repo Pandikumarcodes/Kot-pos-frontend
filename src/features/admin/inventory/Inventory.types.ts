@@ -5,7 +5,7 @@ import type {
   CreateInventoryPayload,
   InventoryUnit,
   InventoryCategory,
-} from "../../../services/adminApi/Inventory.api";
+} from "../../../services/admin/inventory.api";
 
 export type {
   InventoryItem,

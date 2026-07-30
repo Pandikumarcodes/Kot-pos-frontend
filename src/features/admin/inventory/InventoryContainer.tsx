@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useToast } from "../../../Context/toastContext";
+import { useToast } from "../../../contexts/toastContext";
 import {
   getInventoryApi,
   createInventoryApi,
@@ -8,7 +8,7 @@ import {
   adjustStockApi,
   getStockLogsApi,
   deleteInventoryApi,
-} from "../../../services/adminApi/Inventory.api";
+} from "../../../services/admin/inventory.api";
 import type {
   InventoryItem,
   StockLog,

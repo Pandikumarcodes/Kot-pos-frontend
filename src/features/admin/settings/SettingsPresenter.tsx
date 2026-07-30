@@ -6,7 +6,7 @@ import {
   Pulse,
   PageHeader,
   Toggle,
-} from "../../../UiComponents/Index";
+} from "../../../components/ui/index";
 import type {
   SettingsPresenterProps,
   SettingsTab,
@@ -105,7 +105,7 @@ export function SettingsPresenter({
         <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-none">
           <div className="flex gap-1.5 w-max sm:w-auto">
             {TABS.map((tab) => (
-              <button
+              <button type="button"
                 key={tab.key}
                 onClick={() => onTabChange(tab.key)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${

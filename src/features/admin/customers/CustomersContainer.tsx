@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAppSelector } from "../../../Store/hooks";
+import { useAppSelector } from "../../../state/hooks";
 import {
   getCustomersApi,
   createCustomerApi,
   updateCustomerApi,
   deleteCustomerApi,
-} from "../../../services/adminApi/Customer.api";
-import type { Customer } from "../../../services/adminApi/Customer.api";
+} from "../../../services/admin/customer.api";
+import type { Customer } from "../../../services/admin/customer.api";
 import type { CreateCustomerPayload } from "./customers.types";
-import { useToast } from "../../../Context/toastContext";
+import { useToast } from "../../../contexts/toastContext";
 import { CustomerPresenter } from "./CustomersPresenter";
 
 export default function CustomerPageContainer() {

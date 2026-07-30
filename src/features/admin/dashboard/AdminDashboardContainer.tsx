@@ -6,7 +6,7 @@ import {
   getDashboardTablesApi,
   getHourlySalesApi,
   getPaymentMethodsApi,
-} from "../../../services/adminApi/Admindashboard.api";
+} from "../../../services/admin/adminDashboard.api";
 import { AdminDashboardPresenter } from "./DashboardPresenter";
 import type {
   RangeType,

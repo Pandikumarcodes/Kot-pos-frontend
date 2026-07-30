@@ -1,7 +1,7 @@
 import type {
   StaffUser,
   CreateUserPayload,
-} from "../../../services/adminApi/Staff.api";
+} from "../../../services/admin/staff.api";
 import type { ValidationErrors } from "../../../utils/validation";
 
 export type { StaffUser, CreateUserPayload };

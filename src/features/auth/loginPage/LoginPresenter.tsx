@@ -127,9 +127,10 @@ export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
           </div>
 
           {/* Sign In Card */}
-          <div
+          <button
+            type="button"
             onClick={() => onNavigate("signin")}
-            className="group bg-kot-white rounded-2xl p-4 sm:p-6 mb-3 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg active:scale-[0.99]"
+            className="group w-full text-left bg-kot-white rounded-2xl p-4 sm:p-6 mb-3 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg active:scale-[0.99]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 sm:gap-4">
@@ -171,12 +172,13 @@ export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
                 />
               </svg>
             </div>
-          </div>
+          </button>
 
           {/* Sign Up Card */}
-          <div
+          <button
+            type="button"
             onClick={() => onNavigate("signup")}
-            className="group bg-kot-white rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg active:scale-[0.99]"
+            className="group w-full text-left bg-kot-white rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg active:scale-[0.99]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 sm:gap-4">
@@ -218,7 +220,7 @@ export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
                 />
               </svg>
             </div>
-          </div>
+          </button>
 
           <p className="text-center text-xs mt-6 sm:mt-8 text-kot-text">
             © 2026 KOT POS · All rights reserved

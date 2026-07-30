@@ -111,6 +111,7 @@ export function BranchPresenter({
             </p>
           </div>
           <button
+            type="button"
             onClick={onOpenCreate}
             className="flex items-center gap-2 px-4 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-xl transition-colors self-start sm:self-auto text-sm"
           >
@@ -133,6 +134,7 @@ export function BranchPresenter({
               Create your first branch to get started
             </p>
             <button
+              type="button"
               onClick={onOpenCreate}
               className="mt-4 px-5 py-2.5 bg-kot-dark text-white rounded-xl text-sm font-semibold hover:bg-kot-darker"
             >
@@ -190,18 +192,21 @@ export function BranchPresenter({
                 {/* Card actions */}
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={() => onOpenStaff(branch)}
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 border-2 border-kot-chart text-kot-darker rounded-xl hover:bg-kot-light transition-colors text-xs font-medium"
                   >
                     <Users size={13} /> Staff
                   </button>
                   <button
+                    type="button"
                     onClick={() => onOpenEdit(branch)}
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 border-2 border-kot-chart text-kot-darker rounded-xl hover:bg-kot-light transition-colors text-xs font-medium"
                   >
                     <Edit2 size={13} /> Edit
                   </button>
                   <button
+                    type="button"
                     onClick={() => onToggle(branch)}
                     title={branch.isActive ? "Deactivate" : "Activate"}
                     className={`p-2 rounded-xl border-2 transition-colors ${
@@ -232,6 +237,7 @@ export function BranchPresenter({
                 {editingBranch ? "Edit Branch" : "New Branch"}
               </h2>
               <button
+                type="button"
                 onClick={onCloseModal}
                 className="text-kot-text hover:text-kot-darker p-1"
               >
@@ -241,10 +247,14 @@ export function BranchPresenter({
             <form onSubmit={onSave} className="p-4 sm:p-6 space-y-3">
               {FORM_FIELDS.map((f) => (
                 <div key={f.key}>
-                  <label className="block text-sm font-semibold text-kot-darker mb-1">
+                  <label
+                    htmlFor={`branch-${f.key}`}
+                    className="block text-sm font-semibold text-kot-darker mb-1"
+                  >
                     {f.label}
                   </label>
                   <input
+                    id={`branch-${f.key}`}
                     type={f.type}
                     value={formData[f.key]}
                     onChange={(e) => onFormChange(f.key, e.target.value)}
@@ -278,11 +288,18 @@ export function BranchPresenter({
       {/* ── Staff Side Panel ── */}
       {selectedBranch && (
         <>
-          <div
+          <button
+            type="button"
             className="fixed inset-0 bg-black/40 z-40"
             onClick={onCloseStaff}
+            aria-label="Close staff panel"
           />
-          <div className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-96 bg-kot-white shadow-kot-lg flex flex-col">
+          <div
+            className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-96 bg-kot-white shadow-kot-lg flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Staff for ${selectedBranch.name}`}
+          >
             {/* Panel header */}
             <div className="flex items-center justify-between p-4 border-b border-kot-chart">
               <div>
@@ -292,6 +309,7 @@ export function BranchPresenter({
                 <p className="text-xs text-kot-text mt-0.5">Staff Management</p>
               </div>
               <button
+                type="button"
                 onClick={onCloseStaff}
                 className="text-kot-text hover:text-kot-darker p-1"
               >
@@ -401,6 +419,7 @@ export function BranchPresenter({
                           </p>
                         </div>
                         <button
+                          type="button"
                           onClick={() => onAssign(u._id)}
                           disabled={assigningId === u._id}
                           className="px-3 py-1.5 bg-kot-dark text-white rounded-lg text-xs font-medium hover:bg-kot-darker disabled:opacity-60 transition-colors"

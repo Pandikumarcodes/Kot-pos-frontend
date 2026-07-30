@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "./Store/hooks";
+import { useAppDispatch, useAppSelector } from "./state/hooks";
 import {
   setCredentials,
   clearCredentials,
   setAuthLoading,
-} from "./Store/Slices/authSlice";
-import AppRouter from "./Router/AppRouter";
+} from "./state/slices/authSlice";
+import AppRouter from "./routing/AppRouter";
 import Header from "./design-system/organisms/Header";
 import Sidebar from "./design-system/organisms/Sidebar";
 import api from "./services/apiClient";
-import { notificationService } from "./services/notificationServices";
+import { notificationService } from "./services/notificationService";
 
 export default function App() {
   const dispatch = useAppDispatch();

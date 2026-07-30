@@ -11,7 +11,7 @@ import {
   EmptyState,
   Modal,
   Badge,
-} from "../../../UiComponents/Index";
+} from "../../../components/ui/index";
 import { CATEGORIES, type MenuPresenterProps } from "./menu.types";
 
 const getCategoryLabel = (key: string) =>
@@ -119,7 +119,7 @@ export function MenuManagementPresenter({
         <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-none">
           <div className="flex gap-1.5 w-max sm:w-auto sm:flex-wrap">
             {tabs.map((tab) => (
-              <button
+              <button type="button"
                 key={tab.key}
                 onClick={() => onCategoryChange(tab.key)}
                 className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${

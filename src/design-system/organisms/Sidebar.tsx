@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAppSelector } from "../../Store/hooks";
-import { NAV_PERMISSIONS } from "../../config/Permission";
-import type { Role } from "../../config/Permission";
+import { useAppSelector } from "../../state/hooks";
+import { NAV_PERMISSIONS } from "../../config/permissions";
+import type { Role } from "../../config/permissions";
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -19,13 +19,13 @@ import {
   Check,
   Rocket,
   Package,
-  ClipboardList,
+  // ClipboardList,
   X,
   Bot,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { getBranchesApi } from "../../services/adminApi/Branch.api";
-import type { Branch } from "../../services/adminApi/Branch.api";
+import { getBranchesApi } from "../../services/admin/branch.api";
+import type { Branch } from "../../services/admin/branch.api";
 
 interface NavLink {
   label: string;
@@ -36,7 +36,7 @@ interface NavLink {
 const NAV_LINKS: NavLink[] = [
   { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Inventory", to: "/admin/inventory", icon: Package },
-  { label: "Orders", to: "/admin/orders", icon: ClipboardList },
+  // { label: "Orders", to: "/waiter/orders", icon: ClipboardList },
   { label: "Branches", to: "/admin/branches", icon: Building2 },
   { label: "Menu", to: "/admin/menu", icon: UtensilsCrossed },
   { label: "Tables", to: "/waiter/tables", icon: Home },
@@ -151,7 +151,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
           {/* Close button — only visible on mobile */}
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close navigation menu"
             className="md:hidden p-2 rounded-lg hover:bg-kot-light text-kot-text hover:text-kot-darker transition-colors"
           >
             <X size={20} />
@@ -162,7 +164,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {isSuperAdmin && (
           <div className="mb-4" ref={dropdownRef}>
             <button
+              type="button"
               onClick={() => setDropdownOpen((p) => !p)}
+              aria-expanded={dropdownOpen}
+              aria-haspopup="menu"
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 border-kot-chart bg-kot-white hover:border-kot-dark transition-all group"
             >
               <MapPin size={16} className="text-kot-dark flex-shrink-0" />
@@ -184,6 +189,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             {dropdownOpen && (
               <div className="absolute z-50 mt-1 w-56 bg-kot-white rounded-xl shadow-kot-lg border border-kot-chart overflow-hidden">
                 <button
+                  type="button"
                   onClick={() => {
                     setActiveBranch(null);
                     setDropdownOpen(false);
@@ -208,6 +214,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     </p>
                     {branches.map((branch) => (
                       <button
+                        type="button"
                         key={branch._id}
                         onClick={() => {
                           setActiveBranch(branch);
@@ -241,6 +248,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 <div className="border-t border-kot-chart p-2">
                   <button
+                    type="button"
                     onClick={() => {
                       navigate("/admin/branches");
                       setDropdownOpen(false);
@@ -277,8 +285,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             const isActive = location.pathname === to;
             return (
               <button
+                type="button"
                 key={to}
                 onClick={() => handleNavigate(to)}
+                aria-current={isActive ? "page" : undefined}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
                   isActive
                     ? "bg-kot-sidebar text-kot-darker font-medium shadow-kot"
@@ -321,7 +331,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {isOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            onClick={onClose}
+            aria-label="Close navigation menu"
+          />
           {/* Drawer */}
           <div className="absolute left-0 top-0 h-full w-64 shadow-kot-lg">
             {sidebarContent}

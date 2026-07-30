@@ -21,7 +21,6 @@ const EXPECTED_URL: Record<keyof typeof AUTH_STATE, string> = {
 function ensureAuthDir(): void {
   if (!fs.existsSync(".auth")) {
     fs.mkdirSync(".auth", { recursive: true });
-    console.log("[auth.setup] Created .auth/ directory");
   }
 }
 
@@ -33,8 +32,6 @@ async function loginAs(
   role: keyof typeof E2E_CREDENTIALS,
   statePath: string,
 ): Promise<void> {
-  console.log(`\n[auth.setup] Logging in as: ${role}`);
-
   // Step 1 — Go to landing page
   await page.goto("/login");
   await expect(page.getByText("Sign In").first()).toBeVisible({
@@ -89,8 +86,6 @@ async function loginAs(
     console.warn(
       `[auth.setup] WARNING: ${role} expected "${expectedPath}" but landed on "${landed}". Saving state anyway.`,
     );
-  } else {
-    console.log(`[auth.setup] ✓ ${role} landed on: ${landed}`);
   }
 
   // Step 7 — Verify at least one auth cookie was set
@@ -110,14 +105,11 @@ async function loginAs(
         `  → Ensure your backend sets cookies with domain "localhost" and path "/"\n` +
         `  → Ensure playwright.config.ts baseURL is http://localhost:5173`,
     );
-  } else {
-    console.log(`[auth.setup] ✓ Auth cookie: "${authCookie.name}" for ${role}`);
   }
 
   // Step 8 — Save storage state (cookies + localStorage)
   ensureAuthDir();
   await page.context().storageState({ path: statePath });
-  console.log(`[auth.setup] ✓ Saved: ${statePath}`);
 }
 
 // ─────────────────────────────────────────────────────────────

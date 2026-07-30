@@ -1,4 +1,4 @@
-import type { Customer } from "../../../services/adminApi/Customer.api";
+import type { Customer } from "../../../services/admin/customer.api";
 
 export type { Customer };
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../../../Store/hooks";
-import { setCredentials } from "../../../Store/Slices/authSlice";
+import { useAppDispatch } from "../../../state/hooks";
+import { setCredentials } from "../../../state/slices/authSlice";
 import api from "../../../services/apiClient";
 import { validateLogin, hasErrors } from "../../../utils/validation";
 import { SignInPresenter } from "./SignInPresenter";

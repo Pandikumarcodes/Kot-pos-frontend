@@ -1,6 +1,6 @@
 // Service Worker for KOT POS
 
-const CACHE_NAME = "kot-pos-v1";
+const CACHE_NAME = "kot-pos-v2";
 
 // Assets to pre-cache on install
 const PRECACHE_URLS = ["/", "/offline.html"];

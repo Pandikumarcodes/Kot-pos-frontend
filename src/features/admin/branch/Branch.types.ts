@@ -1,7 +1,4 @@
-import type {
-  Branch,
-  BranchSummary,
-} from "../../../services/adminApi/Branch.api";
+import type { Branch, BranchSummary } from "../../../services/admin/branch.api";
 
 export type { Branch, BranchSummary };
 

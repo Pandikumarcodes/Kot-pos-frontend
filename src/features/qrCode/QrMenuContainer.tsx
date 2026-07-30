@@ -4,11 +4,11 @@ import {
   getPublicMenuApi,
   placePublicOrderApi,
   getOrderStatusApi,
-} from "../../services/qrMenuApi.api";
+} from "../../services/qrMenu.api";
 import type {
   PublicMenuItem,
   QrMenuResponse,
-} from "../../services/qrMenuApi.api";
+} from "../../services/qrMenu.api";
 import type { Step, CartItem } from "./QrMenu.types";
 import { QrMenuPresenter } from "./QrMenuPresenter";
 

@@ -2,7 +2,7 @@
 import type {
   QrMenuResponse,
   PublicMenuItem,
-} from "../../services/qrMenuApi.api";
+} from "../../services/qrMenu.api";
 
 export type { QrMenuResponse, PublicMenuItem };
 

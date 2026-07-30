@@ -1,7 +1,7 @@
 import type {
   MenuItem,
   CreateMenuPayload,
-} from "../../../services/adminApi/Menu.api";
+} from "../../../services/admin/menu.api";
 import type { ValidationErrors } from "../../../utils/validation";
 
 export type { MenuItem, CreateMenuPayload };
