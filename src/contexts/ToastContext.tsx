@@ -8,10 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { registerGlobalToastHandler } from "../services/globalToast";
-import {
-  ToastContext,
-  type ToastContextValue,
-} from "./toastContext";
+import { ToastContext, type ToastContextValue } from "./toastContext";
 
 // ── Types ─────────────────────────────────────────────────────
 type ToastType = "success" | "error" | "warning" | "info";

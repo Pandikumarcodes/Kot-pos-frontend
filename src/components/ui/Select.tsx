@@ -1,8 +1,4 @@
-import {
-  type SelectHTMLAttributes,
-  type ReactNode,
-  useId,
-} from "react";
+import { type SelectHTMLAttributes, type ReactNode, useId } from "react";
 import { input } from "./Token";
 
 function cn(...classes: (string | undefined | false)[]) {
