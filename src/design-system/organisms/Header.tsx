@@ -1,7 +1,12 @@
 // src/design-system/organisms/Header.tsx
-import { Menu } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, MapPin, ChevronDown, Check } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { InstallBanner } from "../../components/ui/InstallBanner";
+import { useAppDispatch, useAppSelector } from "../../state/hooks";
+import { setSelectedBranchId } from "../../state/slices/uiSlice";
+import { getBranchesApi, type Branch } from "../../services/admin/branch.api";
+import { getStoredSelectedBranchId, isValidBranchId, storeSelectedBranchId } from "../../state/branchContext";
 
 export interface HeaderProps {
   title?: string;
@@ -28,6 +33,42 @@ export const Header = ({
   onBack,
   onMenuToggle,
 }: HeaderProps) => {
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const selectedBranchId = useAppSelector((state) => state.ui.selectedBranchId);
+  const isGlobalAdmin = user?.role === "admin" && !user.branchId;
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [open, setOpen] = useState(false);
+  const selectorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isGlobalAdmin || !user?.id) {
+      dispatch(setSelectedBranchId(null));
+      return;
+    }
+    const stored = getStoredSelectedBranchId(user.id);
+    dispatch(setSelectedBranchId(isValidBranchId(stored) ? stored : null));
+    if (stored && !isValidBranchId(stored)) storeSelectedBranchId(user.id, null);
+    getBranchesApi().then(({ data }) => {
+      const active = data.branches.filter((branch) => branch.isActive);
+      setBranches(active);
+      if (selectedBranchId && !active.some((branch) => branch._id === selectedBranchId)) {
+        dispatch(setSelectedBranchId(null));
+        storeSelectedBranchId(user.id, null);
+      }
+    }).catch(() => setBranches([]));
+  }, [dispatch, isGlobalAdmin, user?.id]);
+
+  useEffect(() => {
+    const close = (event: MouseEvent) => {
+      if (!selectorRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  const selectedBranch = branches.find((branch) => branch._id === selectedBranchId);
+
   return (
     <header className="bg-kot-header border-b border-kot-chart sticky top-0 z-40">
       <div className="px-4 py-3 md:px-6">
@@ -83,6 +124,31 @@ export const Header = ({
 
           {/* Right Section */}
           <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
+            {isGlobalAdmin && (
+              <div className="relative" ref={selectorRef}>
+                <button type="button" onClick={() => setOpen((value) => !value)}
+                  aria-label="Select active branch" aria-expanded={open}
+                  className="flex items-center gap-2 max-w-48 px-3 py-2 rounded-lg border border-kot-chart bg-kot-white text-sm text-kot-darker">
+                  <MapPin size={15} className="text-kot-dark" />
+                  <span className="truncate">{selectedBranch?.name ?? "Select a branch"}</span>
+                  <ChevronDown size={14} className={open ? "rotate-180" : ""} />
+                </button>
+                {open && (
+                  <div className="absolute right-0 z-50 mt-1 w-64 rounded-xl border border-kot-chart bg-kot-white shadow-kot-lg">
+                    {branches.length === 0 ? <p className="p-3 text-sm text-kot-text">No active branches</p> : branches.map((branch) => (
+                      <button key={branch._id} type="button" onClick={() => {
+                        dispatch(setSelectedBranchId(branch._id));
+                        if (user?.id) storeSelectedBranchId(user.id, branch._id);
+                        setOpen(false);
+                      }} className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-kot-light">
+                        <span className="flex-1 truncate text-sm">{branch.name}</span>
+                        {selectedBranchId === branch._id && <Check size={14} className="text-kot-dark" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {/* Install Banner */}
             <InstallBanner />
 

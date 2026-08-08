@@ -29,6 +29,7 @@ export function Input({ label, error, className, ...props }: InputProps) {
         className={cn(
           input.base,
           error ? input.error : input.normal,
+          "min-h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kot-dark focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:bg-kot-primary disabled:text-kot-text disabled:opacity-70",
           className,
         )}
         {...props}

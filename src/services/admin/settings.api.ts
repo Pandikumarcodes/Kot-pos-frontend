@@ -33,10 +33,40 @@ export interface Settings {
   emailNotifications: boolean;
 }
 
+/** Settings fields intentionally exposed by the read-only operational endpoint. */
+export interface CashierSettings {
+  businessName: string;
+  phone: string;
+  address: string;
+  currency: string;
+  timezone: string;
+  taxRate: number;
+  serviceCharge: number;
+  autoRoundOff: boolean;
+  printReceipt: boolean;
+  paymentMethods: {
+    cash: boolean;
+    card: boolean;
+    upi: boolean;
+  };
+  takeawayEnabled: boolean;
+  deliveryEnabled: boolean;
+}
+
 // GET /admin/settings
-export const getSettingsApi = () =>
-  api.get<{ settings: Settings }>("/admin/settings");
+export const getSettingsApi = (branchId?: string, signal?: AbortSignal) =>
+  api.get<{ settings: Settings }>("/admin/settings", {
+    params: branchId ? { branchId } : undefined,
+    ...(signal ? { signal } : {}),
+  });
+
+export const getCashierSettingsApi = (branchId?: string) =>
+  api.get<{ settings: CashierSettings }>("/settings", {
+    params: branchId ? { branchId } : undefined,
+  });
 
 // PUT /admin/settings
-export const updateSettingsApi = (data: Partial<Settings>) =>
-  api.put<{ message: string; settings: Settings }>("/admin/settings", data);
+export const updateSettingsApi = (data: Partial<Settings>, branchId?: string) =>
+  api.put<{ message: string; settings: Settings }>("/admin/settings", data, {
+    params: branchId ? { branchId } : undefined,
+  });

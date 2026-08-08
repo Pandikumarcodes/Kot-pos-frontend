@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import api from "../../../services/apiClient";
+import { useAppSelector } from "../../../state/hooks";
+import { resolveCashierBranchId, resolveOperationalBranchId } from "../../../state/branchContext";
+import { getCashierSettingsApi, getSettingsApi } from "../../../services/admin/settings.api";
 import type { Bill } from "../../../services/cashier/cashier.api";
 import DOMPurify from "dompurify";
 interface RestaurantSettings {
@@ -144,16 +146,26 @@ const amountInWords = (grandTotal: number): string => {
 // Component
 // ─────────────────────────────────────────────────────────────
 export default function GSTInvoice({ bill, onClose }: GSTInvoiceProps) {
+  const user = useAppSelector((state) => state.auth.user);
+  const selectedBranchId = useAppSelector((state) => state.ui.selectedBranchId);
+  const effectiveBranchId = user?.role === "cashier"
+    ? resolveCashierBranchId(user.branchId)
+    : resolveOperationalBranchId(user?.branchId, selectedBranchId);
   const [settings, setSettings] = useState<RestaurantSettings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
 
   // Abort fetch on unmount — prevents memory leak / state update on dead component
   useEffect(() => {
+    if (!effectiveBranchId) {
+      setSettings(DEFAULTS);
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
-    api
-      .get<{ settings: RestaurantSettings }>("/admin/settings", {
-        signal: controller.signal,
-      })
+    const settingsRequest = user?.role === "cashier"
+      ? getCashierSettingsApi(effectiveBranchId)
+      : getSettingsApi(effectiveBranchId, controller.signal);
+    settingsRequest
       .then((res) => setSettings({ ...DEFAULTS, ...res.data.settings }))
       .catch((err) => {
         if (err.name !== "AbortError") setSettings(DEFAULTS);
@@ -161,7 +173,7 @@ export default function GSTInvoice({ bill, onClose }: GSTInvoiceProps) {
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, []);
+  }, [effectiveBranchId]);
 
   // ── Tax calculations — only recomputes when relevant values change ──────
   const tax = useMemo(() => {

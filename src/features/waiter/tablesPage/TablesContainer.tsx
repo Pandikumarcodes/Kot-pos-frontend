@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../../state/hooks";
+import { resolveOperationalBranchId } from "../../../state/branchContext";
 import { useToast } from "../../../contexts/toastContext";
 import {
   getTablesApi,
@@ -16,6 +17,9 @@ export default function TablesContainer() {
   const toast = useToast();
   const navigate = useNavigate();
   const { user } = useAppSelector((state) => state.auth);
+  const selectedBranchId = useAppSelector((state) => state.ui.selectedBranchId);
+  const requiresBranchSelection = user?.role === "admin" && !user.branchId;
+  const branchId = resolveOperationalBranchId(user?.branchId, selectedBranchId);
 
   const isAdmin = user?.role === "admin" || user?.role === "manager";
   const canDelete = user?.role === "admin";
@@ -32,8 +36,14 @@ export default function TablesContainer() {
   const [, setTick] = useState(0);
 
   const fetchTables = useCallback(async () => {
+    if (requiresBranchSelection && !branchId) {
+      setTables([]);
+      setError("Select a branch to manage tables");
+      setLoading(false);
+      return;
+    }
     try {
-      const { data } = await getTablesApi();
+      const { data } = await getTablesApi(branchId);
       setTables(data.tables);
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
@@ -41,11 +51,17 @@ export default function TablesContainer() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [branchId, requiresBranchSelection]);
 
   useEffect(() => {
     let ignore = false;
-    getTablesApi()
+    if (requiresBranchSelection && !branchId) {
+      setTables([]);
+      setError("Select a branch to manage tables");
+      setLoading(false);
+      return;
+    }
+    getTablesApi(branchId)
       .then(({ data }) => {
         if (!ignore) setTables(data.tables);
       })
@@ -60,7 +76,11 @@ export default function TablesContainer() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [branchId, requiresBranchSelection]);
+
+  useEffect(() => {
+    setTables([]);
+  }, [branchId]);
 
   const handleRefresh = () => {
     setLoading(true);
@@ -87,7 +107,7 @@ export default function TablesContainer() {
       const { data } = await createTableApi({
         tableNumber: parseInt(addForm.tableNumber),
         capacity: parseInt(addForm.capacity),
-      });
+      }, branchId);
       setTables([...tables, data.table]);
       setShowAddModal(false);
       setAddForm({ tableNumber: "", capacity: "" });
@@ -102,7 +122,7 @@ export default function TablesContainer() {
     e.stopPropagation();
     if (!window.confirm(`Delete Table ${table.tableNumber}?`)) return;
     try {
-      await deleteTableApi(table._id);
+      await deleteTableApi(table._id, branchId);
       setTables(tables.filter((t) => t._id !== table._id));
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
@@ -131,7 +151,7 @@ export default function TablesContainer() {
     e.preventDefault();
     if (!selectedTable) return;
     try {
-      const { data } = await allocateTableApi(selectedTable._id, allocateForm);
+      const { data } = await allocateTableApi(selectedTable._id, allocateForm, branchId);
       setTables(
         tables.map((t) => (t._id === selectedTable._id ? data.table : t)),
       );

@@ -10,6 +10,27 @@ export interface MenuItem {
   available: boolean;
 }
 
+export type MenuSortField = "name" | "price" | "category";
+
+export interface MenuQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  availability?: boolean;
+  sort?: MenuSortField;
+  order?: "asc" | "desc";
+}
+
+export interface MenuPagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export interface CreateMenuPayload {
   ItemName: string;
   category: string;
@@ -23,8 +44,11 @@ export interface UpdateMenuPayload {
 }
 
 // GET /admin/menuItems
-export const getMenuItemsApi = () =>
-  api.get<{ menuItems: MenuItem[] }>("/admin/menuItems");
+export const getMenuItemsApi = (query: MenuQuery = {}) =>
+  api.get<{ menuItems: MenuItem[]; pagination?: MenuPagination }>(
+    "/admin/menuItems",
+    { params: query },
+  );
 
 // POST /admin/menu
 export const createMenuItemApi = (data: CreateMenuPayload) =>

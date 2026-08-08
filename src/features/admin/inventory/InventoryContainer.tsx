@@ -17,19 +17,40 @@ import type {
 } from "./Inventory.types";
 import { EMPTY_FORM } from "./Inventory.types";
 import { InventoryPresenter } from "./InventoryPresenter";
+import { useQueryState } from "../../../hooks/useQueryState";
+import { useFilters, usePagination, useSearch, useSorting } from "../../../query/hooks";
+import { useAppSelector } from "../../../state/hooks";
+import { resolveOperationalBranchId } from "../../../state/branchContext";
 
 export default function InventoryContainer() {
   const toast = useToast();
+  const user = useAppSelector((state) => state.auth.user);
+  const selectedBranchId = useAppSelector((state) => state.ui.selectedBranchId);
+  const requiresBranchSelection = user?.role === "admin" && !user.branchId;
+  const branchId = resolveOperationalBranchId(user?.branchId, selectedBranchId);
 
   // ── List state ────────────────────────────────────────────
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [lowStockCount, setLowStockCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [paginationMeta, setPaginationMeta] = useState({
+    page: 1, limit: 20, total: 0, pages: 0, hasNext: false, hasPrev: false,
+  });
 
   // ── Filters ───────────────────────────────────────────────
-  const [search, setSearch] = useState("");
-  const [filterLow, setFilterLow] = useState(false);
-  const [filterCat, setFilterCat] = useState<InventoryCategory | "">("");
+  const { query, updateQuery } = useQueryState({
+    initialState: { page: 1, pageSize: 20 },
+  });
+  const searchState = useSearch(query.search ?? "");
+  const filterState = useFilters(query.filters ?? {});
+  const sortingState = useSorting({ sortBy: query.sortBy, sortOrder: query.sortOrder });
+  const paginationState = usePagination({ page: query.page, pageSize: query.pageSize });
+  const search = searchState.search;
+  const filterLow = filterState.filters.lowStock === true;
+  const filterCat = (filterState.filters.category as InventoryCategory | undefined) ?? "";
+  const sortBy = sortingState.sortBy ?? "currentStock";
+  const sortOrder = sortingState.sortOrder ?? "asc";
 
   // ── Create / Edit modal ───────────────────────────────────
   const [showModal, setShowModal] = useState(false);
@@ -55,67 +76,82 @@ export default function InventoryContainer() {
   const [logsLoading, setLogsLoading] = useState(false);
 
   // ── Fetch ─────────────────────────────────────────────────
-  const fetchItems = useCallback(async (
-    nextFilterLow = false,
-    nextFilterCat: InventoryCategory | "" = "",
-    nextSearch = "",
-  ) => {
+  const fetchItems = useCallback(async () => {
+    if (requiresBranchSelection && !branchId) {
+      setLoading(false);
+      setError("Select a branch to manage inventory");
+      return;
+    }
+    setLoading(true);
+    setError(null);
     try {
       const { data } = await getInventoryApi({
-        lowStock: nextFilterLow || undefined,
-        category: nextFilterCat || undefined,
-        search: nextSearch || undefined,
+        branchId,
+        page: query.page,
+        limit: query.pageSize,
+        lowStock: filterLow || undefined,
+        category: filterCat || undefined,
+        search: searchState.debouncedSearch || undefined,
+        sort: query.sortBy as "name" | "currentStock" | "lowStockThreshold" | "category" | "createdAt" | "updatedAt" | undefined,
+        order: query.sortOrder,
       });
       setItems(data.items);
       setLowStockCount(data.lowStockCount);
+      setPaginationMeta(data.pagination);
     } catch {
+      setError("Failed to load inventory");
       toast.error("Failed to load inventory");
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [branchId, filterCat, filterLow, query.page, query.pageSize, query.sortBy, query.sortOrder, requiresBranchSelection, searchState.debouncedSearch, toast]);
 
   useEffect(() => {
-    let ignore = false;
-    getInventoryApi({})
-      .then(({ data }) => {
-        if (ignore) return;
-        setItems(data.items);
-        setLowStockCount(data.lowStockCount);
-      })
-      .catch(() => {
-        if (!ignore) toast.error("Failed to load inventory");
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [toast]);
+    const request = window.setTimeout(() => void fetchItems(), 0);
+    return () => window.clearTimeout(request);
+  }, [fetchItems]);
+
+  useEffect(() => {
+    setItems([]);
+    setLowStockCount(0);
+    setPaginationMeta((current) => ({ ...current, page: 1, total: 0, pages: 0 }));
+  }, [branchId]);
+
+  useEffect(() => {
+    updateQuery({ search: searchState.debouncedSearch || undefined, page: 1 });
+  }, [searchState.debouncedSearch, updateQuery]);
+
+  useEffect(() => {
+    updateQuery({ filters: filterState.filters, page: 1 });
+  }, [filterState.filters, updateQuery]);
+
+  useEffect(() => {
+    updateQuery({ sortBy: sortingState.sortBy, sortOrder: sortingState.sortOrder, page: 1 });
+  }, [sortingState.sortBy, sortingState.sortOrder, updateQuery]);
+
+  useEffect(() => {
+    updateQuery({ page: paginationState.page, pageSize: paginationState.pageSize });
+  }, [paginationState.page, paginationState.pageSize, updateQuery]);
 
   const handleSearchChange = (nextSearch: string) => {
-    setSearch(nextSearch);
-    setLoading(true);
-    void fetchItems(filterLow, filterCat, nextSearch);
+    searchState.onSearchChange(nextSearch);
   };
 
   const handleFilterLowToggle = () => {
-    const nextFilterLow = !filterLow;
-    setFilterLow(nextFilterLow);
-    setLoading(true);
-    void fetchItems(nextFilterLow, filterCat, search);
+    filterState.setFilter("lowStock", filterLow ? undefined : true);
   };
 
   const handleFilterCatChange = (nextFilterCat: InventoryCategory | "") => {
-    setFilterCat(nextFilterCat);
-    setLoading(true);
-    void fetchItems(filterLow, nextFilterCat, search);
+    if (nextFilterCat) filterState.setFilter("category", nextFilterCat);
+    else filterState.clearFilter("category");
   };
 
   const handleRefresh = () => {
-    setLoading(true);
-    void fetchItems(filterLow, filterCat, search);
+    void fetchItems();
+  };
+
+  const handleSortChange = (value: string) => {
+    sortingState.setSort(value || undefined, value ? sortOrder : "asc");
   };
 
   // ── Modal handlers ────────────────────────────────────────
@@ -162,7 +198,7 @@ export default function InventoryContainer() {
     try {
       setSaving(true);
       if (editingItem) {
-        const { data } = await updateInventoryApi(editingItem._id, formData);
+        const { data } = await updateInventoryApi(editingItem._id, formData, branchId);
         setItems((prev) =>
           prev.map((i) =>
             i._id === editingItem._id ? { ...i, ...data.item } : i,
@@ -170,7 +206,7 @@ export default function InventoryContainer() {
         );
         toast.success("Updated!");
       } else {
-        const { data } = await createInventoryApi(formData);
+        const { data } = await createInventoryApi(formData, branchId);
         setItems((prev) => [data.item, ...prev]);
         toast.success("Item added!");
       }
@@ -208,6 +244,7 @@ export default function InventoryContainer() {
         restockItem._id,
         Number(restockQty),
         restockNote,
+        branchId,
       );
       setItems((prev) =>
         prev.map((i) =>
@@ -250,6 +287,7 @@ export default function InventoryContainer() {
         adjustItem._id,
         Number(adjustQty),
         adjustNote,
+        branchId,
       );
       setItems((prev) =>
         prev.map((i) =>
@@ -271,7 +309,7 @@ export default function InventoryContainer() {
     setLogsItem(item);
     setLogsLoading(true);
     try {
-      const { data } = await getStockLogsApi(item._id);
+      const { data } = await getStockLogsApi(item._id, branchId);
       setLogs(data.logs);
     } catch {
       toast.error("Failed to load logs");
@@ -289,7 +327,7 @@ export default function InventoryContainer() {
   const handleDelete = async (item: InventoryItem) => {
     if (!window.confirm(`Remove "${item.name}" from inventory?`)) return;
     try {
-      await deleteInventoryApi(item._id);
+      await deleteInventoryApi(item._id, branchId);
       setItems((prev) => prev.filter((i) => i._id !== item._id));
       toast.success("Removed");
     } catch {
@@ -303,6 +341,8 @@ export default function InventoryContainer() {
       items={items}
       loading={loading}
       lowStockCount={lowStockCount}
+      pagination={paginationMeta}
+      error={error}
       // Filters
       search={search}
       filterLow={filterLow}
@@ -311,6 +351,11 @@ export default function InventoryContainer() {
       onFilterLowToggle={handleFilterLowToggle}
       onFilterCatChange={handleFilterCatChange}
       onRefresh={handleRefresh}
+      onPageChange={paginationState.setPage}
+      sortBy={sortBy}
+      sortOrder={sortOrder}
+      onSortChange={handleSortChange}
+      onRetry={handleRefresh}
       // Create / Edit modal
       showModal={showModal}
       editingItem={editingItem}

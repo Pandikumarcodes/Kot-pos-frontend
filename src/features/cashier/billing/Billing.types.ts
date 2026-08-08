@@ -4,7 +4,8 @@
  * Change: added  onPrintBill: (bill: Bill) => void  to BillingPresenterProps
  */
 
-import type { Bill } from "../../../services/cashier/cashier.api";
+import type { Bill, PaymentMethod } from "../../../services/cashier/cashier.api";
+import type { CashierSettings } from "../../../services/admin/settings.api";
 
 export interface MenuItem {
   _id: string;
@@ -59,8 +60,9 @@ export interface BillingPresenterProps {
   kotSent: boolean;
 
   // Payment
-  paymentMethod: "cash" | "card" | "upi";
-  onPaymentMethodChange: (m: "cash" | "card" | "upi") => void;
+  paymentMethod: PaymentMethod | null;
+  onPaymentMethodChange: (m: PaymentMethod) => void;
+  enabledPaymentMethods: CashierSettings["paymentMethods"] | null;
   paying: boolean;
   successMsg: string;
   onCollectPayment: () => void;
@@ -79,7 +81,20 @@ export interface BillingPresenterProps {
   onSetInvoiceBill: (bill: Bill | null) => void;
   onMarkPaid: (billId: string) => void;
   onRetryBills: () => void;
+  paymentStatusFilter: string;
+  onPaymentStatusFilterChange: (value: string) => void;
+  sortBy: string;
+  onSortByChange: (value: string) => void;
+  sortOrder: "asc" | "desc";
+  onSortOrderChange: (value: "asc" | "desc") => void;
+  pagination: { page: number; pageSize: number; total: number };
+  onPageChange: (page: number) => void;
 
   // ✅ Print
   onPrintBill: (bill: Bill) => void;
+
+  settingsLoading: boolean;
+  settingsError: string | null;
+  branchAssignmentError: boolean;
+  onRetrySettings: () => void;
 }

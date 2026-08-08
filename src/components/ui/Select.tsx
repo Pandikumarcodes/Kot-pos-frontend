@@ -16,6 +16,7 @@ export function Select({
   error,
   className,
   children,
+  style,
   ...props
 }: SelectProps) {
   const generatedId = useId();
@@ -36,8 +37,10 @@ export function Select({
         className={cn(
           input.base,
           error ? input.error : input.normal,
+          "min-h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kot-dark focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:bg-kot-primary disabled:text-kot-text disabled:opacity-70",
           className,
         )}
+        style={{ paddingRight: "2.5rem", ...style }}
         {...props}
       >
         {children}

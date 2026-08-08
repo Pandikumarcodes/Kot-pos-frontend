@@ -22,22 +22,23 @@ export function Pagination({
   return (
     <nav
       aria-label="Pagination"
-      className={`flex flex-wrap items-center justify-between gap-3 text-sm text-kot-text ${className}`}
+      className={`flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-sm text-kot-text ${className}`}
     >
       <span aria-live="polite">
         {getPageStart(state)}–{getPageEnd(state)} of {state.total}
       </span>
-      <div className="flex items-center gap-1">
+      <div className="ml-auto flex max-w-full items-center gap-1">
         <Button
           variant="secondary"
           size="sm"
           aria-label="Previous page"
           disabled={page <= 1}
+          className="min-h-10 min-w-10 px-2 disabled:hover:bg-kot-white"
           onClick={() => onPageChange(page - 1)}
         >
           <ChevronLeft aria-hidden="true" className="h-4 w-4" />
         </Button>
-        <span className="px-2" aria-current="page">
+        <span className="whitespace-nowrap px-1 sm:px-2" aria-current="page">
           Page {page} of {pageCount}
         </span>
         <Button
@@ -45,6 +46,7 @@ export function Pagination({
           size="sm"
           aria-label="Next page"
           disabled={page >= pageCount}
+          className="min-h-10 min-w-10 px-2 disabled:hover:bg-kot-white"
           onClick={() => onPageChange(page + 1)}
         >
           <ChevronRight aria-hidden="true" className="h-4 w-4" />

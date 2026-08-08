@@ -31,25 +31,25 @@ export interface HourlyStat {
 }
 
 // GET /admin/reports/summary
-export const getSummaryApi = (range: DateRange, from?: string, to?: string) =>
+export const getSummaryApi = (range: DateRange, from?: string, to?: string, branchId?: string) =>
   api.get<SummaryStats>("/admin/reports/summary", {
-    params: { range, from, to },
+    params: { range, from, to, branchId },
   });
 
 // GET /admin/reports/top-items
-export const getTopItemsApi = (range: DateRange, from?: string, to?: string) =>
+export const getTopItemsApi = (range: DateRange, from?: string, to?: string, branchId?: string) =>
   api.get<{ topItems: TopItem[] }>("/admin/reports/top-items", {
-    params: { range, from, to },
+    params: { range, from, to, branchId },
   });
 
 // GET /admin/reports/payments
-export const getPaymentsApi = (range: DateRange, from?: string, to?: string) =>
+export const getPaymentsApi = (range: DateRange, from?: string, to?: string, branchId?: string) =>
   api.get<{ payments: PaymentStat[] }>("/admin/reports/payments", {
-    params: { range, from, to },
+    params: { range, from, to, branchId },
   });
 
 // GET /admin/reports/hourly
-export const getHourlyApi = (range: DateRange, from?: string, to?: string) =>
+export const getHourlyApi = (range: DateRange, from?: string, to?: string, branchId?: string) =>
   api.get<{ hourly: HourlyStat[] }>("/admin/reports/hourly", {
-    params: { range, from, to },
+    params: { range, from, to, branchId },
   });

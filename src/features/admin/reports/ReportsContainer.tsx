@@ -13,8 +13,14 @@ import type {
   HourlyStat,
 } from "../../../services/admin/reports.api";
 import { ReportsPresenter } from "./ReportsPresenter";
+import { useAppSelector } from "../../../state/hooks";
+import { resolveOperationalBranchId } from "../../../state/branchContext";
 
 export default function ReportsPageContainer() {
+  const user = useAppSelector((state) => state.auth.user);
+  const selectedBranchId = useAppSelector((state) => state.ui.selectedBranchId);
+  const requiresBranchSelection = user?.role === "admin" && !user.branchId;
+  const branchId = resolveOperationalBranchId(user?.branchId, selectedBranchId);
   const [range, setRange] = useState<DateRange>("today");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -32,10 +38,10 @@ export default function ReportsPageContainer() {
         const t = nextRange === "custom" ? customTo : undefined;
 
         const [sRes, tRes, pRes, hRes] = await Promise.all([
-          getSummaryApi(nextRange, f, t),
-          getTopItemsApi(nextRange, f, t),
-          getPaymentsApi(nextRange, f, t),
-          getHourlyApi(nextRange, f, t),
+          getSummaryApi(nextRange, f, t, branchId),
+          getTopItemsApi(nextRange, f, t, branchId),
+          getPaymentsApi(nextRange, f, t, branchId),
+          getHourlyApi(nextRange, f, t, branchId),
         ]);
         setSummary(sRes.data);
         setTopItems(tRes.data.topItems);
@@ -48,16 +54,24 @@ export default function ReportsPageContainer() {
         setRefreshing(false);
       }
     },
-    [],
+    [branchId],
   );
 
   useEffect(() => {
     let ignore = false;
+    if (requiresBranchSelection && !branchId) {
+      setSummary(null);
+      setTopItems([]);
+      setPayments([]);
+      setHourly([]);
+      setLoading(false);
+      return;
+    }
     Promise.all([
-      getSummaryApi("today"),
-      getTopItemsApi("today"),
-      getPaymentsApi("today"),
-      getHourlyApi("today"),
+      getSummaryApi("today", undefined, undefined, branchId),
+      getTopItemsApi("today", undefined, undefined, branchId),
+      getPaymentsApi("today", undefined, undefined, branchId),
+      getHourlyApi("today", undefined, undefined, branchId),
     ])
       .then(([sRes, tRes, pRes, hRes]) => {
         if (ignore) return;
@@ -78,7 +92,7 @@ export default function ReportsPageContainer() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [branchId, requiresBranchSelection]);
 
   const handleRangeChange = (nextRange: DateRange) => {
     setRange(nextRange);

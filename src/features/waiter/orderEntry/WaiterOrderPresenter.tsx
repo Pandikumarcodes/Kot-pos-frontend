@@ -16,6 +16,12 @@ const statusColor = (status: string) => {
   return "bg-kot-light text-kot-text";
 };
 
+const statusLabel = (status: string) => ({
+  sent_to_kitchen: "Sent to Kitchen",
+  served: "Served",
+  pending: "Pending",
+}[status] || "Pending");
+
 export function WaiterOrderPresenter({
   customerName,
   tableNumber,
@@ -25,6 +31,7 @@ export function WaiterOrderPresenter({
   onSwitchToHistory,
   onBack,
   historyLoading,
+  historyError,
   allItems,
   grandTotal,
   menuLoading,
@@ -42,7 +49,9 @@ export function WaiterOrderPresenter({
   onToggleOrderPanel,
   sendingKot,
   onSendKot,
+  canSendToCashier,
   sendingToCashier,
+  cashierHandoffComplete,
   onSendToCashier,
 }: WaiterOrderPresenterProps) {
   return (
@@ -81,6 +90,10 @@ export function WaiterOrderPresenter({
                     <Pulse className="h-4 w-16" />
                   </div>
                 ))}
+              </div>
+            ) : historyError ? (
+              <div className="bg-kot-white rounded-2xl shadow-kot p-10 text-center">
+                <p className="font-semibold text-red-700">{historyError}</p>
               </div>
             ) : allItems.length === 0 ? (
               <div className="bg-kot-white rounded-2xl shadow-kot p-10 text-center">
@@ -124,7 +137,7 @@ export function WaiterOrderPresenter({
                         <span
                           className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColor(roundItems[0]?.status)}`}
                         >
-                          {roundItems[0]?.status?.replace("_", " ")}
+                          {statusLabel(roundItems[0]?.status)}
                         </span>
                       </div>
                       {roundItems.map((item, j) => (
@@ -167,18 +180,19 @@ export function WaiterOrderPresenter({
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button type="button"
                 onClick={onSwitchToMenu}
-                className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-kot-dark text-kot-dark font-bold rounded-xl hover:bg-kot-light transition-colors text-sm"
+                disabled={cashierHandoffComplete}
+                className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-kot-dark text-kot-dark font-bold rounded-xl hover:bg-kot-light transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus size={16} />
                 {allItems.length === 0 ? "Start Order" : "Add More Items"}
               </button>
-              {allItems.length > 0 && (
+              {(canSendToCashier || cashierHandoffComplete) && (
                 <button type="button"
                   onClick={onSendToCashier}
-                  disabled={sendingToCashier}
+                  disabled={sendingToCashier || cashierHandoffComplete}
                   className="flex-1 flex items-center justify-center gap-2 py-3 bg-kot-dark hover:bg-kot-darker text-white font-bold rounded-xl transition-colors disabled:opacity-60 text-sm"
                 >
-                  {sendingToCashier ? "Sending..." : "Send to Cashier 🧾"}
+                  {cashierHandoffComplete ? "Sent to Cashier" : sendingToCashier ? "Sending..." : "Send to Cashier 🧾"}
                 </button>
               )}
             </div>

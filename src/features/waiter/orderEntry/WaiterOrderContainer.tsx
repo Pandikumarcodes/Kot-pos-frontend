@@ -38,6 +38,7 @@ export default function WaiterOrderContainer() {
   const [allItems, setAllItems] = useState<TableOrderItem[]>([]);
   const [grandTotal, setGrandTotal] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [roundCount, setRoundCount] = useState(0);
 
   // ── Menu state ────────────────────────────────────────────────
@@ -51,16 +52,22 @@ export default function WaiterOrderContainer() {
   // ── Action state ──────────────────────────────────────────────
   const [sendingKot, setSendingKot] = useState(false);
   const [sendingToCashier, setSendingToCashier] = useState(false);
+  const [cashierHandoffComplete, setCashierHandoffComplete] = useState(false);
+  const canSendToCashier = !cashierHandoffComplete && allItems.length > 0 && allItems.every((item) =>
+    item.status === "sent_to_kitchen" || item.status === "served",
+  );
 
   // ── Fetch existing orders for this table ──────────────────────
   const fetchTableOrders = useCallback(async () => {
     if (!tableId) return;
     try {
       const { data } = await getTableOrdersApi(tableId);
+      setHistoryError(null);
       setAllItems(data.allItems ?? []);
       setGrandTotal(data.grandTotal ?? 0);
       setRoundCount(data.orders?.length ?? 0);
     } catch {
+      setHistoryError("Failed to load this table's order. Please try again.");
       setAllItems([]);
       setGrandTotal(0);
       setRoundCount(0);
@@ -89,12 +96,14 @@ export default function WaiterOrderContainer() {
     getTableOrdersApi(tableId)
       .then(({ data }) => {
         if (ignore) return;
+        setHistoryError(null);
         setAllItems(data.allItems ?? []);
         setGrandTotal(data.grandTotal ?? 0);
         setRoundCount(data.orders?.length ?? 0);
       })
       .catch(() => {
         if (ignore) return;
+        setHistoryError("Failed to load this table's order. Please try again.");
         setAllItems([]);
         setGrandTotal(0);
         setRoundCount(0);
@@ -207,7 +216,7 @@ export default function WaiterOrderContainer() {
         tableNumber,
       });
       toast.success("Sent to cashier! 🧾");
-      navigate("/waiter/tables");
+      setCashierHandoffComplete(true);
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
       toast.error(e?.response?.data?.error || "Failed to send to cashier");
@@ -229,6 +238,7 @@ export default function WaiterOrderContainer() {
       }}
       onBack={() => navigate("/waiter/tables")}
       historyLoading={historyLoading}
+      historyError={historyError}
       allItems={allItems}
       grandTotal={grandTotal}
       menuLoading={menuLoading}
@@ -246,7 +256,9 @@ export default function WaiterOrderContainer() {
       onToggleOrderPanel={setShowOrderPanel}
       sendingKot={sendingKot}
       onSendKot={handleSendKot}
+      canSendToCashier={canSendToCashier}
       sendingToCashier={sendingToCashier}
+      cashierHandoffComplete={cashierHandoffComplete}
       onSendToCashier={handleSendToCashier}
     />
   );

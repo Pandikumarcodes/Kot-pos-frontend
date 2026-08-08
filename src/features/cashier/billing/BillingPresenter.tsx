@@ -2,7 +2,6 @@ import {
   ShoppingBag,
   Receipt,
   X,
-  Search,
   CheckCircle,
   Clock,
   ChevronUp,
@@ -10,27 +9,22 @@ import {
 } from "lucide-react";
 import type { BillingPresenterProps, Step } from "./Billing.types";
 import GstInvoice from "./GstInvoice";
+import {
+  ActiveFilterChips,
+  FilterBar,
+  FilterDropdown,
+  LoadingSkeleton,
+  PageContainer,
+  Pagination,
+  RetryPanel,
+  SearchBar,
+  SortDropdown,
+  Toolbar,
+} from "../../../components/ui";
 
 const Pulse = ({ className }: { className: string }) => (
   <div className={`bg-kot-chart rounded animate-pulse ${className}`} />
 );
-
-function SkeletonBillRow() {
-  return (
-    <div className="bg-kot-white rounded-2xl p-4 shadow-kot">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1.5">
-          <Pulse className="h-4 w-32" />
-          <Pulse className="h-3 w-40" />
-        </div>
-        <div className="text-right space-y-1.5">
-          <Pulse className="h-4 w-16" />
-          <Pulse className="h-5 w-12 rounded-full" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function SkeletonBillStats() {
   return (
@@ -47,6 +41,11 @@ function SkeletonBillStats() {
 
 const inputClass =
   "w-full px-3 py-2.5 border-2 border-kot-chart rounded-lg focus:outline-none focus:border-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50 text-sm";
+
+export const getBillingOrderOptions = (sortBy: string): { value: "asc" | "desc"; label: string }[] =>
+  sortBy === "billDate"
+    ? [{ value: "desc", label: "Newest first" }, { value: "asc", label: "Oldest first" }]
+    : [{ value: "desc", label: "Descending" }, { value: "asc", label: "Ascending" }];
 
 export function BillingPresenter({
   activeTab,
@@ -71,6 +70,7 @@ export function BillingPresenter({
   kotSent,
   paymentMethod,
   onPaymentMethodChange,
+  enabledPaymentMethods,
   paying,
   successMsg,
   onCollectPayment,
@@ -87,11 +87,38 @@ export function BillingPresenter({
   onSetInvoiceBill,
   onMarkPaid,
   onRetryBills,
+  paymentStatusFilter,
+  onPaymentStatusFilterChange,
+  sortBy,
+  onSortByChange,
+  sortOrder,
+  onSortOrderChange,
+  pagination,
+  onPageChange,
   onPrintBill,
+  settingsLoading,
+  settingsError,
+  branchAssignmentError,
+  onRetrySettings,
 }: BillingPresenterProps) {
+  const paymentMethods = ["cash", "card", "upi"] as const;
+  const orderOptions = getBillingOrderOptions(sortBy);
+
   return (
-    <div className="min-h-screen bg-kot-primary">
+    <PageContainer className="min-h-screen">
       <div className="max-w-[2400px] mx-auto p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4">
+        {settingsLoading && <div className="text-sm text-kot-text" role="status">Loading cashier settings...</div>}
+        {branchAssignmentError && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert">
+            This cashier account is not assigned to a branch. Ask an administrator to assign a branch.
+          </div>
+        )}
+        {!settingsLoading && settingsError && !branchAssignmentError && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800" role="alert">
+            <span>{settingsError}</span>
+            <button type="button" onClick={onRetrySettings} className="font-semibold underline">Retry</button>
+          </div>
+        )}
         {/* ── Header ── */}
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -484,11 +511,12 @@ export function BillingPresenter({
                       Payment Method
                     </h3>
                     <div className="grid grid-cols-3 gap-2">
-                      {(["cash", "card", "upi"] as const).map((method) => (
+                      {paymentMethods.map((method) => (
                         <button type="button"
                           key={method}
                           onClick={() => onPaymentMethodChange(method)}
-                          className={`py-2.5 rounded-xl text-xs sm:text-sm font-bold capitalize transition-all border-2 ${paymentMethod === method ? "bg-kot-dark text-white border-kot-dark" : "bg-kot-white text-kot-darker border-kot-chart hover:border-kot-dark"}`}
+                          disabled={enabledPaymentMethods?.[method] === false || paying}
+                          className={`py-2.5 rounded-xl text-xs sm:text-sm font-bold capitalize transition-all border-2 disabled:cursor-not-allowed disabled:opacity-50 ${paymentMethod === method ? "bg-kot-dark text-white border-kot-dark" : "bg-kot-white text-kot-darker border-kot-chart hover:border-kot-dark"}`}
                         >
                           {method === "cash"
                             ? "💵"
@@ -511,7 +539,7 @@ export function BillingPresenter({
                     </button>
                     <button type="button"
                       onClick={onCollectPayment}
-                      disabled={paying || !kotSent}
+                      disabled={paying || !kotSent || !paymentMethod}
                       className="flex-1 py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-bold rounded-xl disabled:opacity-60 transition-colors text-sm"
                     >
                       {paying
@@ -530,20 +558,16 @@ export function BillingPresenter({
           <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
             {/* Bills list */}
             <div className="flex-1 space-y-3 min-w-0">
-              {/* Search */}
-              <div className="relative">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-kot-text"
-                  size={15}
-                />
-                <input
-                  type="text"
-                  placeholder="Search by name, phone or bill number..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 border-2 border-kot-chart rounded-xl bg-kot-white text-kot-darker text-sm focus:outline-none focus:border-kot-dark placeholder:text-kot-text/50"
-                />
-              </div>
+              {/* Server-side search, filters, and sorting */}
+              <Toolbar>
+                <SearchBar value={searchQuery} onChange={onSearchChange} placeholder="Search by name, phone or bill number..." />
+                <FilterBar className="w-full sm:w-auto">
+                  <FilterDropdown className="w-full sm:w-auto" label="Payment Status" value={paymentStatusFilter} options={[{ value: "paid", label: "Paid" }, { value: "unpaid", label: "Unpaid" }]} onChange={onPaymentStatusFilterChange} />
+                  <div className="w-full sm:w-auto"><SortDropdown label="Sort field" value={sortBy} options={[{ value: "billDate", label: "Bill date" }, { value: "paymentStatus", label: "Payment status" }]} onChange={onSortByChange} /></div>
+                  <FilterDropdown className="w-full sm:w-auto" label="Order" value={sortOrder} options={orderOptions} onChange={onSortOrderChange} />
+                </FilterBar>
+              </Toolbar>
+              <ActiveFilterChips filters={paymentStatusFilter ? [{ key: "status", label: "Payment Status", value: paymentStatusFilter }] : []} onRemove={() => onPaymentStatusFilterChange("")} onClear={() => onPaymentStatusFilterChange("")} />
 
               {/* Stats */}
               {billsLoading ? (
@@ -586,23 +610,9 @@ export function BillingPresenter({
 
               {/* Bill rows */}
               {billsLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <SkeletonBillRow key={i} />
-                  ))}
-                </div>
+                <LoadingSkeleton rows={5} />
               ) : billsError ? (
-                <div className="bg-kot-white rounded-2xl p-8 text-center shadow-kot">
-                  <p className="text-red-500 font-medium text-sm">
-                    {billsError}
-                  </p>
-                  <button type="button"
-                    onClick={onRetryBills}
-                    className="mt-3 px-4 py-2 bg-kot-dark text-white rounded-lg text-sm"
-                  >
-                    Retry
-                  </button>
-                </div>
+                <RetryPanel onRetry={onRetryBills} message={billsError} />
               ) : filteredBills.length === 0 ? (
                 <div className="bg-kot-white rounded-2xl p-10 text-center shadow-kot">
                   <p className="text-2xl mb-2">🧾</p>
@@ -621,8 +631,8 @@ export function BillingPresenter({
                       onClick={() => onSelectBill(bill)}
                       className={`w-full text-left bg-kot-white rounded-2xl p-3 sm:p-4 shadow-kot hover:shadow-kot-lg transition-all border-2 ${selectedBill?._id === bill._id ? "border-kot-dark" : "border-transparent"}`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
                           <p className="font-bold text-kot-darker text-sm truncate">
                             {bill.customerName}
                           </p>
@@ -630,12 +640,12 @@ export function BillingPresenter({
                             {bill.billNumber} · {bill.customerPhone}
                           </p>
                         </div>
-                        <div className="text-right flex-shrink-0">
+                        <div className="flex flex-shrink-0 flex-col items-end gap-1 text-right">
                           <p className="font-bold text-kot-darker text-sm">
                             ₹{bill.totalAmount.toLocaleString()}
                           </p>
                           <span
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${bill.paymentStatus === "paid" ? "bg-emerald-100 text-emerald-700" : "bg-yellow-100 text-yellow-700"}`}
+                            className={`whitespace-nowrap text-[10px] px-2 py-0.5 rounded-full font-semibold ${bill.paymentStatus === "paid" ? "bg-emerald-100 text-emerald-700" : "bg-yellow-100 text-yellow-700"}`}
                           >
                             {bill.paymentStatus}
                           </span>
@@ -644,6 +654,9 @@ export function BillingPresenter({
                     </button>
                   ))}
                 </div>
+              )}
+              {!billsLoading && !billsError && filteredBills.length > 0 && (
+                <Pagination state={pagination} onPageChange={onPageChange} />
               )}
             </div>
 
@@ -747,9 +760,23 @@ export function BillingPresenter({
                     {/* Actions */}
                     <div className="space-y-2 pb-4 lg:pb-0">
                       {selectedBill.paymentStatus !== "paid" && (
+                        <div className="grid grid-cols-3 gap-2" aria-label="Payment method">
+                          {paymentMethods.map((method) => (
+                            <button
+                              key={method}
+                              type="button"
+                              disabled={enabledPaymentMethods?.[method] === false}
+                              onClick={() => onPaymentMethodChange(method)}
+                              className={`rounded-lg border px-2 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${paymentMethod === method ? "border-kot-dark bg-kot-dark text-white" : "border-kot-chart text-kot-darker"}`}
+                            >{method.toUpperCase()}</button>
+                          ))}
+                        </div>
+                      )}
+                      {selectedBill.paymentStatus !== "paid" && (
                         <button type="button"
                           onClick={() => onMarkPaid(selectedBill._id)}
-                          className="w-full py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-bold rounded-xl transition-colors"
+                          disabled={paying || !paymentMethod}
+                          className="w-full py-2.5 bg-kot-dark hover:bg-kot-darker text-white font-bold rounded-xl transition-colors disabled:opacity-60"
                         >
                           Mark as Paid ✓
                         </button>
@@ -778,6 +805,6 @@ export function BillingPresenter({
       {invoiceBill && (
         <GstInvoice bill={invoiceBill} onClose={() => onSetInvoiceBill(null)} />
       )}
-    </div>
+    </PageContainer>
   );
 }

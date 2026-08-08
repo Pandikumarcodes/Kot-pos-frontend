@@ -5,6 +5,7 @@ import type {
   CreateInventoryPayload,
   InventoryUnit,
   InventoryCategory,
+  InventoryPagination,
 } from "../../../services/admin/inventory.api";
 
 export type {
@@ -13,6 +14,7 @@ export type {
   CreateInventoryPayload,
   InventoryUnit,
   InventoryCategory,
+  InventoryPagination,
 };
 
 // ── Constants ─────────────────────────────────────────────────
@@ -56,10 +58,13 @@ export const EMPTY_FORM: CreateInventoryPayload = {
 
 // ── Presenter Props ───────────────────────────────────────────
 export interface InventoryPresenterProps {
+
   // List state
   items: InventoryItem[];
   loading: boolean;
   lowStockCount: number;
+  pagination: InventoryPagination;
+  error: string | null;
 
   // Filters
   search: string;
@@ -69,6 +74,11 @@ export interface InventoryPresenterProps {
   onFilterLowToggle: () => void;
   onFilterCatChange: (v: InventoryCategory | "") => void;
   onRefresh: () => void;
+  onPageChange: (page: number) => void;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
+  onSortChange: (value: string) => void;
+  onRetry: () => void;
 
   // Create / Edit modal
   showModal: boolean;

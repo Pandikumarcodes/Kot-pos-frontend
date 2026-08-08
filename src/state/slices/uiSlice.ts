@@ -10,11 +10,13 @@ interface Toast {
 interface UiState {
   sidebarOpen: boolean;
   toasts: Toast[];
+  selectedBranchId: string | null;
 }
 
 const initialState: UiState = {
   sidebarOpen: true,
   toasts: [],
+  selectedBranchId: null,
 };
 
 const uiSlice = createSlice({
@@ -26,6 +28,9 @@ const uiSlice = createSlice({
     },
     setSidebar(state, action: PayloadAction<boolean>) {
       state.sidebarOpen = action.payload;
+    },
+    setSelectedBranchId(state, action: PayloadAction<string | null>) {
+      state.selectedBranchId = action.payload;
     },
     addToast(state, action: PayloadAction<Omit<Toast, "id">>) {
       state.toasts.push({
@@ -39,6 +44,12 @@ const uiSlice = createSlice({
   },
 });
 
-export const { toggleSidebar, setSidebar, addToast, removeToast } =
+export const {
+  toggleSidebar,
+  setSidebar,
+  setSelectedBranchId,
+  addToast,
+  removeToast,
+} =
   uiSlice.actions;
 export default uiSlice.reducer;

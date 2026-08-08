@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "../../../state/hooks";
+import { resolveOperationalBranchId } from "../../../state/branchContext";
 import {
   getDashboardSummaryApi,
   getTopItemsApi,
@@ -20,6 +22,10 @@ import type {
 
 export default function AdminDashboardContainer() {
   const navigate = useNavigate();
+  const user = useAppSelector((state) => state.auth.user);
+  const selectedBranchId = useAppSelector((state) => state.ui.selectedBranchId);
+  const branchId = resolveOperationalBranchId(user?.branchId, selectedBranchId);
+  const requiresBranchSelection = user?.role === "admin" && !user.branchId;
 
   const [selectedView, setSelectedView] = useState<ViewType>("overview");
   const [range, setRange] = useState<RangeType>("today");
@@ -37,11 +43,11 @@ export default function AdminDashboardContainer() {
       try {
         const [summaryRes, topItemsRes, tablesRes, hourlyRes, paymentsRes] =
           await Promise.all([
-            getDashboardSummaryApi(nextRange),
-            getTopItemsApi(nextRange),
-            getDashboardTablesApi(),
-            getHourlySalesApi(nextRange),
-            getPaymentMethodsApi(nextRange),
+            getDashboardSummaryApi(nextRange, branchId),
+            getTopItemsApi(nextRange, branchId),
+            getDashboardTablesApi(branchId),
+            getHourlySalesApi(nextRange, branchId),
+            getPaymentMethodsApi(nextRange, branchId),
           ]);
         setSummary(summaryRes.data);
         setTopItems(topItemsRes.data.topItems || []);
@@ -55,17 +61,22 @@ export default function AdminDashboardContainer() {
         setRefreshing(false);
       }
     },
-    [],
+    [branchId],
   );
 
   useEffect(() => {
     let ignore = false;
+    if (requiresBranchSelection && !branchId) {
+      setSummary(null); setTopItems([]); setTables([]); setHourly([]); setPayments([]);
+      setLoading(false);
+      return () => { ignore = true; };
+    }
     Promise.all([
-      getDashboardSummaryApi("today"),
-      getTopItemsApi("today"),
-      getDashboardTablesApi(),
-      getHourlySalesApi("today"),
-      getPaymentMethodsApi("today"),
+      getDashboardSummaryApi("today", branchId),
+      getTopItemsApi("today", branchId),
+      getDashboardTablesApi(branchId),
+      getHourlySalesApi("today", branchId),
+      getPaymentMethodsApi("today", branchId),
     ])
       .then(
         ([summaryRes, topItemsRes, tablesRes, hourlyRes, paymentsRes]) => {
@@ -89,7 +100,7 @@ export default function AdminDashboardContainer() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [branchId, requiresBranchSelection]);
 
   const handleRangeChange = (nextRange: RangeType) => {
     setRange(nextRange);

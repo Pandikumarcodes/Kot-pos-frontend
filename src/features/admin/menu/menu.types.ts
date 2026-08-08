@@ -1,6 +1,7 @@
 import type {
   MenuItem,
   CreateMenuPayload,
+  MenuPagination,
 } from "../../../services/admin/menu.api";
 import type { ValidationErrors } from "../../../utils/validation";
 
@@ -22,20 +23,30 @@ export const CATEGORIES = [
 export interface MenuPresenterProps {
   // data
   menuItems: MenuItem[];
-  filteredItems: MenuItem[];
+  pagination: MenuPagination;
   // ui state
   loading: boolean;
   error: string | null;
-  selectedCategory: string;
-  searchQuery: string;
+  search: string;
+  filterCat: string;
+  filterAvailability: string;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
+  activeFilters: Array<{ key: string; label: string; value: string }>;
   showModal: boolean;
   editingItem: MenuItem | null;
   formData: CreateMenuPayload;
   formErrors: ValidationErrors;
   isAdmin: boolean;
   // actions
-  onCategoryChange: (cat: string) => void;
   onSearchChange: (q: string) => void;
+  onFilterCatChange: (value: string) => void;
+  onFilterAvailabilityChange: (value: string) => void;
+  onSortChange: (value: string) => void;
+  onSortOrderChange: (value: "asc" | "desc") => void;
+  onRemoveFilter: (key: string) => void;
+  onClearFilters: () => void;
+  onPageChange: (page: number) => void;
   onOpenModal: (item?: MenuItem) => void;
   onCloseModal: () => void;
   onFieldChange: (field: string, value: string | number | boolean) => void;

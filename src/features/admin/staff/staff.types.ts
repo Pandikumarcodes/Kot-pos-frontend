@@ -1,10 +1,11 @@
 import type {
   StaffUser,
   CreateUserPayload,
+  StaffPagination,
 } from "../../../services/admin/staff.api";
 import type { ValidationErrors } from "../../../utils/validation";
 
-export type { StaffUser, CreateUserPayload };
+export type { StaffUser, CreateUserPayload, StaffPagination };
 
 export const ALLOWED_ROLES = [
   "admin",
@@ -24,7 +25,7 @@ export const ROLE_EMOJI: Record<string, string> = {
 export interface StaffPresenterProps {
   // data
   users: StaffUser[];
-  filteredUsers: StaffUser[];
+  pagination: StaffPagination;
   // stats (derived in container)
   activeCount: number;
   lockedCount: number;
@@ -32,14 +33,24 @@ export interface StaffPresenterProps {
   // ui state
   loading: boolean;
   error: string | null;
-  searchQuery: string;
+  search: string;
+  roleFilter: string;
+  statusFilter: string;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
   showModal: boolean;
   editingUser: StaffUser | null;
   formData: CreateUserPayload;
   formErrors: ValidationErrors;
+  saving: boolean;
   isAdmin: boolean;
   // actions
   onSearchChange: (q: string) => void;
+  onRoleChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
+  onSortChange: (value: string) => void;
+  onSortOrderChange: () => void;
+  onPageChange: (page: number) => void;
   onOpenModal: (user?: StaffUser) => void;
   onCloseModal: () => void;
   onFieldChange: (field: string, value: string) => void;

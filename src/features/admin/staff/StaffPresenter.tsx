@@ -4,9 +4,17 @@ import {
   IconButton,
   Input,
   Select,
-  Pulse,
   PageHeader,
-  SearchInput,
+  SearchBar,
+  FilterBar,
+  FilterDropdown,
+  SortDropdown,
+  ActiveFilterChips,
+  Pagination,
+  LoadingSkeleton,
+  RetryPanel,
+  Toolbar,
+  PageContainer,
   EmptyState,
   Modal,
   Badge,
@@ -21,19 +29,29 @@ import {
 
 export function StaffPresenter({
   users,
-  filteredUsers,
+  pagination,
   activeCount,
   lockedCount,
   rolesActive,
   loading,
   error,
-  searchQuery,
+  search,
+  roleFilter,
+  statusFilter,
+  sortBy,
+  sortOrder,
   showModal,
   editingUser,
   formData,
   formErrors,
+  saving,
   isAdmin,
   onSearchChange,
+  onRoleChange,
+  onStatusChange,
+  onSortChange,
+  onSortOrderChange,
+  onPageChange,
   onOpenModal,
   onCloseModal,
   onFieldChange,
@@ -42,12 +60,12 @@ export function StaffPresenter({
   onRetry,
 }: StaffPresenterProps) {
   return (
-    <div className="min-h-screen bg-kot-primary">
-      <main className="p-3 sm:p-4 lg:p-6 max-w-[2400px] mx-auto space-y-4">
+    <PageContainer>
+      <div className="space-y-4">
         {/* ── Header ── */}
         <PageHeader
           title="Staff"
-          sub={`${users.length} members`}
+          sub={`${pagination.total} members`}
           actions={
             isAdmin && (
               <Button
@@ -64,20 +82,13 @@ export function StaffPresenter({
         />
 
         {/* ── Error ── */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-red-600">{error}</p>
-            <Button variant="secondary" size="sm" onClick={onRetry}>
-              Retry
-            </Button>
-          </div>
-        )}
+        {error && <RetryPanel onRetry={onRetry} title="Staff unavailable" message={error} />}
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <StatCard
             label="Total"
-            value={users.length}
+            value={pagination.total}
             bg="bg-kot-white"
             loading={loading}
           />
@@ -102,40 +113,42 @@ export function StaffPresenter({
         </div>
 
         {/* ── Search ── */}
-        <SearchInput
-          value={searchQuery}
+        <SearchBar
+          value={search}
           onChange={onSearchChange}
-          placeholder="Search by username or role…"
+          placeholder="Search by username"
+        />
+        <Toolbar>
+          <FilterBar>
+            <FilterDropdown label="Role" value={roleFilter} options={ALLOWED_ROLES.map((role) => ({ value: role, label: role.charAt(0).toUpperCase() + role.slice(1) }))} onChange={onRoleChange} />
+            <FilterDropdown label="Status" value={statusFilter} options={[{ value: "active", label: "Active" }, { value: "locked", label: "Locked" }, { value: "accepted", label: "Accepted" }]} onChange={onStatusChange} />
+            <SortDropdown label="Sort by" value={sortBy} options={[{ value: "name", label: "Username" }, { value: "createdAt", label: "Date created" }]} onChange={onSortChange} />
+            {sortBy && <Button type="button" variant="secondary" size="sm" onClick={onSortOrderChange}>{sortOrder === "asc" ? "Ascending" : "Descending"}</Button>}
+          </FilterBar>
+        </Toolbar>
+        <ActiveFilterChips
+          filters={[
+            ...(roleFilter ? [{ key: "role", label: "Role", value: roleFilter }] : []),
+            ...(statusFilter ? [{ key: "status", label: "Status", value: statusFilter }] : []),
+          ]}
+          onRemove={(key) => key === "role" ? onRoleChange("") : onStatusChange("")}
+          onClear={() => { onRoleChange(""); onStatusChange(""); }}
         />
 
         {/* ── Content ── */}
         {loading ? (
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="bg-kot-white rounded-xl p-4 flex gap-4 items-center"
-              >
-                <Pulse className="w-10 h-10 rounded-full flex-shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <Pulse className="h-4 w-32" />
-                  <Pulse className="h-3 w-24" />
-                </div>
-                <Pulse className="h-6 w-16 rounded-full" />
-              </div>
-            ))}
-          </div>
-        ) : filteredUsers.length === 0 ? (
+          <LoadingSkeleton rows={6} className="rounded-xl bg-kot-white p-4" />
+        ) : users.length === 0 ? (
           <EmptyState
             icon="👥"
             title="No staff found"
             sub={
-              searchQuery
+              search
                 ? "Try a different search"
                 : "Add your first staff member"
             }
             action={
-              !searchQuery &&
+              !search &&
               isAdmin && (
                 <Button size="sm" onClick={() => onOpenModal()}>
                   Add Staff
@@ -147,7 +160,7 @@ export function StaffPresenter({
           <>
             {/* ── Mobile: card list ── */}
             <div className="sm:hidden space-y-2">
-              {filteredUsers.map((user) => (
+              {users.map((user) => (
                 <div
                   key={user._id}
                   className="bg-kot-white rounded-2xl p-4 shadow-kot"
@@ -218,7 +231,7 @@ export function StaffPresenter({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-kot-chart">
-                  {filteredUsers.map((user) => (
+                  {users.map((user) => (
                     <tr
                       key={user._id}
                       className="hover:bg-kot-primary transition-colors"
@@ -269,6 +282,13 @@ export function StaffPresenter({
         )}
 
         {/* ── Modal ── */}
+        {!loading && !error && pagination.total > 0 && (
+          <Pagination
+            state={{ page: pagination.page, pageSize: pagination.limit, total: pagination.total }}
+            onPageChange={onPageChange}
+          />
+        )}
+
         <Modal
           open={showModal}
           title={editingUser ? "Edit Staff Role" : "Add Staff Member"}
@@ -317,13 +337,13 @@ export function StaffPresenter({
               >
                 Cancel
               </Button>
-              <Button size="md" type="submit" className="flex-1">
-                {editingUser ? "Update Role" : "Add Staff"}
+              <Button size="md" type="submit" className="flex-1" disabled={saving}>
+                {saving ? "Saving..." : editingUser ? "Update Role" : "Add Staff"}
               </Button>
             </div>
           </form>
         </Modal>
-      </main>
-    </div>
+      </div>
+    </PageContainer>
   );
 }

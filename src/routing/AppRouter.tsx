@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import ProtectedRoute, { PublicRoute } from "./ProtectedRoute";
 import RoleRedirect from "./RoleRedirect";
 import { ROUTE_PERMISSIONS } from "../config/permissions";
+import { FEATURES } from "../config/features";
 import { LoadingScreen } from "../components/ui/LoadingScreen";
 import { NotFoundPage } from "../components/NotFoundPage";
 
@@ -121,9 +122,18 @@ export default function AppRouter() {
         <Route element={<ProtectedRoute allowedRoles={r("/admin/settings")} />}>
           <Route path="/admin/settings" element={<SettingsPage />} />
         </Route>
-        <Route element={<ProtectedRoute allowedRoles={r("/admin/branches")} />}>
-          <Route path="/admin/branches" element={<BranchManagementPage />} />
-        </Route>
+        {FEATURES.BRANCHES && (
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={r("/admin/branches")} />
+            }
+          >
+            <Route
+              path="/admin/branches"
+              element={<BranchManagementPage />}
+            />
+          </Route>
+        )}
         <Route
           element={<ProtectedRoute allowedRoles={r("/admin/inventory")} />}
         >

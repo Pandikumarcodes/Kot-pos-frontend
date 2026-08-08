@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAppSelector } from "../../../state/hooks";
+import { resolveOperationalBranchId } from "../../../state/branchContext";
 import {
   getSettingsApi,
   updateSettingsApi,
@@ -11,7 +12,10 @@ import type { SettingsTab } from "./settings.types";
 
 export default function SettingsContainer() {
   const { user } = useAppSelector((state) => state.auth);
+  const selectedBranchId = useAppSelector((state) => state.ui.selectedBranchId);
   const isAdmin = user?.role === "admin";
+  const requiresBranchSelection = isAdmin && !user?.branchId;
+  const branchId = resolveOperationalBranchId(user?.branchId, selectedBranchId);
   const toast = useToast();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
@@ -22,8 +26,14 @@ export default function SettingsContainer() {
   const [settings, setSettings] = useState<Partial<Settings>>({});
 
   const fetchSettings = useCallback(async () => {
+    if (requiresBranchSelection && !branchId) {
+      setSettings({});
+      setError("Select a branch to view settings");
+      setLoading(false);
+      return;
+    }
     try {
-      const { data } = await getSettingsApi();
+      const { data } = await getSettingsApi(branchId);
       setSettings(data.settings);
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
@@ -31,11 +41,17 @@ export default function SettingsContainer() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [branchId, requiresBranchSelection]);
 
   useEffect(() => {
     let ignore = false;
-    getSettingsApi()
+    if (requiresBranchSelection && !branchId) {
+      setSettings({});
+      setError("Select a branch to view settings");
+      setLoading(false);
+      return;
+    }
+    getSettingsApi(branchId)
       .then(({ data }) => {
         if (!ignore) setSettings(data.settings);
       })
@@ -50,7 +66,7 @@ export default function SettingsContainer() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [branchId, requiresBranchSelection]);
 
   const handleReload = () => {
     setLoading(true);
@@ -61,7 +77,7 @@ export default function SettingsContainer() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await updateSettingsApi(settings);
+      await updateSettingsApi(settings, branchId);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {

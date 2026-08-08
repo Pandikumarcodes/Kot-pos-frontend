@@ -36,10 +36,12 @@ export const useFilters = (initial: FilterState = {}) => {
 export const useQueryState = (options: QueryStateOptions = {}) => {
   const defaults: QueryParams = { page: 1, pageSize: 20, ...options.initialState };
   const [query, setQuery] = useState<QueryParams>(() => options.syncUrl === false ? defaults : parseQuery(window.location.search, defaults));
-  const updateQuery = useCallback((patch: Partial<QueryParams>) => setQuery((current) => ({ ...current, ...patch })), []);
+  const updateQuery = useCallback((patch: Partial<QueryParams>) => setQuery((current) => {
+    const changed = Object.entries(patch).some(([key, value]) => !Object.is(current[key as keyof QueryParams], value));
+    return changed ? { ...current, ...patch } : current;
+  }), []);
   const updateFilters = useCallback((filters: FilterState) => updateQuery({ filters, page: 1 }), [updateQuery]);
   const clearAllFilters = useCallback(() => setQuery((current) => resetFilters(current)), []);
   useEffect(() => { if (options.syncUrl !== false) syncUrlQuery(query, options.url); }, [options.syncUrl, options.url, query]);
   return { query, params: query, queryString: buildQueryString(query), setQuery, updateQuery, updateFilters, resetFilters: clearAllFilters };
 };
-

@@ -15,7 +15,13 @@ import {
   Select,
   Pulse,
   PageHeader,
-  SearchInput,
+  SearchBar,
+  SortDropdown,
+  Toolbar,
+  PageContainer,
+  Pagination,
+  LoadingSkeleton,
+  RetryPanel,
   EmptyState,
   Modal,
   TableWrapper,
@@ -29,17 +35,22 @@ import type { CustomerPresenterProps } from "./customers.types";
 
 export function CustomerPresenter({
   customers,
-  filteredCustomers,
+  pagination,
   totalOrders,
   avgOrderValue,
   loading,
   error,
-  searchQuery,
+  search,
+  sortBy,
+  sortOrder,
   showModal,
   editingCustomer,
   formData,
   isAdmin,
   onSearchChange,
+  onSortChange,
+  onSortOrderChange,
+  onPageChange,
   onOpenModal,
   onCloseModal,
   onFormChange,
@@ -48,11 +59,11 @@ export function CustomerPresenter({
   onRetry,
 }: CustomerPresenterProps) {
   return (
-    <div className="min-h-screen bg-kot-primary">
-      <main className="p-3 sm:p-4 lg:p-6 max-w-[2400px] mx-auto space-y-4">
+    <PageContainer>
+      <div className="space-y-4">
         <PageHeader
           title="Customers"
-          sub={`${customers.length} total customers`}
+          sub={`${pagination.total} total customers`}
           actions={
             <Button
               size="sm"
@@ -66,21 +77,14 @@ export function CustomerPresenter({
         />
 
         {/* Error banner */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
-            <p className="text-sm text-red-600">{error}</p>
-            <Button variant="secondary" size="sm" onClick={onRetry}>
-              Retry
-            </Button>
-          </div>
-        )}
+        {error && <RetryPanel onRetry={onRetry} title="Customers unavailable" message={error} />}
 
         {/* Stat row */}
         <div className="grid grid-cols-3 gap-3">
           {[
             {
               label: "Total Customers",
-              value: customers.length,
+              value: pagination.total,
               bg: "bg-kot-white",
             },
             { label: "Total Orders", value: totalOrders, bg: "bg-kot-stats" },
@@ -104,35 +108,28 @@ export function CustomerPresenter({
         </div>
 
         {/* Search */}
-        <SearchInput
-          value={searchQuery}
+        <SearchBar
+          value={search}
           onChange={onSearchChange}
-          placeholder="Search by name, email or phone…"
+          placeholder="Search by name or phone"
         />
+        <Toolbar>
+          <SortDropdown label="Sort by" value={sortBy} options={[{ value: "name", label: "Name" }, { value: "createdAt", label: "Date joined" }]} onChange={onSortChange} />
+          {sortBy && <Button type="button" variant="secondary" size="sm" onClick={onSortOrderChange}>{sortOrder === "asc" ? "A–Z / Oldest" : "Z–A / Newest"}</Button>}
+        </Toolbar>
 
         {/* Table */}
-        {loading ? (
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="bg-kot-white rounded-xl p-4 flex gap-4">
-                <Pulse className="w-10 h-10 rounded-full flex-shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <Pulse className="h-4 w-40" />
-                  <Pulse className="h-3 w-56" />
-                </div>
-                <Pulse className="h-8 w-16 rounded-lg" />
-              </div>
-            ))}
-          </div>
-        ) : filteredCustomers.length === 0 ? (
+        {error ? null : loading ? (
+          <LoadingSkeleton rows={8} className="rounded-xl bg-kot-white p-4" />
+        ) : customers.length === 0 ? (
           <EmptyState
             icon="👥"
             title="No customers found"
             sub={
-              searchQuery ? "Try a different search" : "Add your first customer"
+              search ? "Try a different search" : "Add your first customer"
             }
             action={
-              !searchQuery && (
+              !search && (
                 <Button size="sm" onClick={() => onOpenModal()}>
                   Add Customer
                 </Button>
@@ -153,7 +150,7 @@ export function CustomerPresenter({
               </tr>
             </Thead>
             <Tbody>
-              {filteredCustomers.map((c) => (
+              {customers.map((c) => (
                 <Tr key={c._id}>
                   <Td>
                     <div className="flex items-center gap-3">
@@ -226,6 +223,13 @@ export function CustomerPresenter({
           </TableWrapper>
         )}
 
+        {!loading && !error && pagination.total > 0 && (
+          <Pagination
+            state={{ page: pagination.page, pageSize: pagination.limit, total: pagination.total }}
+            onPageChange={onPageChange}
+          />
+        )}
+
         {/* Modal */}
         <Modal
           open={showModal}
@@ -284,7 +288,7 @@ export function CustomerPresenter({
             </div>
           </form>
         </Modal>
-      </main>
-    </div>
+      </div>
+    </PageContainer>
   );
 }

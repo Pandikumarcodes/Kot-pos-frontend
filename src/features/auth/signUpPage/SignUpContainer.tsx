@@ -12,7 +12,6 @@ export default function SignUpContainer() {
     username: "",
     password: "",
     confirmPassword: "",
-    role: "waiter",
     status: "active",
   });
   const [errors, setErrors] = useState<SignUpFormErrors>({});
@@ -40,7 +39,6 @@ export default function SignUpContainer() {
       e.confirmPassword = "Please confirm your password";
     else if (formData.password !== formData.confirmPassword)
       e.confirmPassword = "Passwords do not match";
-    if (!formData.role) e.role = "Please select a role";
     if (!agreeToTerms) e.terms = "You must agree to the terms";
     return e;
   };
@@ -70,7 +68,6 @@ export default function SignUpContainer() {
         {
           username: formData.username,
           password: formData.password,
-          role: formData.role,
           status: formData.status,
         },
         { withCredentials: true },

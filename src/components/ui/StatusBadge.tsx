@@ -23,6 +23,7 @@ type StatusVariant =
   | "paid"
   | "unpaid"
   | "active"
+  | "accepted"
   | "locked";
 
 interface StatusBadgeProps {
@@ -118,6 +119,13 @@ const statusConfig: Record<
     color: "text-green-700",
     bgColor: "bg-green-50",
     borderColor: "border-green-200",
+    icon: CheckCircle,
+  },
+  accepted: {
+    label: "Accepted",
+    color: "text-blue-700",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
     icon: CheckCircle,
   },
   locked: {

@@ -4,7 +4,9 @@ import { table } from "./Token";
 export function TableWrapper({ children }: { children: ReactNode }) {
   return (
     <div className={table.wrapper}>
-      <table className="w-full">{children}</table>
+      <div className="overflow-x-auto">
+        <table className="w-full">{children}</table>
+      </div>
     </div>
   );
 }

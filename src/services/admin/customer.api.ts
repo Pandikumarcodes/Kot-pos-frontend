@@ -12,6 +12,25 @@ export interface Customer {
   createdAt: string;
 }
 
+export type CustomerSortField = "name" | "createdAt";
+
+export interface CustomerQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sort?: CustomerSortField;
+  order?: "asc" | "desc";
+}
+
+export interface CustomerPagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export interface CreateCustomerPayload {
   name: string;
   phone: string;
@@ -20,8 +39,11 @@ export interface CreateCustomerPayload {
 }
 
 // GET /admin/customers
-export const getCustomersApi = () =>
-  api.get<{ customers: Customer[] }>("/admin/customers");
+export const getCustomersApi = (query: CustomerQuery = {}) =>
+  api.get<{ customers: Customer[]; pagination?: CustomerPagination }>(
+    "/admin/customers",
+    { params: query },
+  );
 
 // GET /admin/customers/:id
 export const getCustomerByIdApi = (id: string) =>

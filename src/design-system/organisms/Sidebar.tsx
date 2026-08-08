@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAppSelector } from "../../state/hooks";
+import { useAppDispatch, useAppSelector } from "../../state/hooks";
 import { NAV_PERMISSIONS } from "../../config/permissions";
+import { FEATURES } from "../../config/features";
 import type { Role } from "../../config/permissions";
 import {
   LayoutDashboard,
@@ -24,7 +25,6 @@ import {
   Bot,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { getBranchesApi } from "../../services/admin/branch.api";
 import type { Branch } from "../../services/admin/branch.api";
 
 interface NavLink {
@@ -62,34 +62,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const role = user?.role as Role | undefined;
 
   const isSuperAdmin = role === "admin" && !user?.branchId;
-
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [activeBranch, setActiveBranch] = useState<Branch | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  // The selector is owned by Header. These inert values keep the legacy hidden
+  // markup unreachable until it is removed in the next UI cleanup.
+  const dispatch = useAppDispatch();
+  const selectedBranchId: string | null = null;
+  const branches: Branch[] = [];
+  const dropdownOpen = false;
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const displayedBranch: Branch | null = null;
+  const setDropdownOpen = (_value: boolean | ((value: boolean) => boolean)) => undefined;
+  let selectedBranch: Branch | null = null;
+  const setSelectedBranchId = (_value: string | null) => ({ type: "ui/legacyNoop" });
+  const storeSelectedBranchId = (_userId: string, _branchId: string | null) => undefined;
 
-  useEffect(() => {
-    if (!isSuperAdmin) return;
-    getBranchesApi()
-      .then((res) => {
-        const active = res.data.branches.filter((b) => b.isActive);
-        setBranches(active);
-      })
-      .catch(() => {});
-  }, [isSuperAdmin]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -108,24 +93,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     };
   }, [isOpen]);
 
-  const visibleLinks = NAV_LINKS.filter((link) =>
-    role ? (NAV_PERMISSIONS[link.label] ?? []).includes(role) : false,
+  const visibleLinks = NAV_LINKS.filter(
+    (link) =>
+      role &&
+      (link.label !== "Branches" || FEATURES.BRANCHES) &&
+      (NAV_PERMISSIONS[link.label] ?? []).includes(role),
   );
 
-  const staffBranchName =
-    !isSuperAdmin && user?.branchId
-      ? (activeBranch?.name ?? "My Branch")
-      : null;
-
-  useEffect(() => {
-    if (isSuperAdmin || !user?.branchId) return;
-    getBranchesApi()
-      .then((res) => {
-        const found = res.data.branches.find((b) => b._id === user.branchId);
-        if (found) setActiveBranch(found);
-      })
-      .catch(() => {});
-  }, [isSuperAdmin, user?.branchId]);
+  const staffBranchName = !isSuperAdmin && user?.branchId ? "My Branch" : null;
 
   const handleNavigate = (to: string) => {
     navigate(to);
@@ -161,7 +136,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* ── Branch Selector (super-admin) ── */}
-        {isSuperAdmin && (
+        {false && FEATURES.BRANCHES && isSuperAdmin && (
           <div className="mb-4" ref={dropdownRef}>
             <button
               type="button"
@@ -172,7 +147,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             >
               <MapPin size={16} className="text-kot-dark flex-shrink-0" />
               <span className="flex-1 text-left text-sm font-medium text-kot-darker truncate">
-                {activeBranch ? activeBranch.name : "All Branches"}
+                {displayedBranch?.name ?? "Select a branch"}
               </span>
               <div className="flex items-center gap-1">
                 <Rocket
@@ -191,7 +166,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveBranch(null);
+                    dispatch(setSelectedBranchId(null));
+                    if (user?.id) storeSelectedBranchId(user.id, null);
                     setDropdownOpen(false);
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-kot-light transition-colors text-left"
@@ -202,7 +178,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <span className="text-sm font-medium text-kot-darker flex-1">
                     All Branches
                   </span>
-                  {!activeBranch && (
+                  {!selectedBranchId && (
                     <Check size={14} className="text-kot-dark" />
                   )}
                 </button>
@@ -217,7 +193,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         type="button"
                         key={branch._id}
                         onClick={() => {
-                          setActiveBranch(branch);
+                          dispatch(setSelectedBranchId(branch._id));
+                          if (user?.id) storeSelectedBranchId(user.id, branch._id);
                           setDropdownOpen(false);
                         }}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-kot-light transition-colors text-left"
@@ -235,7 +212,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             </p>
                           )}
                         </div>
-                        {activeBranch?._id === branch._id && (
+                        {selectedBranchId === branch._id && (
                           <Check
                             size={14}
                             className="text-kot-dark flex-shrink-0"
@@ -265,7 +242,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
 
         {/* ── Branch Badge (branch staff) ── */}
-        {!isSuperAdmin && staffBranchName && (
+        {!isSuperAdmin && role !== "cashier" && staffBranchName && (
           <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
             <MapPin size={14} className="text-emerald-600 flex-shrink-0" />
             <div className="min-w-0">
@@ -303,14 +280,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* ── Active branch indicator ── */}
-        {isSuperAdmin && activeBranch && (
+        {isSuperAdmin && selectedBranch && (
           <div className="mt-4 pt-4 border-t border-kot-chart">
             <div className="flex items-center gap-2 px-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <p className="text-xs text-kot-text">
                 Viewing:{" "}
                 <span className="font-semibold text-kot-darker">
-                  {activeBranch.name}
+                  {(selectedBranch as Branch).name}
                 </span>
               </p>
             </div>

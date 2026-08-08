@@ -29,6 +29,7 @@ export interface WaiterOrderPresenterProps {
 
   // history
   historyLoading: boolean;
+  historyError: string | null;
   allItems: TableOrderItem[];
   grandTotal: number;
 
@@ -52,6 +53,8 @@ export interface WaiterOrderPresenterProps {
   // actions
   sendingKot: boolean;
   onSendKot: () => void;
+  canSendToCashier: boolean;
   sendingToCashier: boolean;
+  cashierHandoffComplete: boolean;
   onSendToCashier: () => void;
 }

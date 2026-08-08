@@ -1,7 +1,14 @@
 import { RefreshCw, Clock, ChefHat, Wifi, WifiOff } from "lucide-react";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { FilterBar, FilterDropdown, SortDropdown } from "../../../components/ui/FilterControls";
+import { LoadingSkeleton } from "../../../components/ui/LoadingSkeleton";
+import { PageContainer } from "../../../components/ui/PageContainer";
+import { Pagination } from "../../../components/ui/Pagination";
+import { RetryPanel } from "../../../components/ui/RetryPanel";
+import { Toolbar } from "../../../components/ui/Toolbar";
 import type {
   KitchenPresenterProps,
-  TabFilter,
+  KitchenTabFilter,
   KotStatus,
 } from "./Kitchen.types";
 
@@ -80,60 +87,39 @@ function SkeletonStats() {
   );
 }
 
-function SkeletonCard() {
-  return (
-    <div className="bg-kot-white rounded-2xl shadow-kot border-l-4 border-kot-chart overflow-hidden">
-      <div className="px-4 py-3 bg-kot-light flex items-center justify-between">
-        <div className="space-y-1.5">
-          <Pulse className="h-4 w-24" />
-          <Pulse className="h-3 w-16" />
-        </div>
-        <Pulse className="h-6 w-16 rounded-full" />
-      </div>
-      <div className="px-4 py-3 space-y-2.5">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Pulse className="w-6 h-6 rounded-full" />
-              <Pulse className="h-3 w-28" />
-            </div>
-            <Pulse className="h-3 w-10" />
-          </div>
-        ))}
-      </div>
-      <div className="px-4 pb-4 flex gap-2">
-        <Pulse className="flex-1 h-9 rounded-xl" />
-        <Pulse className="w-10 h-9 rounded-xl" />
-      </div>
-    </div>
-  );
-}
-
-const TABS: { value: TabFilter; label: string }[] = [
+const TABS: { value: KitchenTabFilter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
   { value: "preparing", label: "Preparing" },
   { value: "ready", label: "Ready" },
-  { value: "served", label: "Served" },
 ];
 
 export function KitchenPresenter({
-  sorted,
+  kots,
   counts,
   loading,
   refreshing,
   isConnected,
   activeTab,
+  sortBy,
+  sortOrder,
+  pagination,
   updatingId,
   onTabChange,
+  onSortChange,
+  onSortOrderChange,
+  onPageChange,
+  onRetry,
+  error,
   onRefresh,
   onStart,
   onReady,
+  onServe,
   onCancel,
 }: KitchenPresenterProps) {
   return (
-    <div className="min-h-screen bg-kot-primary">
-      <div className="p-3 sm:p-4 lg:p-6 max-w-[2400px] mx-auto space-y-3 sm:space-y-4">
+    <PageContainer>
+      <div className="space-y-3 sm:space-y-4">
         {/* ── Header ── */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -219,6 +205,20 @@ export function KitchenPresenter({
           </div>
         )}
 
+        <Toolbar>
+          <FilterBar>
+            <FilterDropdown label="Status" value={activeTab === "all" ? "" : activeTab}
+              options={TABS.filter((tab) => tab.value !== "all")}
+              onChange={(value) => onTabChange((value || "all") as KitchenTabFilter)} />
+            <SortDropdown value={sortBy}
+              options={[{ value: "createdAt", label: "Created time" }, { value: "status", label: "Status" }]}
+              onChange={onSortChange} />
+            <FilterDropdown label="Order" value={sortOrder}
+              options={[{ value: "asc", label: "Ascending" }, { value: "desc", label: "Descending" }]}
+              onChange={onSortOrderChange} />
+          </FilterBar>
+        </Toolbar>
+
         {/* ── Tabs — scrollable on mobile ── */}
         <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-none">
           <div className="flex gap-1 bg-kot-white rounded-2xl p-1 sm:p-1.5 shadow-kot w-max sm:w-auto">
@@ -240,24 +240,14 @@ export function KitchenPresenter({
 
         {/* ── KOT Cards ── */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="bg-kot-white rounded-2xl p-10 sm:p-16 text-center shadow-kot">
-            <p className="text-4xl sm:text-5xl mb-3">🍳</p>
-            <p className="text-lg sm:text-xl font-bold text-kot-darker">
-              No orders
-            </p>
-            <p className="text-xs sm:text-sm text-kot-text mt-1">
-              {activeTab === "all" ? "All done!" : `No ${activeTab} orders`}
-            </p>
-          </div>
+          <LoadingSkeleton rows={8} className="rounded-2xl bg-kot-white p-6" />
+        ) : error ? (
+          <RetryPanel onRetry={onRetry} title="Could not load kitchen orders" message={error} />
+        ) : kots.length === 0 ? (
+          <EmptyState icon="🍳" title="No orders" sub={activeTab === "all" ? "All done!" : `No ${activeTab} orders`} />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
-            {sorted.map((kot) => {
+            {kots.map((kot) => {
               const cfg = STATUS_CONFIG[kot.status];
               const urgent =
                 isUrgent(kot.createdAt) && kot.status === "pending";
@@ -348,9 +338,13 @@ export function KitchenPresenter({
                         </button>
                       )}
                       {kot.status === "ready" && (
-                        <div className="flex-1 py-2 rounded-xl bg-emerald-100 text-emerald-700 text-xs sm:text-sm font-semibold text-center">
-                          Waiting pickup
-                        </div>
+                        <button type="button"
+                          onClick={() => onServe(kot._id)}
+                          disabled={isUpdating}
+                          className="flex-1 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50"
+                        >
+                          {isUpdating ? "..." : "Serve"}
+                        </button>
                       )}
                       {/* Only show cancel for pending/preparing */}
                       {(kot.status === "pending" ||
@@ -370,7 +364,8 @@ export function KitchenPresenter({
             })}
           </div>
         )}
+        {!loading && !error && <Pagination state={{ page: pagination.page, pageSize: pagination.limit, total: pagination.total }} onPageChange={onPageChange} />}
       </div>
-    </div>
+    </PageContainer>
   );
 }

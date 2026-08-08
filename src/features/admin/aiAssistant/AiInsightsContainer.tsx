@@ -1,5 +1,11 @@
 import { useState, useCallback, useRef } from "react";
-import api from "../../../services/apiClient";
+import { useAppSelector } from "../../../state/hooks";
+import { resolveOperationalBranchId } from "../../../state/branchContext";
+import {
+  getDailySummaryApi,
+  getInventoryAlertsApi,
+  sendAiChatApi,
+} from "../../../services/admin/ai.api";
 import { AiInsightsPresenter } from "./AiInsightsPresenter";
 import type {
   InventoryAlert,
@@ -11,6 +17,9 @@ import type {
 } from "./AiInsights.types";
 
 export default function AiInsightsContainer() {
+  const user = useAppSelector((state) => state.auth.user);
+  const selectedBranchId = useAppSelector((state) => state.ui.selectedBranchId);
+  const branchId = resolveOperationalBranchId(user?.branchId, selectedBranchId);
   const [activeTab, setActiveTab] = useState<ActiveTab>("chat");
 
   // ── Daily summary state ───────────────────────────────────
@@ -46,7 +55,7 @@ export default function AiInsightsContainer() {
     try {
       setSummaryLoading(true);
       setSummaryError(null);
-      const { data } = await api.get("/ai/daily-summary");
+      const { data } = await getDailySummaryApi(branchId);
       setSummaryData(data.data);
       setAiSummary(data.aiSummary);
     } catch (err) {
@@ -55,14 +64,14 @@ export default function AiInsightsContainer() {
     } finally {
       setSummaryLoading(false);
     }
-  }, []);
+  }, [branchId]);
 
   // ── Fetch inventory alerts ────────────────────────────────
   const fetchAlerts = useCallback(async () => {
     try {
       setAlertsLoading(true);
       setAlertsError(null);
-      const { data } = await api.get("/ai/inventory-alerts");
+      const { data } = await getInventoryAlertsApi(branchId);
       setAlerts(data.alerts);
       setCounts(data.counts);
     } catch (err) {
@@ -71,7 +80,7 @@ export default function AiInsightsContainer() {
     } finally {
       setAlertsLoading(false);
     }
-  }, []);
+  }, [branchId]);
 
   // ── Tab change ────────────────────────────────────────────
   const handleTabChange = useCallback(
@@ -120,10 +129,7 @@ export default function AiInsightsContainer() {
 
       try {
         const context = summaryData ?? {};
-        const { data } = await api.post("/ai/chat", {
-          message: trimmed,
-          context,
-        });
+        const { data } = await sendAiChatApi({ message: trimmed, context }, branchId);
 
         const aiMsg: Message = {
           id: `${Date.now()}-ai`,
@@ -150,7 +156,7 @@ export default function AiInsightsContainer() {
         }, 100);
       }
     },
-    [chatLoading, summaryData],
+    [branchId, chatLoading, summaryData],
   );
 
   return (

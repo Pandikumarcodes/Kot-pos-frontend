@@ -25,14 +25,14 @@ export function SearchBar({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         aria-label={label}
-        className="pl-9 pr-9"
+        style={{ paddingInlineStart: "2.5rem", paddingInlineEnd: "2.75rem" }}
       />
       {value && (
         <button
           type="button"
           aria-label="Clear search"
           onClick={() => onChange("")}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-kot-text hover:bg-kot-light focus:outline-none focus:ring-2 focus:ring-kot-dark"
+          className="absolute right-0.5 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-kot-text hover:bg-kot-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kot-dark focus-visible:ring-offset-1"
         >
           <X aria-hidden="true" className="h-4 w-4" />
         </button>

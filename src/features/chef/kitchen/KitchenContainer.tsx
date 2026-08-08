@@ -1,188 +1,186 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  getKotOrdersApi,
-  startKotApi,
-  markKotReadyApi,
   cancelKotApi,
+  getKotOrdersApi,
+  markKotReadyApi,
+  serveKotApi,
+  startKotApi,
 } from "../../../services/chef/chef.api";
-import type { Kot } from "../../../services/chef/chef.api";
+import type {
+  KitchenSortField,
+  KitchenSortOrder,
+  Kot,
+} from "../../../services/chef/chef.api";
 import { useToast } from "../../../contexts/toastContext";
 import { useNotifications } from "../../../hooks/useNotifications";
+import { useFilters } from "../../../hooks/useFilters";
+import { usePagination } from "../../../hooks/usePagination";
+import { useQueryState } from "../../../hooks/useQueryState";
+import { useSorting } from "../../../hooks/useSorting";
 import { KitchenPresenter } from "./KitchenPresenter";
-import type { TabFilter } from "./Kitchen.types";
+import type { KitchenTabFilter } from "./Kitchen.types";
+import { useAppSelector } from "../../../state/hooks";
+import { resolveOperationalBranchId } from "../../../state/branchContext";
+
+const DEFAULT_PAGE_SIZE = 20;
+const DEFAULT_SORT: KitchenSortField = "createdAt";
+const DEFAULT_ORDER: KitchenSortOrder = "asc";
+const ACTIVE_STATUSES = ["pending", "preparing", "ready"] as const;
+
+const getErrorMessage = (error: unknown) => {
+  const response = error as { response?: { data?: { error?: string; message?: string } } };
+  return response.response?.data?.error || response.response?.data?.message || "Failed to load orders";
+};
 
 export default function KitchenContainer() {
   const toast = useToast();
+  const user = useAppSelector((state) => state.auth.user);
+  const selectedBranchId = useAppSelector((state) => state.ui.selectedBranchId);
+  const requiresBranchSelection = user?.role === "admin" && !user.branchId;
+  const branchId = resolveOperationalBranchId(user?.branchId, selectedBranchId);
+  const { query, updateQuery } = useQueryState({
+    initialState: { page: 1, pageSize: DEFAULT_PAGE_SIZE, sortBy: DEFAULT_SORT, sortOrder: DEFAULT_ORDER },
+  });
+  const queryStatus = query.filters?.status;
+  const initialFilters = queryStatus === "pending" || queryStatus === "preparing" || queryStatus === "ready" ? { status: queryStatus } : {};
+  const filterState = useFilters(initialFilters);
+  const initialSort = query.sortBy === "status" || query.sortBy === "createdAt" ? query.sortBy : DEFAULT_SORT;
+  const sortingState = useSorting({ sortBy: initialSort, sortOrder: query.sortOrder === "desc" ? "desc" : DEFAULT_ORDER });
+  const pageSize = Math.min(100, Math.max(1, query.pageSize));
+  const paginationState = usePagination({ page: query.page, pageSize });
+  const activeTab = (filterState.filters.status as KitchenTabFilter | undefined) ?? "all";
+  const sortBy = (sortingState.sortBy ?? DEFAULT_SORT) as KitchenSortField;
+  const sortOrder = sortingState.sortOrder ?? DEFAULT_ORDER;
 
   const [kots, setKots] = useState<Kot[]>([]);
+  const [pagination, setPagination] = useState({ page: 1, limit: DEFAULT_PAGE_SIZE, total: 0, pages: 0, hasNext: false, hasPrev: false });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [, setTick] = useState(0);
 
-  // Re-render every minute so formatTime stays fresh
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 60000);
-    return () => clearInterval(id);
+    const id = window.setInterval(() => setTick((tick) => tick + 1), 60000);
+    return () => window.clearInterval(id);
   }, []);
 
-  const fetchKots = useCallback(async () => {
+  const fetchKots = useCallback(async (background = false) => {
+    if (background) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+    if (requiresBranchSelection && !branchId) {
+      setKots([]);
+      setError("Select a branch to view kitchen orders");
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     try {
-      const res = await getKotOrdersApi();
-      setKots(res.data.KotOrders);
-    } catch (err) {
-      const e = err as { response?: { data?: { error?: string } } };
-      setError(e?.response?.data?.error || "Failed to load orders");
+      const response = await getKotOrdersApi({
+        branchId,
+        page: query.page,
+        limit: pageSize,
+        status: activeTab === "all" ? undefined : activeTab,
+        sort: sortBy,
+        order: sortOrder,
+      });
+      setKots(response.data.KotOrders);
+      if (response.data.pagination) setPagination(response.data.pagination);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [activeTab, branchId, pageSize, query.page, requiresBranchSelection, sortBy, sortOrder]);
 
   useEffect(() => {
-    let ignore = false;
-    getKotOrdersApi()
-      .then((res) => {
-        if (!ignore) setKots(res.data.KotOrders);
-      })
-      .catch((err) => {
-        if (ignore) return;
-        const e = err as { response?: { data?: { error?: string } } };
-        setError(e?.response?.data?.error || "Failed to load orders");
-      })
-      .finally(() => {
-        if (!ignore) {
-          setLoading(false);
-          setRefreshing(false);
-        }
-      });
-    return () => {
-      ignore = true;
-    };
-  }, []);
+    const request = window.setTimeout(() => void fetchKots(), 0);
+    return () => window.clearTimeout(request);
+  }, [fetchKots]);
 
-  const handleRetry = () => {
-    setLoading(true);
-    setError(null);
-    void fetchKots();
-  };
+  useEffect(() => {
+    setKots([]);
+    setPagination((current) => ({ ...current, page: 1, total: 0, pages: 0 }));
+  }, [branchId]);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setError(null);
-    void fetchKots();
-  };
+  useEffect(() => {
+    updateQuery({ filters: filterState.filters, page: 1 });
+  }, [filterState.filters, updateQuery]);
+
+  useEffect(() => {
+    updateQuery({ sortBy: sortingState.sortBy ?? DEFAULT_SORT, sortOrder: sortingState.sortOrder ?? DEFAULT_ORDER, page: 1 });
+  }, [sortingState.sortBy, sortingState.sortOrder, updateQuery]);
+
+  useEffect(() => {
+    updateQuery({ page: paginationState.page, pageSize: paginationState.pageSize });
+  }, [paginationState.page, paginationState.pageSize, updateQuery]);
+
+  const matchesView = useCallback((kot: Kot) => activeTab === "all" ? ACTIVE_STATUSES.includes(kot.status as typeof ACTIVE_STATUSES[number]) : kot.status === activeTab, [activeTab]);
+  const ordered = useCallback((items: Kot[]) => [...items].sort((a, b) => {
+    const left = sortBy === "status" ? a.status : a.createdAt;
+    const right = sortBy === "status" ? b.status : b.createdAt;
+    const result = left < right ? -1 : left > right ? 1 : a._id.localeCompare(b._id);
+    return sortOrder === "asc" ? result : -result;
+  }), [sortBy, sortOrder]);
 
   const isConnected = useNotifications({
-    "order:new": (kot: unknown) => {
-      const k = kot as Kot;
-      setKots((prev) =>
-        prev.some((x) => x._id === k._id) ? prev : [k, ...prev],
-      );
+    "order:new": (payload: unknown) => {
+      const kot = payload as Kot;
+      if (paginationState.page !== 1 || !matchesView(kot)) return;
+      setKots((current) => {
+        if (current.some((item) => item._id === kot._id)) return current;
+        return ordered([kot, ...current]).slice(0, paginationState.pageSize);
+      });
     },
-    "kot:updated": (kot: unknown) => {
-      const k = kot as Kot;
-      setKots((prev) => prev.map((x) => (x._id === k._id ? k : x)));
+    "kot:updated": (payload: unknown) => {
+      const kot = payload as Kot;
+      setKots((current) => {
+        const exists = current.some((item) => item._id === kot._id);
+        if (!matchesView(kot)) return exists ? current.filter((item) => item._id !== kot._id) : current;
+        return ordered(exists ? current.map((item) => item._id === kot._id ? kot : item) : current);
+      });
     },
   });
 
-  const handleStart = async (id: string) => {
+  const handleAction = async (id: string, action: () => Promise<{ data: { order: Kot } }>, message: string, kind: "success" | "info" = "success") => {
     try {
       setUpdatingId(id);
-      const r = await startKotApi(id);
-      setKots((prev) => prev.map((k) => (k._id === id ? r.data.order : k)));
-      toast.success("Cooking started! 🔥");
-    } catch (e: unknown) {
-      toast.error(
-        (e as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Failed",
-      );
+      const response = await action();
+      setKots((current) => ordered(current
+        .map((kot) => kot._id === id ? response.data.order : kot)
+        .filter(matchesView)));
+      toast[kind](message);
+    } catch (actionError) {
+      toast.error(getErrorMessage(actionError));
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const handleReady = async (id: string) => {
-    try {
-      setUpdatingId(id);
-      const r = await markKotReadyApi(id);
-      setKots((prev) => prev.map((k) => (k._id === id ? r.data.order : k)));
-      toast.success("Order ready! ✅");
-    } catch (e: unknown) {
-      toast.error(
-        (e as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Failed",
-      );
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const handleCancel = async (id: string) => {
-    if (!window.confirm("Cancel?")) return;
-    try {
-      setUpdatingId(id);
-      const r = await cancelKotApi(id);
-      setKots((prev) => prev.map((k) => (k._id === id ? r.data.order : k)));
-      toast.info("Cancelled");
-    } catch (e: unknown) {
-      toast.error(
-        (e as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Failed",
-      );
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  // Derived
-  const counts = {
-    all: kots.length,
-    pending: kots.filter((k) => k.status === "pending").length,
-    preparing: kots.filter((k) => k.status === "preparing").length,
-    ready: kots.filter((k) => k.status === "ready").length,
-    served: kots.filter((k) => k.status === "served").length,
-    cancelled: kots.filter((k) => k.status === "cancelled").length,
-  };
-
-  const filtered =
-    activeTab === "all" ? kots : kots.filter((k) => k.status === activeTab);
-  const sorted = [...filtered].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-  );
-
-  if (error)
-    return (
-      <div className="h-screen flex items-center justify-center bg-kot-primary px-4">
-        <div className="text-center">
-          <p className="text-red-600 font-medium mb-3">{error}</p>
-          <button type="button"
-            onClick={handleRetry}
-            className="px-4 py-2 bg-kot-dark text-white rounded-lg"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
+  const counts = useMemo(() => ({
+    all: pagination.total,
+    pending: kots.filter((kot) => kot.status === "pending").length,
+    preparing: kots.filter((kot) => kot.status === "preparing").length,
+    ready: kots.filter((kot) => kot.status === "ready").length,
+    served: kots.filter((kot) => kot.status === "served").length,
+    cancelled: kots.filter((kot) => kot.status === "cancelled").length,
+  }), [kots, pagination.total]);
 
   return (
     <KitchenPresenter
-      kots={kots}
-      sorted={sorted}
-      counts={counts}
-      loading={loading}
-      refreshing={refreshing}
-      isConnected={isConnected}
-      activeTab={activeTab}
-      updatingId={updatingId}
-      onTabChange={setActiveTab}
-      onRefresh={handleRefresh}
-      onStart={handleStart}
-      onReady={handleReady}
-      onCancel={handleCancel}
+      kots={ordered(kots)} counts={counts} loading={loading} refreshing={refreshing}
+      isConnected={isConnected} activeTab={activeTab} sortBy={sortBy} sortOrder={sortOrder}
+      pagination={pagination} updatingId={updatingId} error={error}
+      onTabChange={(value) => { paginationState.setPage(1); value === "all" ? filterState.clearFilter("status") : filterState.setFilter("status", value); }}
+      onSortChange={(value) => { paginationState.setPage(1); sortingState.setSort(value || DEFAULT_SORT, sortOrder); }}
+      onSortOrderChange={(value) => { paginationState.setPage(1); sortingState.setSort(sortBy, value); }}
+      onPageChange={paginationState.setPage} onRetry={() => void fetchKots()} onRefresh={() => void fetchKots(true)}
+      onStart={(id) => void handleAction(id, () => startKotApi(id, branchId), "Cooking started! 🔥")}
+      onReady={(id) => void handleAction(id, () => markKotReadyApi(id, branchId), "Order ready! ✅")}
+      onServe={(id) => void handleAction(id, () => serveKotApi(id, branchId), "Order served", "info")}
+      onCancel={(id) => { if (window.confirm("Cancel?")) void handleAction(id, () => cancelKotApi(id, branchId), "Cancelled", "info"); }}
     />
   );
 }

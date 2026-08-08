@@ -1,7 +1,14 @@
-import type { Kot, KotStatus } from "../../../services/chef/chef.api";
+import type {
+  KitchenPagination,
+  KitchenSortField,
+  KitchenSortOrder,
+  Kot,
+  KotStatus,
+} from "../../../services/chef/chef.api";
 
 export type { Kot, KotStatus };
 export type TabFilter = KotStatus | "all";
+export type KitchenTabFilter = "all" | "pending" | "preparing" | "ready";
 
 export interface KotCounts {
   all: number;
@@ -14,16 +21,24 @@ export interface KotCounts {
 
 export interface KitchenPresenterProps {
   kots: Kot[];
-  sorted: Kot[];
   counts: KotCounts;
   loading: boolean;
   refreshing: boolean;
   isConnected: boolean;
-  activeTab: TabFilter;
+  activeTab: KitchenTabFilter;
+  sortBy: KitchenSortField;
+  sortOrder: KitchenSortOrder;
+  pagination: KitchenPagination;
   updatingId: string | null;
-  onTabChange: (t: TabFilter) => void;
+  onTabChange: (t: KitchenTabFilter) => void;
+  onSortChange: (value: string) => void;
+  onSortOrderChange: (value: KitchenSortOrder) => void;
+  onPageChange: (page: number) => void;
+  onRetry: () => void;
+  error: string | null;
   onRefresh: () => void;
   onStart: (id: string) => void;
   onReady: (id: string) => void;
+  onServe: (id: string) => void;
   onCancel: (id: string) => void;
 }
