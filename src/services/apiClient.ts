@@ -1,6 +1,5 @@
 import axios from "axios";
 import { globalToast } from "../services/globalToast";
-import { store } from "../state";
 
 const BASE =
   import.meta.env.VITE_API_URL || "https://kot-pos-backend.onrender.com";
@@ -49,27 +48,6 @@ export function isOperationalBranchRequest(url?: string): boolean {
 // ── Request Interceptor ──────────────────────────────────────
 api.interceptors.request.use(
   (config) => {
-    const { auth, ui } = store.getState();
-    const isBranchlessGlobalAdmin =
-      auth.user?.role === "admin" && auth.user.branchId == null;
-
-    if (
-      isBranchlessGlobalAdmin &&
-      ui.selectedBranchId &&
-      isOperationalBranchRequest(config.url)
-    ) {
-      if (config.params instanceof URLSearchParams) {
-        const params = new URLSearchParams(config.params);
-        params.set("branchId", ui.selectedBranchId);
-        config.params = params;
-      } else {
-        config.params = {
-          ...(config.params ?? {}),
-          branchId: ui.selectedBranchId,
-        };
-      }
-    }
-
     return config;
   },
   (error) => Promise.reject(error),

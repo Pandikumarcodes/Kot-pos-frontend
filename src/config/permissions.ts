@@ -1,4 +1,10 @@
-export type Role = "admin" | "manager" | "waiter" | "chef" | "cashier";
+export type Role =
+  | "superadmin"
+  | "admin"
+  | "manager"
+  | "waiter"
+  | "chef"
+  | "cashier";
 
 // ── Route permissions ─────────────────────────────────────────
 // Each route → which roles can access it
@@ -9,7 +15,7 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/admin/customers": ["admin", "manager"],
   "/admin/reports": ["admin", "manager"],
   "/admin/settings": ["admin"],
-  "/admin/branches": ["admin", "manager"],
+  "/admin/branches": ["superadmin"],
   "/admin/inventory": ["admin", "manager"],
   "/admin/tables": ["admin", "manager"],
   "/waiter/tables": ["admin", "manager", "waiter"],
@@ -22,6 +28,7 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
 // ── Role home pages ───────────────────────────────────────────
 // Where each role lands after login
 export const ROLE_HOME: Record<Role, string> = {
+  superadmin: "/admin/branches",
   admin: "/admin/dashboard",
   manager: "/admin/dashboard",
   waiter: "/waiter/tables",
@@ -33,7 +40,7 @@ export const ROLE_HOME: Record<Role, string> = {
 export const NAV_PERMISSIONS: Record<string, Role[]> = {
   Dashboard: ["admin", "manager"],
   Menu: ["admin", "manager"],
-  Branches: ["admin", "manager"],
+  Branches: ["superadmin"],
   Inventory: ["admin", "manager"],
   Tables: ["admin", "manager", "waiter"],
   Kitchen: ["admin", "chef"],

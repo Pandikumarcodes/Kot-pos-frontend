@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import Sidebar from "../../design-system/organisms/Sidebar";
 import { getBranchesApi } from "../../services/admin/branch.api";
 import authReducer, { setCredentials } from "../../state/slices/authSlice";
+import type { UserRole } from "../../state/slices/authSlice";
 import cartReducer from "../../state/slices/cartSlice";
 import uiReducer, {
   setSelectedBranchId,
@@ -38,17 +39,25 @@ const branches = [
   },
 ];
 
-function renderSidebar(selectedBranchId: string | null = null) {
+function renderSidebar({
+  role = "superadmin",
+  branchId = null,
+  selectedBranchId = null,
+}: {
+  role?: UserRole;
+  branchId?: string | null;
+  selectedBranchId?: string | null;
+} = {}) {
   const testStore = configureStore({
     reducer: { auth: authReducer, cart: cartReducer, ui: uiReducer },
   });
   testStore.dispatch(
     setCredentials({
       id: "admin",
-      name: "Global Admin",
+      name: role,
       email: "admin@example.com",
-      role: "admin",
-      branchId: null,
+      role,
+      branchId,
     }),
   );
   testStore.dispatch(setSelectedBranchId(selectedBranchId));
@@ -73,7 +82,7 @@ describe("Sidebar operational branch selector", () => {
   });
 
   it("reflects shared selection and dispatches branch changes to shared state", async () => {
-    const testStore = renderSidebar("branch-b");
+    const testStore = renderSidebar({ selectedBranchId: "branch-b" });
 
     const selector = await screen.findByRole("button", { name: /Branch B/i });
     expect(selector).toBeInTheDocument();
@@ -96,5 +105,24 @@ describe("Sidebar operational branch selector", () => {
     expect(await screen.findByRole("button", { name: /All Branches/i })).toBeInTheDocument();
     expect(testStore.getState().ui.selectedBranchId).toBeNull();
     expect(screen.queryByText("Viewing:")).not.toBeInTheDocument();
+  });
+
+  it("shows Branches for superadmin but hides operational workflows", async () => {
+    renderSidebar();
+
+    expect(await screen.findByRole("button", { name: /All Branches/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Branches$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Tables$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Kitchen$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Billing$/i })).not.toBeInTheDocument();
+  });
+
+  it("does not show global branch management for branch admin", async () => {
+    renderSidebar({ role: "admin", branchId: "branch-a" });
+
+    await waitFor(() => expect(getBranchesApi).toHaveBeenCalled());
+    expect(screen.queryByRole("button", { name: /All Branches/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Branches$/i })).not.toBeInTheDocument();
+    expect(screen.getByText("Branch")).toBeInTheDocument();
   });
 });

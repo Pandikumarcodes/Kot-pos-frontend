@@ -58,7 +58,7 @@ describe("shouldAttemptTokenRefresh", () => {
   });
 });
 
-describe("Global Admin operational branch propagation", () => {
+describe("Operational branch propagation", () => {
   const originalAdapter = api.defaults.adapter;
   let requests: InternalAxiosRequestConfig[];
 
@@ -78,9 +78,9 @@ describe("Global Admin operational branch propagation", () => {
     store.dispatch(
       setCredentials({
         id: "global-admin",
-        name: "Global Admin",
+        name: "Super Admin",
         email: "admin@example.com",
-        role: "admin",
+        role: "superadmin",
         branchId: null,
       }),
     );
@@ -101,7 +101,7 @@ describe("Global Admin operational branch propagation", () => {
     expect(isOperationalBranchRequest("/public/menu/table-id")).toBe(false);
   });
 
-  it("adds the selected branch to Inventory, Staff, Tables, and Billing", async () => {
+  it("does not add the selected branch to operational requests for superadmin", async () => {
     await getInventoryApi({ page: 2 });
     await getUsersApi({ search: "chef" });
     await getTablesApi();
@@ -109,21 +109,21 @@ describe("Global Admin operational branch propagation", () => {
 
     expect(requests).toHaveLength(4);
     expect(requests.map((request) => request.params)).toEqual([
-      { page: 2, branchId: "branch-a" },
-      { search: "chef", branchId: "branch-a" },
-      { branchId: "branch-a" },
-      { status: "paid", branchId: "branch-a" },
+      { page: 2 },
+      { search: "chef" },
+      undefined,
+      { status: "paid" },
     ]);
   });
 
-  it("uses a changed selection for subsequent operational requests", async () => {
+  it("does not use a changed selection for subsequent operational requests", async () => {
     await getInventoryApi();
     store.dispatch(setSelectedBranchId("branch-b"));
     await getInventoryApi();
 
     expect(requests.map((request) => request.params?.branchId)).toEqual([
-      "branch-a",
-      "branch-b",
+      undefined,
+      undefined,
     ]);
   });
 
@@ -141,8 +141,24 @@ describe("Global Admin operational branch propagation", () => {
     expect(requests[0].params).toEqual({});
   });
 
-  it.each<UserRole>(["manager", "waiter", "chef", "cashier"])(
-    "does not send the Global Admin selection for %s",
+  it("does not treat a branchless legacy admin as global", async () => {
+    store.dispatch(
+      setCredentials({
+        id: "legacy-admin",
+        name: "Legacy Admin",
+        email: "legacy-admin@example.com",
+        role: "admin",
+        branchId: null,
+      }),
+    );
+
+    await getTablesApi();
+
+    expect(requests[0].params).toBeUndefined();
+  });
+
+  it.each<UserRole>(["admin", "manager", "waiter", "chef", "cashier"])(
+    "does not send the selected branch for %s",
     async (role) => {
       store.dispatch(
         setCredentials({

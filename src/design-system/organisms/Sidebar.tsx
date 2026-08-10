@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAppSelector } from "../../state/hooks";
+import { useAppDispatch, useAppSelector } from "../../state/hooks";
 import { NAV_PERMISSIONS } from "../../config/permissions";
 import type { Role } from "../../config/permissions";
 import {
@@ -26,6 +26,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { getBranchesApi } from "../../services/admin/branch.api";
 import type { Branch } from "../../services/admin/branch.api";
+import { setSelectedBranchId } from "../../state/slices/uiSlice";
 
 interface NavLink {
   label: string;
@@ -58,10 +59,12 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const { selectedBranchId } = useAppSelector((state) => state.ui);
   const role = user?.role as Role | undefined;
 
-  const isSuperAdmin = role === "admin" && !user?.branchId;
+  const isSuperAdmin = role === "superadmin";
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [activeBranch, setActiveBranch] = useState<Branch | null>(null);
@@ -74,9 +77,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       .then((res) => {
         const active = res.data.branches.filter((b) => b.isActive);
         setBranches(active);
+        setActiveBranch(
+          active.find((branch) => branch._id === selectedBranchId) ?? null,
+        );
       })
       .catch(() => {});
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, selectedBranchId]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -192,6 +198,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   type="button"
                   onClick={() => {
                     setActiveBranch(null);
+                    dispatch(setSelectedBranchId(null));
                     setDropdownOpen(false);
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-kot-light transition-colors text-left"
@@ -218,6 +225,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         key={branch._id}
                         onClick={() => {
                           setActiveBranch(branch);
+                          dispatch(setSelectedBranchId(branch._id));
                           setDropdownOpen(false);
                         }}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-kot-light transition-colors text-left"

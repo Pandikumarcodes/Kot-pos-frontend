@@ -69,8 +69,15 @@ describe("authSlice — setCredentials", () => {
     expect(asCashier.isAuthenticated).toBe(true);
   });
 
-  it("works for all five recognised roles", () => {
-    const roles: UserRole[] = ["admin", "manager", "cashier", "waiter", "chef"];
+  it("works for all six recognised roles", () => {
+    const roles: UserRole[] = [
+      "superadmin",
+      "admin",
+      "manager",
+      "cashier",
+      "waiter",
+      "chef",
+    ];
     roles.forEach((role) => {
       const user: AuthUser = { ...adminUser, id: `user_${role}`, role };
       const state = authReducer(emptyState, setCredentials(user));
@@ -79,11 +86,46 @@ describe("authSlice — setCredentials", () => {
     });
   });
 
-  it("handles null branchId (super-admin with no branch)", () => {
-    const globalAdmin: AuthUser = { ...adminUser, branchId: null };
-    const state = authReducer(emptyState, setCredentials(globalAdmin));
+  it("handles explicit superadmin with null branchId", () => {
+    const superadmin: AuthUser = {
+      ...adminUser,
+      role: "superadmin",
+      branchId: null,
+    };
+    const state = authReducer(emptyState, setCredentials(superadmin));
+    expect(state.user?.role).toBe("superadmin");
     expect(state.user?.branchId).toBeNull();
     expect(state.isAuthenticated).toBe(true);
+  });
+
+  it("accepts a superadmin login response payload", () => {
+    const loginUser: AuthUser = {
+      id: "superadmin",
+      name: "superadmin",
+      email: "superadmin@example.com",
+      role: "superadmin",
+      branchId: null,
+    };
+
+    const state = authReducer(emptyState, setCredentials(loginUser));
+
+    expect(state.user).toEqual(loginUser);
+    expect(state.isAuthenticated).toBe(true);
+  });
+
+  it("accepts a superadmin /auth/me response payload", () => {
+    const meUser: AuthUser = {
+      id: "superadmin-me",
+      name: "Super Admin",
+      email: "superadmin-me@example.com",
+      role: "superadmin",
+      branchId: null,
+    };
+
+    const state = authReducer(emptyState, setCredentials(meUser));
+
+    expect(state.user).toEqual(meUser);
+    expect(state.isLoading).toBe(false);
   });
 
   it("stores branchId correctly for multi-branch support", () => {

@@ -137,6 +137,23 @@ describe("hasPermission — cashier", () => {
     expect(hasPermission(role, "canViewKOT")).toBe(false));
 });
 
+describe("hasPermission — superadmin", () => {
+  const role: Role = "superadmin";
+
+  it("does not inherit branch operational feature permissions", () => {
+    expect(hasPermission(role, "canAddTable")).toBe(false);
+    expect(hasPermission(role, "canDeleteTable")).toBe(false);
+    expect(hasPermission(role, "canEditMenu")).toBe(false);
+    expect(hasPermission(role, "canDeleteMenu")).toBe(false);
+    expect(hasPermission(role, "canAddStaff")).toBe(false);
+    expect(hasPermission(role, "canDeleteStaff")).toBe(false);
+    expect(hasPermission(role, "canAllocateTable")).toBe(false);
+    expect(hasPermission(role, "canSendToKitchen")).toBe(false);
+    expect(hasPermission(role, "canProcessBilling")).toBe(false);
+    expect(hasPermission(role, "canViewKOT")).toBe(false);
+  });
+});
+
 // ─── ROUTE_PERMISSIONS ────────────────────────────────────────────────────────
 describe("ROUTE_PERMISSIONS", () => {
   it("admin can access /admin/staff", () => {
@@ -157,6 +174,26 @@ describe("ROUTE_PERMISSIONS", () => {
 
   it("waiter can access /waiter/tables", () => {
     expect(ROUTE_PERMISSIONS["/waiter/tables"]).toContain("waiter");
+  });
+
+  it("superadmin can access global Branch management", () => {
+    expect(ROUTE_PERMISSIONS["/admin/branches"]).toEqual(["superadmin"]);
+  });
+
+  it("branch admin cannot access global Branch management", () => {
+    expect(ROUTE_PERMISSIONS["/admin/branches"]).not.toContain("admin");
+  });
+
+  it("superadmin cannot access operational routes", () => {
+    expect(ROUTE_PERMISSIONS["/waiter/tables"]).not.toContain("superadmin");
+    expect(ROUTE_PERMISSIONS["/waiter/order"]).not.toContain("superadmin");
+    expect(ROUTE_PERMISSIONS["/chef/kot"]).not.toContain("superadmin");
+    expect(ROUTE_PERMISSIONS["/cashier/billing"]).not.toContain("superadmin");
+    expect(ROUTE_PERMISSIONS["/admin/tables"]).not.toContain("superadmin");
+    expect(ROUTE_PERMISSIONS["/admin/inventory"]).not.toContain("superadmin");
+    expect(ROUTE_PERMISSIONS["/admin/menu"]).not.toContain("superadmin");
+    expect(ROUTE_PERMISSIONS["/admin/settings"]).not.toContain("superadmin");
+    expect(ROUTE_PERMISSIONS["/admin/ai"]).not.toContain("superadmin");
   });
 
   it("cashier cannot access /waiter/tables", () => {
@@ -186,6 +223,10 @@ describe("ROLE_HOME", () => {
     expect(ROLE_HOME["admin"]).toBe("/admin/dashboard");
   });
 
+  it("superadmin lands on /admin/branches", () => {
+    expect(ROLE_HOME["superadmin"]).toBe("/admin/branches");
+  });
+
   it("manager lands on /admin/dashboard", () => {
     expect(ROLE_HOME["manager"]).toBe("/admin/dashboard");
   });
@@ -203,7 +244,14 @@ describe("ROLE_HOME", () => {
   });
 
   it("every role has a home page defined", () => {
-    const roles: Role[] = ["admin", "manager", "waiter", "chef", "cashier"];
+    const roles: Role[] = [
+      "superadmin",
+      "admin",
+      "manager",
+      "waiter",
+      "chef",
+      "cashier",
+    ];
     roles.forEach((role) => {
       expect(ROLE_HOME[role]).toBeTruthy();
     });
@@ -212,6 +260,16 @@ describe("ROLE_HOME", () => {
 
 // ─── NAV_PERMISSIONS ──────────────────────────────────────────────────────────
 describe("NAV_PERMISSIONS", () => {
+  it("only superadmin can see Branches nav item", () => {
+    expect(NAV_PERMISSIONS["Branches"]).toEqual(["superadmin"]);
+  });
+
+  it("superadmin does not see operational nav items", () => {
+    expect(NAV_PERMISSIONS["Tables"]).not.toContain("superadmin");
+    expect(NAV_PERMISSIONS["Kitchen"]).not.toContain("superadmin");
+    expect(NAV_PERMISSIONS["Billing"]).not.toContain("superadmin");
+  });
+
   it("only admin can see Staff nav item", () => {
     expect(NAV_PERMISSIONS["Staff"]).toEqual(["admin"]);
   });

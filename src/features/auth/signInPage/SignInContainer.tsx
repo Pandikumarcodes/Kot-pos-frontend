@@ -3,17 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../../state/hooks";
 import { setCredentials } from "../../../state/slices/authSlice";
 import api from "../../../services/apiClient";
+import { ROLE_HOME } from "../../../config/permissions";
 import { validateLogin, hasErrors } from "../../../utils/validation";
 import { SignInPresenter } from "./SignInPresenter";
 import type { SignInFormData, SignInFormErrors } from "./SignIn.types";
-
-const ROLE_HOME: Record<string, string> = {
-  admin: "/admin/dashboard",
-  manager: "/admin/dashboard",
-  cashier: "/cashier/billing",
-  waiter: "/waiter/tables",
-  chef: "/chef/kot",
-};
 
 export default function SignInContainer() {
   const navigate = useNavigate();
@@ -58,7 +51,7 @@ export default function SignInContainer() {
           branchId: user.branchId ?? null,
         }),
       );
-      navigate(ROLE_HOME[user.role] ?? "/");
+      navigate(ROLE_HOME[user.role as keyof typeof ROLE_HOME] ?? "/");
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
       setErrors({
