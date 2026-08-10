@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppSelector } from "../../../state/hooks";
 import {
   getCustomersApi,
@@ -6,10 +6,26 @@ import {
   updateCustomerApi,
   deleteCustomerApi,
 } from "../../../services/admin/customer.api";
-import type { Customer } from "../../../services/admin/customer.api";
+import type {
+  Customer,
+  CustomersQuery,
+} from "../../../services/admin/customer.api";
 import type { CreateCustomerPayload } from "./customers.types";
 import { useToast } from "../../../contexts/toastContext";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
+import type { PaginationMeta } from "../../../types/query";
 import { CustomerPresenter } from "./CustomersPresenter";
+
+const DEFAULT_QUERY: CustomersQuery = { page: 1, limit: 20, search: "" };
+
+const EMPTY_PAGINATION: PaginationMeta = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  pages: 0,
+  hasNext: false,
+  hasPrev: false,
+};
 
 export default function CustomerPageContainer() {
   const { user } = useAppSelector((state) => state.auth);
@@ -17,9 +33,13 @@ export default function CustomerPageContainer() {
   const toast = useToast();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [query, setQuery] = useState<CustomersQuery>(DEFAULT_QUERY);
+  const [pagination, setPagination] = useState(EMPTY_PAGINATION);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const activeRequest = useRef<AbortController | null>(null);
+  const debouncedSearch = useDebouncedValue(query.search ?? "");
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CreateCustomerPayload>({
@@ -29,59 +49,94 @@ export default function CustomerPageContainer() {
     address: "",
   });
 
-  const fetchCustomers = useCallback(async () => {
-    try {
-      const { data } = await getCustomersApi();
-      setCustomers(data.customers);
-    } catch (err) {
-      const e = err as { response?: { data?: { error?: string } } };
-      setError(e?.response?.data?.error || "Failed to load customers");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    let ignore = false;
-    getCustomersApi()
+    if ((query.search ?? "").trim() !== debouncedSearch.trim()) {
+      activeRequest.current?.abort();
+      return;
+    }
+
+    const controller = new AbortController();
+    activeRequest.current?.abort();
+    activeRequest.current = controller;
+    let redirectingToValidPage = false;
+    const requestQuery: CustomersQuery = {
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
+      search: debouncedSearch.trim() || undefined,
+      sort: query.sort,
+      order: query.order,
+    };
+
+    void getCustomersApi(requestQuery, controller.signal)
       .then(({ data }) => {
-        if (!ignore) setCustomers(data.customers);
+        if (controller.signal.aborted) return;
+        if (!data.pagination) {
+          throw new Error("Paginated customer response did not include metadata");
+        }
+        const lastValidPage = Math.max(1, data.pagination.pages);
+        if (data.pagination.page > lastValidPage) {
+          redirectingToValidPage = true;
+          setQuery((previous) => ({ ...previous, page: lastValidPage }));
+          return;
+        }
+        setCustomers(data.customers);
+        setPagination(data.pagination);
       })
       .catch((err) => {
-        if (ignore) return;
-        const e = err as { response?: { data?: { error?: string } } };
-        setError(e?.response?.data?.error || "Failed to load customers");
+        if (controller.signal.aborted) return;
+        const apiError = err as { response?: { data?: { error?: string } } };
+        setError(apiError.response?.data?.error || "Failed to load customers");
       })
       .finally(() => {
-        if (!ignore) setLoading(false);
+        if (!controller.signal.aborted && !redirectingToValidPage) {
+          setLoading(false);
+        }
       });
-    return () => {
-      ignore = true;
-    };
-  }, []);
 
-  const handleRetry = () => {
+    return () => controller.abort();
+  }, [
+    debouncedSearch,
+    query.limit,
+    query.order,
+    query.page,
+    query.search,
+    query.sort,
+    refreshKey,
+  ]);
+
+  const refreshCustomers = () => {
+    activeRequest.current?.abort();
     setLoading(true);
     setError(null);
-    void fetchCustomers();
+    setRefreshKey((value) => value + 1);
   };
 
-  // Derived / filtered — computed in container, passed as prop
-  const filteredCustomers = searchQuery
-    ? customers.filter(
-        (c) =>
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.phone.includes(searchQuery) ||
-          c.email?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : customers;
+  const updateQueryAndResetPage = (updates: Partial<CustomersQuery>) => {
+    activeRequest.current?.abort();
+    setLoading(true);
+    setError(null);
+    setQuery((previous) => ({ ...previous, ...updates, page: 1 }));
+  };
 
-  const totalOrders = customers.reduce((s, c) => s + c.totalOrders, 0);
-  const totalSpent = customers.reduce((s, c) => s + c.totalSpent, 0);
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page === query.page) return;
+    activeRequest.current?.abort();
+    setLoading(true);
+    setError(null);
+    setQuery((previous) => ({ ...previous, page }));
+  };
+
+  const totalOrders = customers.reduce(
+    (sum, customer) => sum + customer.totalOrders,
+    0,
+  );
+  const totalSpent = customers.reduce(
+    (sum, customer) => sum + customer.totalSpent,
+    0,
+  );
   const avgOrderValue =
     totalOrders > 0 ? Math.round(totalSpent / totalOrders) : 0;
 
-  // Handlers
   const handleOpenModal = (customer?: Customer) => {
     setEditingCustomer(customer || null);
     setFormData(
@@ -106,28 +161,23 @@ export default function CustomerPageContainer() {
     field: keyof CreateCustomerPayload,
     value: string,
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((previous) => ({ ...previous, [field]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     try {
       if (editingCustomer) {
-        const { data } = await updateCustomerApi(editingCustomer._id, formData);
-        setCustomers(
-          customers.map((c) =>
-            c._id === editingCustomer._id ? data.customer : c,
-          ),
-        );
+        await updateCustomerApi(editingCustomer._id, formData);
       } else {
-        const { data } = await createCustomerApi(formData);
-        setCustomers([data.customer, ...customers]);
+        await createCustomerApi(formData);
       }
       handleCloseModal();
       toast.success(editingCustomer ? "Customer updated!" : "Customer added!");
+      refreshCustomers();
     } catch (err) {
-      const e = err as { response?: { data?: { error?: string } } };
-      toast.error(e?.response?.data?.error || "Failed to save customer");
+      const apiError = err as { response?: { data?: { error?: string } } };
+      toast.error(apiError.response?.data?.error || "Failed to save customer");
     }
   };
 
@@ -135,34 +185,36 @@ export default function CustomerPageContainer() {
     if (!window.confirm(`Delete "${customer.name}"?`)) return;
     try {
       await deleteCustomerApi(customer._id);
-      setCustomers(customers.filter((c) => c._id !== customer._id));
       toast.success("Customer deleted!");
+      refreshCustomers();
     } catch (err) {
-      const e = err as { response?: { data?: { error?: string } } };
-      toast.error(e?.response?.data?.error || "Failed to delete customer");
+      const apiError = err as { response?: { data?: { error?: string } } };
+      toast.error(apiError.response?.data?.error || "Failed to delete customer");
     }
   };
 
   return (
     <CustomerPresenter
       customers={customers}
-      filteredCustomers={filteredCustomers}
+      pagination={pagination}
       totalOrders={totalOrders}
       avgOrderValue={avgOrderValue}
       loading={loading}
       error={error}
-      searchQuery={searchQuery}
+      searchQuery={query.search ?? ""}
       showModal={showModal}
       editingCustomer={editingCustomer}
       formData={formData}
       isAdmin={isAdmin}
-      onSearchChange={setSearchQuery}
+      onSearchChange={(search) => updateQueryAndResetPage({ search })}
+      onPageChange={handlePageChange}
+      onLimitChange={(limit) => updateQueryAndResetPage({ limit })}
       onOpenModal={handleOpenModal}
       onCloseModal={handleCloseModal}
       onFormChange={handleFormChange}
       onSubmit={handleSubmit}
       onDelete={handleDelete}
-      onRetry={handleRetry}
+      onRetry={refreshCustomers}
     />
   );
 }

@@ -1,9 +1,12 @@
 import api from "../apiClient";
+import type { BaseListQuery, PaginationMeta } from "../../types/query";
 
 // ── Types ─────────────────────────────────────────────────────
 
 export type PaymentMethod = "cash" | "card" | "upi";
-export type PaymentStatus = "paid" | "pending" | "due";
+export type PaymentStatus = "paid" | "unpaid" | "pending" | "due";
+export type BillingListStatus = "unpaid" | "paid";
+export type BillingSort = "billDate" | "paymentStatus";
 export type TakeawayStatus =
   | "pending"
   | "sent_to_kitchen"
@@ -55,6 +58,17 @@ export interface CreateBillPayload {
   paymentMethod: PaymentMethod;
 }
 
+export interface BillingQuery extends BaseListQuery {
+  search?: string;
+  status?: BillingListStatus;
+  sort?: BillingSort;
+}
+
+export interface BillsResponse {
+  myBills: Bill[];
+  pagination?: PaginationMeta;
+}
+
 // ── Takeaway APIs ─────────────────────────────────────────────
 
 // POST /cashier/takeaway-orders — create takeaway order
@@ -97,7 +111,10 @@ export const createBillApi = (data: CreateBillPayload) =>
   api.post<{ message: string; bill: Bill }>("/cashier/billing", data);
 
 // GET /cashier/bills — get all bills
-export const getBillsApi = () => api.get<{ myBills: Bill[] }>("/cashier/bills");
+export const getBillsApi = (query?: BillingQuery, signal?: AbortSignal) => {
+  if (!query && !signal) return api.get<BillsResponse>("/cashier/bills");
+  return api.get<BillsResponse>("/cashier/bills", { params: query, signal });
+};
 
 // GET /cashier/bills/:billId — get single bill
 export const getBillByIdApi = (billId: string) =>

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { BillingPresenterProps, Step } from "./Billing.types";
 import GstInvoice from "./GstInvoice";
+import { ListError, Pagination, Select } from "../../../components/ui";
 
 const Pulse = ({ className }: { className: string }) => (
   <div className={`bg-kot-chart rounded animate-pulse ${className}`} />
@@ -76,11 +77,15 @@ export function BillingPresenter({
   onCollectPayment,
   onReset,
   bills,
-  filteredBills,
+  pagination,
   billsLoading,
   billsError,
   searchQuery,
   onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  onPageChange,
+  onLimitChange,
   selectedBill,
   onSelectBill,
   invoiceBill,
@@ -531,18 +536,44 @@ export function BillingPresenter({
             {/* Bills list */}
             <div className="flex-1 space-y-3 min-w-0">
               {/* Search */}
-              <div className="relative">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-kot-text"
-                  size={15}
-                />
-                <input
-                  type="text"
-                  placeholder="Search by name, phone or bill number..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 border-2 border-kot-chart rounded-xl bg-kot-white text-kot-darker text-sm focus:outline-none focus:border-kot-dark placeholder:text-kot-text/50"
-                />
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-kot-text"
+                    size={15}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search by name, phone or bill number..."
+                    value={searchQuery}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 border-2 border-kot-chart rounded-xl bg-kot-white text-kot-darker text-sm focus:outline-none focus:border-kot-dark placeholder:text-kot-text/50"
+                  />
+                </div>
+                <Select
+                  aria-label="Payment status"
+                  value={statusFilter}
+                  onChange={(event) =>
+                    onStatusFilterChange(
+                      event.target.value as "" | "unpaid" | "paid",
+                    )
+                  }
+                  className="sm:w-40"
+                >
+                  <option value="">All statuses</option>
+                  <option value="unpaid">Unpaid</option>
+                  <option value="paid">Paid</option>
+                </Select>
+                <Select
+                  aria-label="Bills per page"
+                  value={pagination.limit}
+                  onChange={(event) => onLimitChange(Number(event.target.value))}
+                  className="sm:w-40"
+                >
+                  <option value={20}>20 per page</option>
+                  <option value={50}>50 per page</option>
+                  <option value={100}>100 per page</option>
+                </Select>
               </div>
 
               {/* Stats */}
@@ -552,18 +583,18 @@ export function BillingPresenter({
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {[
                     {
-                      label: "Total",
+                       label: "Bills on Page",
                       value: bills.length,
                       color: "bg-kot-stats",
                     },
                     {
-                      label: "Paid",
+                       label: "Paid on Page",
                       value: bills.filter((b) => b.paymentStatus === "paid")
                         .length,
                       color: "bg-emerald-50",
                     },
                     {
-                      label: "Pending",
+                       label: "Unpaid on Page",
                       value: bills.filter((b) => b.paymentStatus !== "paid")
                         .length,
                       color: "bg-yellow-50",
@@ -592,30 +623,26 @@ export function BillingPresenter({
                   ))}
                 </div>
               ) : billsError ? (
-                <div className="bg-kot-white rounded-2xl p-8 text-center shadow-kot">
-                  <p className="text-red-500 font-medium text-sm">
-                    {billsError}
-                  </p>
-                  <button type="button"
-                    onClick={onRetryBills}
-                    className="mt-3 px-4 py-2 bg-kot-dark text-white rounded-lg text-sm"
-                  >
-                    Retry
-                  </button>
-                </div>
-              ) : filteredBills.length === 0 ? (
+                <ListError
+                  onRetry={onRetryBills}
+                  message={billsError}
+                  retrying={billsLoading}
+                />
+              ) : bills.length === 0 ? (
                 <div className="bg-kot-white rounded-2xl p-10 text-center shadow-kot">
                   <p className="text-2xl mb-2">🧾</p>
                   <p className="font-semibold text-kot-darker text-sm">
                     No bills found
                   </p>
                   <p className="text-xs text-kot-text mt-1">
-                    Bills appear after takeaway payments
+                    {searchQuery || statusFilter
+                      ? "Try a different search or payment status"
+                      : "Bills appear after takeaway payments"}
                   </p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filteredBills.map((bill) => (
+                  {bills.map((bill) => (
                     <button type="button"
                       key={bill._id}
                       onClick={() => onSelectBill(bill)}
@@ -644,6 +671,14 @@ export function BillingPresenter({
                     </button>
                   ))}
                 </div>
+              )}
+
+              {!billsLoading && !billsError && pagination.total > 0 && (
+                <Pagination
+                  pagination={pagination}
+                  onPageChange={onPageChange}
+                  showSummary
+                />
               )}
             </div>
 

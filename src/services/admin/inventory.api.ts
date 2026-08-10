@@ -1,4 +1,5 @@
 import api from "../apiClient";
+import type { BaseListQuery, PaginationMeta } from "../../types/query";
 
 // ── Types ─────────────────────────────────────────────────────
 export type InventoryUnit =
@@ -58,20 +59,38 @@ export interface CreateInventoryPayload {
   menuItemId?: string;
 }
 
-export interface InventoryQuery {
+export type InventorySort =
+  | "name"
+  | "currentStock"
+  | "lowStockThreshold"
+  | "category"
+  | "createdAt"
+  | "updatedAt";
+
+export interface InventoryQuery extends BaseListQuery {
   lowStock?: boolean;
   category?: InventoryCategory;
   search?: string;
+  sort?: InventorySort;
+}
+
+export interface InventoryResponse {
+  items: InventoryItem[];
+  lowStockCount: number;
+  pagination: PaginationMeta;
 }
 
 // ── API calls ─────────────────────────────────────────────────
 
 // GET /admin/inventory
-export const getInventoryApi = (query: InventoryQuery = {}) =>
-  api.get<{ items: InventoryItem[]; lowStockCount: number }>(
-    "/admin/inventory",
-    { params: query },
-  );
+export const getInventoryApi = (
+  query: InventoryQuery = {},
+  signal?: AbortSignal,
+) =>
+  api.get<InventoryResponse>("/admin/inventory", {
+    params: query,
+    signal,
+  });
 
 // POST /admin/inventory
 export const createInventoryApi = (data: CreateInventoryPayload) =>

@@ -13,6 +13,7 @@ import {
 import type { InventoryPresenterProps } from "./Inventory.types";
 import { UNITS, CATEGORIES, LOG_TYPE_CONFIG } from "./Inventory.types";
 import type { InventoryUnit, InventoryCategory } from "./Inventory.types";
+import { ListError, Pagination } from "../../../components/ui";
 
 // ── Shared ────────────────────────────────────────────────────
 const Pulse = ({ className }: { className: string }) => (
@@ -26,7 +27,10 @@ const inputClass =
 export function InventoryPresenter({
   items,
   loading,
+  error,
   lowStockCount,
+  pagination,
+  hasActiveFilters,
   search,
   filterLow,
   filterCat,
@@ -34,6 +38,10 @@ export function InventoryPresenter({
   onFilterLowToggle,
   onFilterCatChange,
   onRefresh,
+  onRetry,
+  onClearFilters,
+  onPageChange,
+  onLimitChange,
   showModal,
   editingItem,
   formData,
@@ -78,10 +86,10 @@ export function InventoryPresenter({
               Inventory
             </h1>
             <p className="text-xs sm:text-sm text-kot-text mt-0.5">
-              {items.length} items
+              {pagination.total} items
               {lowStockCount > 0 && (
                 <span className="ml-2 text-red-600 font-semibold">
-                  · {lowStockCount} low stock
+                  · {lowStockCount} low stock on this page
                 </span>
               )}
             </p>
@@ -102,7 +110,7 @@ export function InventoryPresenter({
               }`}
             >
               <AlertTriangle size={14} />
-              Low Stock {lowStockCount > 0 && `(${lowStockCount})`}
+              Low Stock
             </button>
             <button type="button"
               onClick={onOpenCreate}
@@ -156,6 +164,25 @@ export function InventoryPresenter({
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-kot-text pointer-events-none"
             />
           </div>
+          <div className="relative">
+            <label htmlFor="inventory-page-size" className="sr-only">
+              Items per page
+            </label>
+            <select
+              id="inventory-page-size"
+              value={pagination.limit}
+              onChange={(event) => onLimitChange(Number(event.target.value))}
+              className="appearance-none pl-3 pr-8 py-2.5 border-2 border-kot-chart rounded-xl bg-kot-white text-kot-darker text-sm focus:outline-none focus:border-kot-dark"
+            >
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+              <option value={100}>100 per page</option>
+            </select>
+            <ChevronDown
+              size={14}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-kot-text pointer-events-none"
+            />
+          </div>
         </div>
 
         {/* ── Items Grid ── */}
@@ -176,18 +203,24 @@ export function InventoryPresenter({
               </div>
             ))}
           </div>
+        ) : error ? (
+          <ListError onRetry={onRetry} message={error} retrying={loading} />
         ) : items.length === 0 ? (
           <div className="bg-kot-white rounded-2xl p-12 text-center shadow-kot">
             <Package className="w-12 h-12 text-kot-chart mx-auto mb-3" />
-            <p className="font-semibold text-kot-darker">No inventory items</p>
+            <p className="font-semibold text-kot-darker">
+              {hasActiveFilters ? "No matching inventory items" : "No inventory items"}
+            </p>
             <p className="text-sm text-kot-text mt-1">
-              Add items to start tracking stock
+              {hasActiveFilters
+                ? "Try clearing the search or filters"
+                : "Add items to start tracking stock"}
             </p>
             <button type="button"
-              onClick={onOpenCreate}
+              onClick={hasActiveFilters ? onClearFilters : onOpenCreate}
               className="mt-4 px-5 py-2.5 bg-kot-dark text-white rounded-xl text-sm font-semibold hover:bg-kot-darker"
             >
-              Add First Item
+              {hasActiveFilters ? "Clear filters" : "Add First Item"}
             </button>
           </div>
         ) : (
@@ -288,6 +321,14 @@ export function InventoryPresenter({
               </div>
             ))}
           </div>
+        )}
+
+        {!loading && !error && pagination.total > 0 && (
+          <Pagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+            showSummary
+          />
         )}
       </div>
 

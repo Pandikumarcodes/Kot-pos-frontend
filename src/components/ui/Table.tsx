@@ -1,10 +1,25 @@
 import { type ReactNode } from "react";
 import { table } from "./Token";
 
-export function TableWrapper({ children }: { children: ReactNode }) {
+interface TableWrapperProps {
+  children: ReactNode;
+  scrollLabel: string;
+  tableClassName?: string;
+}
+
+export function TableWrapper({
+  children,
+  scrollLabel,
+  tableClassName,
+}: TableWrapperProps) {
   return (
-    <div className={table.wrapper}>
-      <table className="w-full">{children}</table>
+    <div
+      aria-label={scrollLabel}
+      className={table.wrapper}
+      role="region"
+      tabIndex={0}
+    >
+      <table className={`w-full ${tableClassName ?? ""}`}>{children}</table>
     </div>
   );
 }

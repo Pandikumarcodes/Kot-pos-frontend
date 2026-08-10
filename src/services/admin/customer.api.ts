@@ -1,4 +1,5 @@
 import api from "../apiClient";
+import type { BaseListQuery, PaginationMeta } from "../../types/query";
 
 export interface Customer {
   _id: string;
@@ -19,9 +20,29 @@ export interface CreateCustomerPayload {
   address?: string;
 }
 
+export type CustomersSort = "name" | "createdAt";
+
+export interface CustomersQuery extends BaseListQuery {
+  search?: string;
+  sort?: CustomersSort;
+}
+
+export interface CustomersResponse {
+  customers: Customer[];
+  pagination?: PaginationMeta;
+}
+
 // GET /admin/customers
-export const getCustomersApi = () =>
-  api.get<{ customers: Customer[] }>("/admin/customers");
+export const getCustomersApi = (
+  query?: CustomersQuery,
+  signal?: AbortSignal,
+) => {
+  if (!query && !signal) return api.get<CustomersResponse>("/admin/customers");
+  return api.get<CustomersResponse>("/admin/customers", {
+    params: query,
+    signal,
+  });
+};
 
 // GET /admin/customers/:id
 export const getCustomerByIdApi = (id: string) =>

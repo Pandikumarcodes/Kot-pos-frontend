@@ -4,7 +4,11 @@
  * Change: added  onPrintBill: (bill: Bill) => void  to BillingPresenterProps
  */
 
-import type { Bill } from "../../../services/cashier/cashier.api";
+import type {
+  Bill,
+  BillingListStatus,
+} from "../../../services/cashier/cashier.api";
+import type { PaginationMeta } from "../../../types/query";
 
 export interface MenuItem {
   _id: string;
@@ -68,11 +72,15 @@ export interface BillingPresenterProps {
 
   // Bills tab
   bills: Bill[];
-  filteredBills: Bill[];
+  pagination: PaginationMeta;
   billsLoading: boolean;
   billsError: string | null;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  statusFilter: BillingListStatus | "";
+  onStatusFilterChange: (status: BillingListStatus | "") => void;
+  onPageChange: (page: number) => void;
+  onLimitChange: (limit: number) => void;
   selectedBill: Bill | null;
   onSelectBill: (bill: Bill | null) => void;
   invoiceBill: Bill | null;

@@ -1,4 +1,4 @@
-import type { Settings } from "../services/admin/settings.api";
+import type { ReceiptSettings } from "../services/settings.api";
 import type { Kot } from "../services/chef/chef.api";
 import type { Bill } from "../services/cashier/cashier.api";
 
@@ -64,7 +64,7 @@ function openPrint(html: string) {
 }
 
 // ── KOT Slip ──────────────────────────────────────────────────
-function kotHtml(kot: Kot, s?: Partial<Settings>): string {
+function kotHtml(kot: Kot, s?: Partial<ReceiptSettings>): string {
   const d = new Date(kot.createdAt);
   const dt = d.toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -111,7 +111,7 @@ function kotHtml(kot: Kot, s?: Partial<Settings>): string {
 }
 
 // ── Bill Receipt ──────────────────────────────────────────────
-function billHtml(bill: Bill, s?: Partial<Settings>): string {
+function billHtml(bill: Bill, s?: Partial<ReceiptSettings>): string {
   const d = new Date(bill.createdAt);
   const dt = d.toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -189,9 +189,9 @@ function billHtml(bill: Bill, s?: Partial<Settings>): string {
 
 // ── Hook ──────────────────────────────────────────────────────
 export function usePrint() {
-  const printKOT = (kot: Kot, settings?: Partial<Settings>) =>
+  const printKOT = (kot: Kot, settings?: Partial<ReceiptSettings>) =>
     openPrint(kotHtml(kot, settings));
-  const printBill = (bill: Bill, settings?: Partial<Settings>) =>
+  const printBill = (bill: Bill, settings?: Partial<ReceiptSettings>) =>
     openPrint(billHtml(bill, settings));
   return { printKOT, printBill };
 }

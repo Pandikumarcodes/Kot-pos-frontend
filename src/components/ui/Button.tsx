@@ -22,7 +22,12 @@ export function Button({
   return (
     <button
       type={type}
-      className={cn(btn[variant], btn[size], className)}
+      className={cn(
+        btn[variant],
+        btn[size],
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kot-dark focus-visible:ring-offset-2 disabled:cursor-not-allowed",
+        className,
+      )}
       {...props}
     >
       {children}

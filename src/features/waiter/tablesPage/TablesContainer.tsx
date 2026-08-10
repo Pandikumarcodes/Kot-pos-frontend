@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../../state/hooks";
 import { useToast } from "../../../contexts/toastContext";
+import { useNotifications } from "../../../hooks/useNotifications";
+import { hasPermission } from "../../../config/permissions";
 import {
   getTablesApi,
   createTableApi,
@@ -18,7 +20,8 @@ export default function TablesContainer() {
   const { user } = useAppSelector((state) => state.auth);
 
   const isAdmin = user?.role === "admin" || user?.role === "manager";
-  const canDelete = user?.role === "admin";
+  const canAdd = user ? hasPermission(user.role, "canAddTable") : false;
+  const canDelete = user ? hasPermission(user.role, "canDeleteTable") : false;
 
   const [tables, setTables] = useState<Table[]>([]);
   const [filter, setFilter] = useState<FilterValue>("all");
@@ -35,6 +38,7 @@ export default function TablesContainer() {
     try {
       const { data } = await getTablesApi();
       setTables(data.tables);
+      setError(null);
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
       setError(e?.response?.data?.error || "Failed to load tables");
@@ -42,6 +46,12 @@ export default function TablesContainer() {
       setLoading(false);
     }
   }, []);
+
+  useNotifications({
+    "table:updated": () => {
+      void fetchTables();
+    },
+  });
 
   useEffect(() => {
     let ignore = false;
@@ -88,7 +98,7 @@ export default function TablesContainer() {
         tableNumber: parseInt(addForm.tableNumber),
         capacity: parseInt(addForm.capacity),
       });
-      setTables([...tables, data.table]);
+      setTables((current) => [...current, data.table]);
       setShowAddModal(false);
       setAddForm({ tableNumber: "", capacity: "" });
       toast.success("Table added successfully!");
@@ -103,7 +113,7 @@ export default function TablesContainer() {
     if (!window.confirm(`Delete Table ${table.tableNumber}?`)) return;
     try {
       await deleteTableApi(table._id);
-      setTables(tables.filter((t) => t._id !== table._id));
+      setTables((current) => current.filter((t) => t._id !== table._id));
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
       toast.error(e?.response?.data?.error || "Failed to delete table");
@@ -132,8 +142,10 @@ export default function TablesContainer() {
     if (!selectedTable) return;
     try {
       const { data } = await allocateTableApi(selectedTable._id, allocateForm);
-      setTables(
-        tables.map((t) => (t._id === selectedTable._id ? data.table : t)),
+      setTables((current) =>
+        current.map((t) =>
+          t._id === selectedTable._id ? data.table : t,
+        ),
       );
       setShowAllocateModal(false);
       navigate(`/waiter/order/${selectedTable._id}`, {
@@ -174,6 +186,7 @@ export default function TablesContainer() {
       filter={filter}
       loading={loading}
       isAdmin={isAdmin}
+      canAdd={canAdd}
       canDelete={canDelete}
       showAddModal={showAddModal}
       addForm={addForm}

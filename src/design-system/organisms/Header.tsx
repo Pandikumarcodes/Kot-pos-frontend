@@ -1,5 +1,5 @@
 // src/design-system/organisms/Header.tsx
-import { Menu } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { InstallBanner } from "../../components/ui/InstallBanner";
 
@@ -41,7 +41,7 @@ export const Header = ({
               className="md:hidden p-2 rounded-lg hover:bg-kot-light text-kot-text hover:text-kot-darker transition-colors flex-shrink-0"
               aria-label="Open menu"
             >
-              <Menu size={22} />
+              <Menu size={19} />
             </button>
 
             {/* Back button */}
@@ -123,7 +123,9 @@ export const Header = ({
                 aria-label={`Open profile for ${userName}`}
                 className="md:hidden w-8 h-8 rounded-full bg-kot-dark text-white flex items-center justify-center font-semibold text-sm flex-shrink-0"
               >
-                {userName.charAt(0).toUpperCase()}
+                <span className="flex size-8 items-center justify-center rounded-full bg-kot-dark text-sm font-semibold text-white">
+                  {userName.charAt(0).toUpperCase()}
+                </span>
               </button>
             )}
 
@@ -136,21 +138,7 @@ export const Header = ({
                 className="text-xs md:text-sm px-2 md:px-4"
               >
                 <span className="hidden sm:inline">Logout</span>
-                <span className="sm:hidden">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                </span>
+                <LogOut className="sm:hidden" size={18} aria-hidden="true" />
               </Button>
             )}
           </div>

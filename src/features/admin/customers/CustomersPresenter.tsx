@@ -24,12 +24,14 @@ import {
   Tbody,
   Tr,
   Td,
+  ListError,
+  Pagination,
 } from "../../../components/ui/index";
 import type { CustomerPresenterProps } from "./customers.types";
 
 export function CustomerPresenter({
   customers,
-  filteredCustomers,
+  pagination,
   totalOrders,
   avgOrderValue,
   loading,
@@ -40,6 +42,8 @@ export function CustomerPresenter({
   formData,
   isAdmin,
   onSearchChange,
+  onPageChange,
+  onLimitChange,
   onOpenModal,
   onCloseModal,
   onFormChange,
@@ -52,7 +56,7 @@ export function CustomerPresenter({
       <main className="p-3 sm:p-4 lg:p-6 max-w-[2400px] mx-auto space-y-4">
         <PageHeader
           title="Customers"
-          sub={`${customers.length} total customers`}
+          sub={`${pagination.total} customers found`}
           actions={
             <Button
               size="sm"
@@ -65,27 +69,17 @@ export function CustomerPresenter({
           }
         />
 
-        {/* Error banner */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
-            <p className="text-sm text-red-600">{error}</p>
-            <Button variant="secondary" size="sm" onClick={onRetry}>
-              Retry
-            </Button>
-          </div>
-        )}
-
         {/* Stat row */}
         <div className="grid grid-cols-3 gap-3">
           {[
             {
-              label: "Total Customers",
-              value: customers.length,
+              label: "Customers Found",
+              value: pagination.total,
               bg: "bg-kot-white",
             },
-            { label: "Total Orders", value: totalOrders, bg: "bg-kot-stats" },
+            { label: "Orders on Page", value: totalOrders, bg: "bg-kot-stats" },
             {
-              label: "Avg Order Value",
+              label: "Avg Order Value on Page",
               value: `₹${avgOrderValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`,
               bg: "bg-blue-50",
             },
@@ -104,11 +98,28 @@ export function CustomerPresenter({
         </div>
 
         {/* Search */}
-        <SearchInput
-          value={searchQuery}
-          onChange={onSearchChange}
-          placeholder="Search by name, email or phone…"
-        />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex-1">
+            <SearchInput
+              value={searchQuery}
+              onChange={onSearchChange}
+              placeholder="Search by name or phone…"
+            />
+          </div>
+          <label htmlFor="customers-page-size" className="sr-only">
+            Customers per page
+          </label>
+          <Select
+            id="customers-page-size"
+            value={pagination.limit}
+            onChange={(event) => onLimitChange(Number(event.target.value))}
+            className="sm:w-44"
+          >
+            <option value={20}>20 per page</option>
+            <option value={50}>50 per page</option>
+            <option value={100}>100 per page</option>
+          </Select>
+        </div>
 
         {/* Table */}
         {loading ? (
@@ -124,7 +135,9 @@ export function CustomerPresenter({
               </div>
             ))}
           </div>
-        ) : filteredCustomers.length === 0 ? (
+        ) : error ? (
+          <ListError onRetry={onRetry} message={error} retrying={loading} />
+        ) : customers.length === 0 ? (
           <EmptyState
             icon="👥"
             title="No customers found"
@@ -140,7 +153,10 @@ export function CustomerPresenter({
             }
           />
         ) : (
-          <TableWrapper>
+          <TableWrapper
+            scrollLabel="Customers table"
+            tableClassName="min-w-[900px]"
+          >
             <Thead>
               <tr>
                 <Th>Customer</Th>
@@ -153,7 +169,7 @@ export function CustomerPresenter({
               </tr>
             </Thead>
             <Tbody>
-              {filteredCustomers.map((c) => (
+              {customers.map((c) => (
                 <Tr key={c._id}>
                   <Td>
                     <div className="flex items-center gap-3">
@@ -224,6 +240,14 @@ export function CustomerPresenter({
               ))}
             </Tbody>
           </TableWrapper>
+        )}
+
+        {!loading && !error && pagination.total > 0 && (
+          <Pagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+            showSummary
+          />
         )}
 
         {/* Modal */}

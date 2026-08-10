@@ -1,20 +1,6 @@
+// import { ArrowRight, LogIn, UserPlus } from "lucide-react";
+// import { AuthShell } from "../components/AuthShell";
 import type { LoginPresenterProps } from "./Login.types";
-
-// ── Reusable logo component ───────────────────────────────────
-// function KotLogo({ size = "md" }: { size?: "sm" | "md" }) {
-//   const imgSize = size === "sm" ? "w-9 h-9" : "w-10 h-10";
-//   const textSize = size === "sm" ? "text-lg" : "text-xl xl:text-2xl";
-//   return (
-//     <div className="flex items-center gap-3">
-//       <img
-//         src="/icons/icon.png"
-//         alt="KOT POS"
-//         className={`${imgSize} rounded-xl object-cover shadow-kot`}
-//       />
-//       <span className={`font-bold ${textSize} text-kot-darker`}>KOT POS</span>
-//     </div>
-//   );
-// }
 
 export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
   return (

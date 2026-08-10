@@ -1,6 +1,11 @@
-import type { Customer } from "../../../services/admin/customer.api";
+import type {
+  Customer,
+  CustomersQuery,
+  CustomersSort,
+} from "../../../services/admin/customer.api";
+import type { PaginationMeta } from "../../../types/query";
 
-export type { Customer };
+export type { Customer, CustomersQuery, CustomersSort };
 
 export interface CreateCustomerPayload {
   name: string;
@@ -13,7 +18,7 @@ export interface CreateCustomerPayload {
 export interface CustomerPresenterProps {
   // data
   customers: Customer[];
-  filteredCustomers: Customer[];
+  pagination: PaginationMeta;
   // stats (derived, computed in container)
   totalOrders: number;
   avgOrderValue: number;
@@ -27,6 +32,8 @@ export interface CustomerPresenterProps {
   isAdmin: boolean;
   // actions
   onSearchChange: (q: string) => void;
+  onPageChange: (page: number) => void;
+  onLimitChange: (limit: number) => void;
   onOpenModal: (customer?: Customer) => void;
   onCloseModal: () => void;
   onFormChange: (field: keyof CreateCustomerPayload, value: string) => void;

@@ -61,11 +61,11 @@ export const stickyHeader =
 // ── Button variants ───────────────────────────────────────────
 export const btn = {
   primary:
-    "bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-xl transition-colors",
+    "bg-kot-dark hover:bg-kot-darker text-white font-semibold rounded-lg transition-colors",
   secondary:
-    "border-2 border-kot-chart text-kot-darker font-semibold rounded-xl hover:bg-kot-light transition-colors bg-kot-white",
+    "border border-kot-chart text-kot-darker font-semibold rounded-lg hover:bg-kot-light transition-colors bg-kot-white",
   ghost:
-    "bg-kot-light hover:bg-kot-stats text-kot-dark font-medium rounded-xl transition-colors",
+    "bg-kot-light hover:bg-kot-stats text-kot-dark font-medium rounded-lg transition-colors",
   danger: "text-red-600 hover:bg-red-50 rounded-lg transition-colors",
   icon: "p-1.5 rounded-lg transition-colors",
   tabInactive:
@@ -78,7 +78,7 @@ export const btn = {
 
 // ── Form / input ──────────────────────────────────────────────
 export const input = {
-  base: "w-full px-3 py-2.5 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-kot-dark focus:border-kot-dark bg-kot-white text-kot-darker placeholder:text-kot-text/50 text-sm transition-colors",
+  base: "min-h-11 w-full rounded-lg border bg-kot-white px-3 py-2.5 text-sm text-kot-darker transition-colors placeholder:text-kot-text/50 focus:border-kot-dark focus:outline-none focus:ring-2 focus:ring-kot-dark/20",
   normal: "border-kot-chart",
   error: "border-red-500",
   label: "block text-sm font-semibold text-kot-darker mb-1",
@@ -100,7 +100,7 @@ export const skeleton = "bg-kot-chart rounded animate-pulse";
 // ── Table ────────────────────────────────────────────────────
 export const table = {
   wrapper:
-    "bg-kot-white rounded-xl shadow-kot border border-kot-chart overflow-hidden",
+    "max-w-full overflow-x-auto bg-kot-white rounded-xl shadow-kot border border-kot-chart focus:outline-none focus-visible:ring-2 focus-visible:ring-kot-dark focus-visible:ring-inset",
   thead: "bg-kot-light border-b border-kot-chart",
   th: "px-4 py-3 text-xs font-semibold text-kot-text uppercase text-left",
   thRight: "px-4 py-3 text-xs font-semibold text-kot-text uppercase text-right",
@@ -115,9 +115,9 @@ export const modal = {
   overlay:
     "fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4",
   panel:
-    "bg-kot-white rounded-t-3xl sm:rounded-xl shadow-kot-lg w-full sm:max-w-md",
-  header: "flex items-center justify-between p-5 border-b border-kot-chart",
-  body: "p-5 space-y-4 max-h-[80vh] overflow-y-auto",
+    "bg-kot-white rounded-t-2xl sm:rounded-xl shadow-kot-lg w-full sm:max-w-md",
+  header: "flex items-center justify-between border-b border-kot-chart p-4",
+  body: "max-h-[80vh] space-y-4 overflow-y-auto p-4",
   dragHandle: "flex justify-center pt-3 pb-1 sm:hidden",
 } as const;
 

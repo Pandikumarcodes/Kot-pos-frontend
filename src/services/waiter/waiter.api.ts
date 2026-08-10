@@ -3,10 +3,12 @@ import api from "../apiClient";
 export type {
   Order,
   OrdersQuery,
+  OrdersResponse,
 } from "../../features/waiter/ordersPage/Orders.types";
 import type {
   Order,
   OrdersQuery,
+  OrdersResponse,
 } from "../../features/waiter/ordersPage/Orders.types";
 
 export interface MenuItem {
@@ -51,8 +53,8 @@ export const getMenuApi = (params?: { category?: string; search?: string }) =>
 export const createOrderApi = (data: CreateOrderPayload) =>
   api.post<{ message: string; order: Order }>("/waiter/orders", data);
 
-export const getOrdersApi = (query?: OrdersQuery) =>
-  api.get<{ myOrders: Order[] }>("/waiter/orders", { params: query });
+export const getOrdersApi = (query: OrdersQuery, signal?: AbortSignal) =>
+  api.get<OrdersResponse>("/waiter/orders", { params: query, signal });
 
 export const getTableOrdersApi = (tableId: string) =>
   api.get<TableOrdersResponse>(`/waiter/orders/table/${tableId}`);

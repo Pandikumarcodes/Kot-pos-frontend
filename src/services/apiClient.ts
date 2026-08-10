@@ -1,5 +1,6 @@
 import axios from "axios";
 import { globalToast } from "../services/globalToast";
+import { store } from "../state";
 
 const BASE =
   import.meta.env.VITE_API_URL || "https://kot-pos-backend.onrender.com";
@@ -9,9 +10,68 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Only routes that actually install the backend branchScope middleware belong
+// here. Global administration routes such as /admin/branches are deliberately
+// excluded.
+const OPERATIONAL_BRANCH_ROUTE_PREFIXES = [
+  "/admin/customers",
+  "/admin/menu",
+  "/admin/menuItems",
+  "/admin/menu-item",
+  "/admin/delete",
+  "/admin/reports",
+  "/admin/settings",
+  "/admin/inventory",
+  "/admin/tables",
+  "/admin/users",
+  "/admin/create-user",
+  "/admin/update-role",
+  "/admin/deleteUser",
+  "/cashier",
+  "/chef",
+  "/waiter",
+  "/ai",
+] as const;
+
+export function isOperationalBranchRequest(url?: string): boolean {
+  if (!url) return false;
+
+  const pathname = new URL(url, "http://localhost").pathname.replace(
+    /^\/api\/v1/,
+    "",
+  );
+
+  return OPERATIONAL_BRANCH_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 // ── Request Interceptor ──────────────────────────────────────
 api.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    const { auth, ui } = store.getState();
+    const isBranchlessGlobalAdmin =
+      auth.user?.role === "admin" && auth.user.branchId == null;
+
+    if (
+      isBranchlessGlobalAdmin &&
+      ui.selectedBranchId &&
+      isOperationalBranchRequest(config.url)
+    ) {
+      if (config.params instanceof URLSearchParams) {
+        const params = new URLSearchParams(config.params);
+        params.set("branchId", ui.selectedBranchId);
+        config.params = params;
+      } else {
+        config.params = {
+          ...(config.params ?? {}),
+          branchId: ui.selectedBranchId,
+        };
+      }
+    }
+
+    return config;
+  },
   (error) => Promise.reject(error),
 );
 

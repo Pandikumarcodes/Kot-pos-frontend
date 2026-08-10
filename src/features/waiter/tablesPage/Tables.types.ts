@@ -23,6 +23,7 @@ export interface TablesPresenterProps {
   filter: FilterValue;
   loading: boolean;
   isAdmin: boolean;
+  canAdd: boolean;
   canDelete: boolean;
 
   // add modal

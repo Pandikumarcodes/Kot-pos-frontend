@@ -11,6 +11,8 @@ import {
   EmptyState,
   Modal,
   Badge,
+  ListError,
+  Pagination,
 } from "../../../components/ui/index";
 import { CATEGORIES, type MenuPresenterProps } from "./menu.types";
 
@@ -19,7 +21,7 @@ const getCategoryLabel = (key: string) =>
 
 export function MenuManagementPresenter({
   menuItems,
-  filteredItems,
+  pagination,
   loading,
   error,
   selectedCategory,
@@ -31,6 +33,8 @@ export function MenuManagementPresenter({
   isAdmin,
   onCategoryChange,
   onSearchChange,
+  onPageChange,
+  onLimitChange,
   onOpenModal,
   onCloseModal,
   onFieldChange,
@@ -50,7 +54,7 @@ export function MenuManagementPresenter({
         {/* ── Header ── */}
         <PageHeader
           title="Menu"
-          sub={`${menuItems.length} items`}
+          sub={`${pagination.total} items`}
           actions={
             isAdmin && (
               <Button
@@ -66,30 +70,20 @@ export function MenuManagementPresenter({
           }
         />
 
-        {/* ── Error ── */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-red-600">{error}</p>
-            <Button variant="secondary" size="sm" onClick={onRetry}>
-              Retry
-            </Button>
-          </div>
-        )}
-
         {/* ── Stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {[
-            { label: "Total", value: menuItems.length },
+            { label: "Items on Page", value: menuItems.length },
             {
-              label: "Available",
+              label: "Available on Page",
               value: menuItems.filter((i) => i.available).length,
             },
             {
-              label: "Unavailable",
+              label: "Unavailable on Page",
               value: menuItems.filter((i) => !i.available).length,
             },
             {
-              label: "Categories",
+              label: "Categories on Page",
               value: new Set(menuItems.map((i) => i.category)).size,
             },
           ].map((s) => (
@@ -109,11 +103,28 @@ export function MenuManagementPresenter({
         </div>
 
         {/* ── Search ── */}
-        <SearchInput
-          value={searchQuery}
-          onChange={onSearchChange}
-          placeholder="Search menu items…"
-        />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex-1">
+            <SearchInput
+              value={searchQuery}
+              onChange={onSearchChange}
+              placeholder="Search menu items…"
+            />
+          </div>
+          <label htmlFor="menu-page-size" className="sr-only">
+            Items per page
+          </label>
+          <Select
+            id="menu-page-size"
+            value={pagination.limit}
+            onChange={(event) => onLimitChange(Number(event.target.value))}
+            className="sm:w-40"
+          >
+            <option value={20}>20 per page</option>
+            <option value={50}>50 per page</option>
+            <option value={100}>100 per page</option>
+          </Select>
+        </div>
 
         {/* ── Category tabs — horizontal scroll on mobile ── */}
         <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-none">
@@ -148,7 +159,9 @@ export function MenuManagementPresenter({
               </Card>
             ))}
           </div>
-        ) : filteredItems.length === 0 ? (
+        ) : error ? (
+          <ListError onRetry={onRetry} message={error} retrying={loading} />
+        ) : menuItems.length === 0 ? (
           <EmptyState
             icon="🍽️"
             title="No items found"
@@ -168,7 +181,7 @@ export function MenuManagementPresenter({
           />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-            {filteredItems.map((item) => (
+            {menuItems.map((item) => (
               <Card key={item._id} className="overflow-hidden flex flex-col">
                 {/* Image placeholder */}
                 <div className="w-full h-28 sm:h-40 bg-kot-light flex items-center justify-center text-3xl sm:text-4xl flex-shrink-0">
@@ -230,6 +243,14 @@ export function MenuManagementPresenter({
               </Card>
             ))}
           </div>
+        )}
+
+        {!loading && !error && pagination.total > 0 && (
+          <Pagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+            showSummary
+          />
         )}
 
         {/* ── Modal ── */}

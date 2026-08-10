@@ -2,13 +2,21 @@ import {
   Search,
   Filter,
   X,
-  ChevronLeft,
-  ChevronRight,
   RefreshCw,
 } from "lucide-react";
-import type { OrdersPresenterProps, Order } from "./Orders.types";
+import { ListError, Pagination } from "../../../components/ui";
+import type {
+  OrdersPresenterProps,
+  Order,
+  OrderStatusFilter,
+} from "./Orders.types";
 
-const STATUSES = [
+const STATUSES: Array<{
+  value: OrderStatusFilter;
+  label: string;
+  color: string;
+  bg: string;
+}> = [
   { value: "all", label: "All", color: "text-kot-text", bg: "bg-kot-light" },
   {
     value: "pending",
@@ -17,19 +25,13 @@ const STATUSES = [
     bg: "bg-yellow-50",
   },
   {
-    value: "preparing",
+    value: "sent_to_kitchen",
     label: "Preparing",
     color: "text-blue-700",
     bg: "bg-blue-50",
   },
   {
-    value: "ready",
-    label: "Ready",
-    color: "text-emerald-700",
-    bg: "bg-emerald-50",
-  },
-  {
-    value: "delivered",
+    value: "served",
     label: "Delivered",
     color: "text-kot-darker",
     bg: "bg-kot-stats",
@@ -233,29 +235,21 @@ function OrderDetailPanel({
 // ── Presenter ─────────────────────────────────────────────────
 export function OrdersPresenter({
   orders,
-  total,
-  page,
-  totalPages,
+  pagination,
   loading,
   refreshing,
-  search,
+  error,
   status,
-  from,
-  to,
-  tableNum,
   showFilters,
   activeFilterCount,
   selectedOrder,
-  onSearchChange,
   onStatusChange,
-  onFromChange,
-  onToChange,
-  onTableNumChange,
   onToggleFilters,
   onClearFilters,
   onSelectOrder,
   onPageChange,
   onRefresh,
+  onRetry,
 }: OrdersPresenterProps) {
   return (
     <div className="min-h-screen bg-kot-primary">
@@ -269,7 +263,7 @@ export function OrdersPresenter({
             <p className="text-xs sm:text-sm text-kot-text mt-0.5">
               {loading
                 ? "Loading..."
-                : `${total.toLocaleString()} orders found`}
+                : `${pagination.total.toLocaleString()} orders found`}
             </p>
           </div>
           <button type="button"
@@ -292,19 +286,11 @@ export function OrdersPresenter({
               />
               <input
                 type="text"
-                placeholder="Search customer, phone, table..."
-                value={search}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 border-2 border-kot-chart rounded-xl bg-kot-primary text-kot-darker text-sm focus:outline-none focus:border-kot-dark placeholder:text-kot-text/50"
+                placeholder="Search unavailable for paginated orders"
+                disabled
+                aria-label="Search unavailable for paginated orders"
+                className="w-full pl-9 pr-4 py-2.5 border-2 border-kot-chart rounded-xl bg-kot-primary text-kot-darker text-sm disabled:cursor-not-allowed disabled:opacity-60 placeholder:text-kot-text/70"
               />
-              {search && (
-                <button type="button"
-                  onClick={() => onSearchChange("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kot-text hover:text-kot-darker"
-                >
-                  <X size={14} />
-                </button>
-              )}
             </div>
             <button type="button"
               onClick={onToggleFilters}
@@ -344,6 +330,9 @@ export function OrdersPresenter({
           {/* Expanded filters */}
           {showFilters && (
             <div className="pt-2 border-t border-kot-chart space-y-3">
+              <p id="orders-unsupported-filter-note" className="text-xs text-kot-text">
+                Search, date, and table filters are unavailable with server pagination.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label htmlFor="orders-from-date" className="block text-xs font-semibold text-kot-darker mb-1">
@@ -352,9 +341,8 @@ export function OrdersPresenter({
                   <input
                     id="orders-from-date"
                     type="date"
-                    value={from}
-                    onChange={(e) => onFromChange(e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-kot-chart rounded-lg text-sm focus:outline-none focus:border-kot-dark bg-kot-primary text-kot-darker"
+                    disabled
+                    className="w-full px-3 py-2 border-2 border-kot-chart rounded-lg text-sm bg-kot-primary text-kot-darker disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
                 <div>
@@ -364,9 +352,8 @@ export function OrdersPresenter({
                   <input
                     id="orders-to-date"
                     type="date"
-                    value={to}
-                    onChange={(e) => onToChange(e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-kot-chart rounded-lg text-sm focus:outline-none focus:border-kot-dark bg-kot-primary text-kot-darker"
+                    disabled
+                    className="w-full px-3 py-2 border-2 border-kot-chart rounded-lg text-sm bg-kot-primary text-kot-darker disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
                 <div>
@@ -378,9 +365,8 @@ export function OrdersPresenter({
                     type="number"
                     min="1"
                     placeholder="e.g. 5"
-                    value={tableNum}
-                    onChange={(e) => onTableNumChange(e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-kot-chart rounded-lg text-sm focus:outline-none focus:border-kot-dark bg-kot-primary text-kot-darker placeholder:text-kot-text/50"
+                    disabled
+                    className="w-full px-3 py-2 border-2 border-kot-chart rounded-lg text-sm bg-kot-primary text-kot-darker disabled:cursor-not-allowed disabled:opacity-60 placeholder:text-kot-text/50"
                   />
                 </div>
               </div>
@@ -441,6 +427,8 @@ export function OrdersPresenter({
               ))}
             </div>
           </>
+        ) : error ? (
+          <ListError onRetry={onRetry} message={error} retrying={loading} />
         ) : orders.length === 0 ? (
           <div className="bg-kot-white rounded-2xl shadow-kot p-12 text-center">
             <p className="text-4xl mb-3">📋</p>
@@ -448,11 +436,11 @@ export function OrdersPresenter({
               No orders found
             </p>
             <p className="text-sm text-kot-text mt-1">
-              {search || activeFilterCount > 0
-                ? "Try adjusting your search or filters"
+              {status !== "all"
+                ? "No orders match the selected status"
                 : "Orders will appear here once placed"}
             </p>
-            {(search || activeFilterCount > 0) && (
+            {status !== "all" && (
               <button type="button"
                 onClick={onClearFilters}
                 className="mt-4 px-4 py-2 bg-kot-dark text-white text-sm font-semibold rounded-lg hover:bg-kot-darker"
@@ -610,61 +598,15 @@ export function OrdersPresenter({
               })}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between bg-kot-white rounded-2xl shadow-kot px-4 py-3">
-                <p className="text-xs sm:text-sm text-kot-text">
-                  Page{" "}
-                  <span className="font-semibold text-kot-darker">{page}</span>{" "}
-                  of{" "}
-                  <span className="font-semibold text-kot-darker">
-                    {totalPages}
-                  </span>
-                </p>
-                <div className="flex gap-2">
-                  <button type="button"
-                    onClick={() => onPageChange(page - 1)}
-                    disabled={page <= 1}
-                    className="p-2 rounded-lg border-2 border-kot-chart text-kot-darker disabled:opacity-40 hover:bg-kot-light transition-colors"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <div className="hidden sm:flex gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const pg =
-                        totalPages <= 5
-                          ? i + 1
-                          : page <= 3
-                            ? i + 1
-                            : page >= totalPages - 2
-                              ? totalPages - 4 + i
-                              : page - 2 + i;
-                      return (
-                        <button type="button"
-                          key={pg}
-                          onClick={() => onPageChange(pg)}
-                          className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
-                            pg === page
-                              ? "bg-kot-dark text-white"
-                              : "border-2 border-kot-chart text-kot-darker hover:bg-kot-light"
-                          }`}
-                        >
-                          {pg}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <button type="button"
-                    onClick={() => onPageChange(page + 1)}
-                    disabled={page >= totalPages}
-                    className="p-2 rounded-lg border-2 border-kot-chart text-kot-darker disabled:opacity-40 hover:bg-kot-light transition-colors"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            )}
           </>
+        )}
+
+        {!loading && !error && pagination.total > 0 && (
+          <Pagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+            showSummary
+          />
         )}
       </div>
 

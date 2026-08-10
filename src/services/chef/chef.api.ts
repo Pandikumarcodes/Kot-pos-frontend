@@ -1,4 +1,12 @@
 import api from "../apiClient";
+export type {
+  KitchenQuery,
+  KitchenResponse,
+} from "../../features/chef/kitchen/Kitchen.types";
+import type {
+  KitchenQuery,
+  KitchenResponse,
+} from "../../features/chef/kitchen/Kitchen.types";
 
 // ── Types ─────────────────────────────────────────────────────
 export type KotStatus =
@@ -33,8 +41,14 @@ export interface Kot {
 
 // ── API Calls ─────────────────────────────────────────────────
 
-// GET /chef/kot — all pending orders
-export const getKotOrdersApi = () => api.get<{ KotOrders: Kot[] }>("/chef/kot");
+// GET /chef/kot — active Kitchen orders
+export const getKotOrdersApi = (
+  query?: KitchenQuery,
+  signal?: AbortSignal,
+) =>
+  query === undefined && signal === undefined
+    ? api.get<KitchenResponse>("/chef/kot")
+    : api.get<KitchenResponse>("/chef/kot", { params: query, signal });
 
 // GET /chef/kot/:orderId
 export const getKotByIdApi = (orderId: string) =>

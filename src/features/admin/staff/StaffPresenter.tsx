@@ -12,6 +12,8 @@ import {
   Badge,
   StatCard,
   StatusBadge,
+  ListError,
+  Pagination,
 } from "../../../components/ui/index";
 import {
   ALLOWED_ROLES,
@@ -21,19 +23,25 @@ import {
 
 export function StaffPresenter({
   users,
-  filteredUsers,
+  pagination,
   activeCount,
   lockedCount,
   rolesActive,
   loading,
   error,
   searchQuery,
+  roleFilter,
+  statusFilter,
   showModal,
   editingUser,
   formData,
   formErrors,
   isAdmin,
   onSearchChange,
+  onRoleChange,
+  onStatusChange,
+  onPageChange,
+  onLimitChange,
   onOpenModal,
   onCloseModal,
   onFieldChange,
@@ -47,7 +55,7 @@ export function StaffPresenter({
         {/* ── Header ── */}
         <PageHeader
           title="Staff"
-          sub={`${users.length} members`}
+          sub={`${pagination.total} members found`}
           actions={
             isAdmin && (
               <Button
@@ -64,37 +72,28 @@ export function StaffPresenter({
         />
 
         {/* ── Error ── */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-red-600">{error}</p>
-            <Button variant="secondary" size="sm" onClick={onRetry}>
-              Retry
-            </Button>
-          </div>
-        )}
-
         {/* ── Stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <StatCard
-            label="Total"
-            value={users.length}
+            label="Members Found"
+            value={pagination.total}
             bg="bg-kot-white"
             loading={loading}
           />
           <StatCard
-            label="Active"
+            label="Active on Page"
             value={activeCount}
             bg="bg-kot-stats"
             loading={loading}
           />
           <StatCard
-            label="Locked"
+            label="Locked on Page"
             value={lockedCount}
             bg="bg-red-50"
             loading={loading}
           />
           <StatCard
-            label="Active Roles"
+            label="Roles on Page"
             value={rolesActive}
             bg="bg-blue-50"
             loading={loading}
@@ -102,11 +101,52 @@ export function StaffPresenter({
         </div>
 
         {/* ── Search ── */}
-        <SearchInput
-          value={searchQuery}
-          onChange={onSearchChange}
-          placeholder="Search by username or role…"
-        />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex-1">
+            <SearchInput
+              value={searchQuery}
+              onChange={onSearchChange}
+              placeholder="Search by username…"
+            />
+          </div>
+          <Select
+            aria-label="Filter staff by role"
+            value={roleFilter}
+            onChange={(event) =>
+              onRoleChange(event.target.value as typeof roleFilter)
+            }
+            className="sm:w-40"
+          >
+            <option value="">All roles</option>
+            {ALLOWED_ROLES.map((role) => (
+              <option key={role} value={role}>
+                {role.charAt(0).toUpperCase() + role.slice(1)}
+              </option>
+            ))}
+          </Select>
+          <Select
+            aria-label="Filter staff by status"
+            value={statusFilter}
+            onChange={(event) =>
+              onStatusChange(event.target.value as typeof statusFilter)
+            }
+            className="sm:w-40"
+          >
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="locked">Locked</option>
+          </Select>
+          <Select
+            aria-label="Staff per page"
+            value={pagination.limit}
+            onChange={(event) => onLimitChange(Number(event.target.value))}
+            className="sm:w-40"
+          >
+            <option value={20}>20 per page</option>
+            <option value={50}>50 per page</option>
+            <option value={100}>100 per page</option>
+          </Select>
+        </div>
 
         {/* ── Content ── */}
         {loading ? (
@@ -125,17 +165,21 @@ export function StaffPresenter({
               </div>
             ))}
           </div>
-        ) : filteredUsers.length === 0 ? (
+        ) : error ? (
+          <ListError onRetry={onRetry} message={error} retrying={loading} />
+        ) : users.length === 0 ? (
           <EmptyState
             icon="👥"
             title="No staff found"
             sub={
-              searchQuery
-                ? "Try a different search"
+              searchQuery || roleFilter || statusFilter
+                ? "Try different search or filter criteria"
                 : "Add your first staff member"
             }
             action={
               !searchQuery &&
+              !roleFilter &&
+              !statusFilter &&
               isAdmin && (
                 <Button size="sm" onClick={() => onOpenModal()}>
                   Add Staff
@@ -147,7 +191,7 @@ export function StaffPresenter({
           <>
             {/* ── Mobile: card list ── */}
             <div className="sm:hidden space-y-2">
-              {filteredUsers.map((user) => (
+              {users.map((user) => (
                 <div
                   key={user._id}
                   className="bg-kot-white rounded-2xl p-4 shadow-kot"
@@ -218,7 +262,7 @@ export function StaffPresenter({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-kot-chart">
-                  {filteredUsers.map((user) => (
+                  {users.map((user) => (
                     <tr
                       key={user._id}
                       className="hover:bg-kot-primary transition-colors"
@@ -269,6 +313,14 @@ export function StaffPresenter({
         )}
 
         {/* ── Modal ── */}
+        {!loading && !error && pagination.total > 0 && (
+          <Pagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+            showSummary
+          />
+        )}
+
         <Modal
           open={showModal}
           title={editingUser ? "Edit Staff Role" : "Add Staff Member"}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import api from "../../../services/apiClient";
 import {
   createTakeawayApi,
@@ -7,27 +7,49 @@ import {
   getBillsApi,
   markBillPaidApi,
 } from "../../../services/cashier/cashier.api";
-import type { Bill } from "../../../services/cashier/cashier.api";
+import type {
+  Bill,
+  BillingQuery,
+} from "../../../services/cashier/cashier.api";
 import { useToast } from "../../../contexts/toastContext";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { usePrint } from "../../../hooks/usePrint";
-import { getSettingsApi } from "../../../services/admin/settings.api";
-import type { Settings } from "../../../services/admin/settings.api";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
+import {
+  getReceiptSettingsApi,
+  type ReceiptSettings,
+} from "../../../services/settings.api";
 import { BillingPresenter } from "./BillingPresenter";
 import type { Tab, Step, MenuItem, OrderItem } from "./Billing.types";
+import type { PaginationMeta } from "../../../types/query";
+
+const DEFAULT_BILLS_QUERY: BillingQuery = { page: 1, limit: 20, search: "" };
+
+const EMPTY_BILLS_PAGINATION: PaginationMeta = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  pages: 0,
+  hasNext: false,
+  hasPrev: false,
+};
 
 export default function BillingContainer() {
   const toast = useToast();
   const { printBill } = usePrint();
 
   // ── Settings (for print: businessName, taxRate, printReceipt, etc.) ──
-  const [settings, setSettings] = useState<Partial<Settings>>({});
+  const [settings, setSettings] = useState<Partial<ReceiptSettings>>({});
 
   useEffect(() => {
-    getSettingsApi()
+    getReceiptSettingsApi()
       .then((res) => setSettings(res.data.settings))
-      .catch(() => {}); // silently fail — print still works without it
-  }, []);
+      .catch(() => {
+        toast.warning(
+          "Receipt settings could not be loaded. Billing will use receipt defaults.",
+        );
+      });
+  }, [toast]);
 
   // ── Tab / Step ────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<Tab>("takeaway");
@@ -51,9 +73,15 @@ export default function BillingContainer() {
 
   // ── Bills state ───────────────────────────────────────────
   const [bills, setBills] = useState<Bill[]>([]);
+  const [billsQuery, setBillsQuery] = useState<BillingQuery>(DEFAULT_BILLS_QUERY);
+  const [billsPagination, setBillsPagination] = useState<PaginationMeta>(
+    EMPTY_BILLS_PAGINATION,
+  );
   const [billsLoading, setBillsLoading] = useState(false);
   const [billsError, setBillsError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [billsRefreshKey, setBillsRefreshKey] = useState(0);
+  const activeBillsRequest = useRef<AbortController | null>(null);
+  const debouncedBillsSearch = useDebouncedValue(billsQuery.search ?? "");
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [invoiceBill, setInvoiceBill] = useState<Bill | null>(null);
 
@@ -61,12 +89,13 @@ export default function BillingContainer() {
 
   // ── Socket: live bill updates ─────────────────────────────
   useNotifications({
-    "billing:created": (bill: unknown) => {
-      const b = bill as Bill;
-      if (activeTab === "bills")
-        setBills((prev) =>
-          prev.some((x) => x._id === b._id) ? prev : [b, ...prev],
-        );
+    "billing:created": () => {
+      if (activeTab === "bills") {
+        activeBillsRequest.current?.abort();
+        setBillsLoading(true);
+        setBillsError(null);
+        setBillsRefreshKey((value) => value + 1);
+      }
     },
   });
 
@@ -92,18 +121,110 @@ export default function BillingContainer() {
   }, []);
 
   // ── Fetch bills when switching to bills tab ───────────────
-  const fetchBills = async () => {
-    try {
-      const res = await getBillsApi();
-      setBills(res.data.myBills);
-    } catch (err) {
-      const e = err as { response?: { data?: { error?: string } } };
-      const msg = e?.response?.data?.error || "Failed to load bills";
-      if (msg !== "No Bills found") setBillsError(msg);
-      else setBills([]);
-    } finally {
-      setBillsLoading(false);
+  useEffect(() => {
+    if (activeTab !== "bills") return;
+    if ((billsQuery.search ?? "").trim() !== debouncedBillsSearch.trim()) {
+      activeBillsRequest.current?.abort();
+      return;
     }
+
+    const controller = new AbortController();
+    activeBillsRequest.current?.abort();
+    activeBillsRequest.current = controller;
+    let redirectingToFirstPage = false;
+    const requestQuery: BillingQuery = {
+      page: billsQuery.page ?? 1,
+      limit: billsQuery.limit ?? 20,
+      search: debouncedBillsSearch.trim() || undefined,
+      status: billsQuery.status,
+      sort: billsQuery.sort,
+      order: billsQuery.order,
+    };
+
+    void getBillsApi(requestQuery, controller.signal)
+      .then(({ data }) => {
+        if (controller.signal.aborted) return;
+        if (!data.pagination) {
+          throw new Error("Paginated bills response did not include metadata");
+        }
+        setBills(data.myBills);
+        setBillsPagination(data.pagination);
+        setSelectedBill((previous) =>
+          previous
+            ? data.myBills.find((bill) => bill._id === previous._id) ?? null
+            : null,
+        );
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        const apiError = err as {
+          response?: { status?: number; data?: { error?: string } };
+        };
+        const isKnownEmpty =
+          apiError.response?.status === 404 &&
+          apiError.response?.data?.error === "No Bills found";
+
+        if (isKnownEmpty && (requestQuery.page ?? 1) > 1) {
+          redirectingToFirstPage = true;
+          setBillsQuery((previous) => ({ ...previous, page: 1 }));
+          return;
+        }
+        if (isKnownEmpty) {
+          setBills([]);
+          setSelectedBill(null);
+          setBillsPagination({
+            page: requestQuery.page ?? 1,
+            limit: requestQuery.limit ?? 20,
+            total: 0,
+            pages: 0,
+            hasNext: false,
+            hasPrev: false,
+          });
+          return;
+        }
+        setBillsError(
+          apiError.response?.data?.error || "Failed to load bills",
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted && !redirectingToFirstPage) {
+          setBillsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [
+    activeTab,
+    billsQuery.limit,
+    billsQuery.order,
+    billsQuery.page,
+    billsQuery.search,
+    billsQuery.sort,
+    billsQuery.status,
+    billsRefreshKey,
+    debouncedBillsSearch,
+  ]);
+
+  const refreshBills = () => {
+    activeBillsRequest.current?.abort();
+    setBillsLoading(true);
+    setBillsError(null);
+    setBillsRefreshKey((value) => value + 1);
+  };
+
+  const updateBillsQueryAndResetPage = (updates: Partial<BillingQuery>) => {
+    activeBillsRequest.current?.abort();
+    setBillsLoading(true);
+    setBillsError(null);
+    setBillsQuery((previous) => ({ ...previous, ...updates, page: 1 }));
+  };
+
+  const handleBillsPageChange = (page: number) => {
+    if (page < 1 || page === billsQuery.page) return;
+    activeBillsRequest.current?.abort();
+    setBillsLoading(true);
+    setBillsError(null);
+    setBillsQuery((previous) => ({ ...previous, page }));
   };
 
   const handleTabChange = (nextTab: Tab) => {
@@ -111,15 +232,10 @@ export default function BillingContainer() {
     if (nextTab === "bills") {
       setBillsLoading(true);
       setBillsError(null);
-      void fetchBills();
     }
   };
 
-  const handleRetryBills = () => {
-    setBillsLoading(true);
-    setBillsError(null);
-    void fetchBills();
-  };
+  const handleRetryBills = refreshBills;
 
   // ── Derived ───────────────────────────────────────────────
   const categories = [
@@ -131,12 +247,6 @@ export default function BillingContainer() {
       ? menuItems
       : menuItems.filter((i) => i.category === selectedCategory);
   const total = orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const filteredBills = bills.filter(
-    (b) =>
-      b.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.billNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.customerPhone?.includes(searchQuery),
-  );
 
   // ── Handlers ─────────────────────────────────────────────
   const handleAddItem = (item: MenuItem) => {
@@ -205,6 +315,8 @@ export default function BillingContainer() {
         printBill(res.data.bill, settings);
       }
 
+      if (activeTab === "bills") refreshBills();
+
       setSuccessMsg(
         `Payment collected! ₹${total.toFixed(2)} via ${paymentMethod.toUpperCase()}`,
       );
@@ -236,14 +348,9 @@ export default function BillingContainer() {
 
   const handleMarkPaid = async (billId: string) => {
     try {
-      await markBillPaidApi(billId, paymentMethod);
-      setBills(
-        bills.map((b) =>
-          b._id === billId ? { ...b, paymentStatus: "paid" } : b,
-        ),
-      );
-      if (selectedBill?._id === billId)
-        setSelectedBill({ ...selectedBill, paymentStatus: "paid" });
+      const { data } = await markBillPaidApi(billId, paymentMethod);
+      if (selectedBill?._id === billId) setSelectedBill(data.bill);
+      refreshBills();
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
       toast.error(e?.response?.data?.error || "Failed");
@@ -290,11 +397,17 @@ export default function BillingContainer() {
       onCollectPayment={handleCollectPayment}
       onReset={handleReset}
       bills={bills}
-      filteredBills={filteredBills}
+      pagination={billsPagination}
       billsLoading={billsLoading}
       billsError={billsError}
-      searchQuery={searchQuery}
-      onSearchChange={setSearchQuery}
+      searchQuery={billsQuery.search ?? ""}
+      onSearchChange={(search) => updateBillsQueryAndResetPage({ search })}
+      statusFilter={billsQuery.status ?? ""}
+      onStatusFilterChange={(status) =>
+        updateBillsQueryAndResetPage({ status: status || undefined })
+      }
+      onPageChange={handleBillsPageChange}
+      onLimitChange={(limit) => updateBillsQueryAndResetPage({ limit })}
       selectedBill={selectedBill}
       onSelectBill={setSelectedBill}
       invoiceBill={invoiceBill}

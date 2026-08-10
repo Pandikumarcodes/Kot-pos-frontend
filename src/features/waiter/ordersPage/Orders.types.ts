@@ -1,9 +1,13 @@
+import type { BaseListQuery, PaginationMeta } from "../../../types/query";
+
 export type OrderStatus =
   | "pending"
-  | "preparing"
-  | "ready"
-  | "delivered"
+  | "sent_to_kitchen"
+  | "served"
   | "cancelled";
+
+export type OrderStatusFilter = OrderStatus | "all";
+export type OrdersSort = "createdAt" | "status";
 
 export interface OrderItem {
   name: string;
@@ -16,7 +20,7 @@ export interface Order {
   customerName: string;
   customerPhone?: string;
   tableNumber?: number;
-  orderType: string;
+  orderType?: string;
   status: OrderStatus;
   items: OrderItem[];
   totalAmount: number;
@@ -24,43 +28,35 @@ export interface Order {
   createdAt: string;
 }
 
-export interface OrdersQuery {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-  from?: string;
-  to?: string;
-  tableNumber?: string;
+export interface OrdersQuery extends BaseListQuery {
+  status?: OrderStatus;
+  sort?: OrdersSort;
+}
+
+export interface OrdersResponse {
+  myOrders: Order[];
+  pagination?: PaginationMeta;
 }
 
 export interface OrdersPresenterProps {
   orders: Order[];
-  total: number;
-  page: number;
-  totalPages: number;
+  pagination: PaginationMeta;
   loading: boolean;
   refreshing: boolean;
+  error: string | null;
 
-  // filters
-  search: string;
-  status: string;
-  from: string;
-  to: string;
-  tableNum: string;
+  // supported server filter
+  status: OrderStatusFilter;
   showFilters: boolean;
   activeFilterCount: number;
 
   selectedOrder: Order | null;
 
-  onSearchChange: (v: string) => void;
-  onStatusChange: (v: string) => void;
-  onFromChange: (v: string) => void;
-  onToChange: (v: string) => void;
-  onTableNumChange: (v: string) => void;
+  onStatusChange: (v: OrderStatusFilter) => void;
   onToggleFilters: () => void;
   onClearFilters: () => void;
   onSelectOrder: (o: Order | null) => void;
   onPageChange: (p: number) => void;
   onRefresh: () => void;
+  onRetry: () => void;
 }

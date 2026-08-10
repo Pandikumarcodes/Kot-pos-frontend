@@ -1,5 +1,6 @@
 // src/api/userApi.ts
 import api from "../apiClient";
+import type { BaseListQuery, PaginationMeta } from "../../types/query";
 
 export interface StaffUser {
   _id: string;
@@ -15,9 +16,30 @@ export interface CreateUserPayload {
   status: string;
 }
 
+export type StaffRole = "admin" | "waiter" | "chef" | "cashier" | "manager";
+export type StaffStatus = "active" | "locked";
+export type StaffSort = "name" | "createdAt";
+
+export interface StaffQuery extends BaseListQuery {
+  search?: string;
+  role?: StaffRole;
+  status?: StaffStatus;
+  sort?: StaffSort;
+}
+
+export interface StaffResponse {
+  users: StaffUser[];
+  pagination?: PaginationMeta;
+}
+
 // GET /admin/users
-export const getUsersApi = () =>
-  api.get<{ users: StaffUser[] }>("/admin/users");
+export const getUsersApi = (query?: StaffQuery, signal?: AbortSignal) => {
+  if (!query && !signal) return api.get<StaffResponse>("/admin/users");
+  return api.get<StaffResponse>("/admin/users", {
+    ...(query && { params: query }),
+    ...(signal && { signal }),
+  });
+};
 
 // POST /admin/create-user
 export const createUserApi = (data: CreateUserPayload) =>

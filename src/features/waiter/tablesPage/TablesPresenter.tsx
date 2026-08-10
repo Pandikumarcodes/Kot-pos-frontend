@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Plus, Trash2, X } from "lucide-react";
 import type {
   TablesPresenterProps,
@@ -107,6 +108,7 @@ export function TablesPresenter({
   filter,
   loading,
   isAdmin,
+  canAdd,
   canDelete,
   showAddModal,
   addForm,
@@ -125,6 +127,16 @@ export function TablesPresenter({
   onDeleteTable,
   onRefresh,
 }: TablesPresenterProps) {
+  useEffect(() => {
+    if (!showAddModal) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCloseAddModal();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [showAddModal, onCloseAddModal]);
+
   return (
     <div className="min-h-screen bg-kot-primary">
       <div className="p-3 sm:p-4 lg:p-6 xl:p-8 max-w-[2400px] mx-auto space-y-4 sm:space-y-5">
@@ -140,9 +152,10 @@ export function TablesPresenter({
             </p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
-            {isAdmin && (
+            {canAdd && (
               <button type="button"
                 onClick={onOpenAddModal}
+                aria-label="Add Table"
                 className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-white bg-kot-dark hover:bg-kot-darker transition-colors"
               >
                 <Plus size={14} />
@@ -379,15 +392,25 @@ export function TablesPresenter({
       </div>
 
       {/* ── Add Table Modal ── */}
-      {isAdmin && showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-kot-white rounded-t-3xl sm:rounded-2xl shadow-kot-lg w-full sm:max-w-sm">
+      {canAdd && showAddModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4"
+          onMouseDown={onCloseAddModal}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-table-title"
+            className="bg-kot-white rounded-t-3xl sm:rounded-2xl shadow-kot-lg w-full sm:max-w-sm"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-kot-chart">
-              <h2 className="text-lg font-bold text-kot-darker">
+              <h2 id="add-table-title" className="text-lg font-bold text-kot-darker">
                 Add New Table
               </h2>
               <button type="button"
                 onClick={onCloseAddModal}
+                aria-label="Close Add New Table"
                 className="text-kot-text hover:text-kot-darker p-1"
               >
                 <X size={20} />

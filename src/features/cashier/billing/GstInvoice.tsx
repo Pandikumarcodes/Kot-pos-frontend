@@ -1,21 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import api from "../../../services/apiClient";
 import type { Bill } from "../../../services/cashier/cashier.api";
+import {
+  getReceiptSettingsApi,
+  type ReceiptSettings,
+} from "../../../services/settings.api";
 import DOMPurify from "dompurify";
-interface RestaurantSettings {
-  businessName: string;
-  email: string;
-  phone: string;
-  address: string;
-  gstin: string;
-  fssai: string;
-  hsn: string;
-  currency: string;
-  taxRate: number;
-  serviceCharge: number;
-  autoRoundOff: boolean;
-  printReceipt: boolean;
-}
+
+type RestaurantSettings = ReceiptSettings;
 
 interface GSTInvoiceProps {
   bill: Bill;
@@ -146,17 +137,18 @@ const amountInWords = (grandTotal: number): string => {
 export default function GSTInvoice({ bill, onClose }: GSTInvoiceProps) {
   const [settings, setSettings] = useState<RestaurantSettings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState(false);
 
   // Abort fetch on unmount — prevents memory leak / state update on dead component
   useEffect(() => {
     const controller = new AbortController();
-    api
-      .get<{ settings: RestaurantSettings }>("/admin/settings", {
-        signal: controller.signal,
-      })
+    getReceiptSettingsApi(controller.signal)
       .then((res) => setSettings({ ...DEFAULTS, ...res.data.settings }))
       .catch((err) => {
-        if (err.name !== "AbortError") setSettings(DEFAULTS);
+        if (err.name !== "AbortError" && err.name !== "CanceledError") {
+          setSettings(DEFAULTS);
+          setSettingsError(true);
+        }
       })
       .finally(() => setLoading(false));
 
@@ -422,7 +414,12 @@ export default function GSTInvoice({ bill, onClose }: GSTInvoiceProps) {
       </div>
 
       {/* ── Receipt preview ── */}
-      <div className="bg-gray-300 rounded-2xl shadow-2xl flex justify-center p-5 w-full max-w-md">
+      <div className="bg-gray-300 rounded-2xl shadow-2xl flex flex-col items-center justify-center p-5 w-full max-w-md">
+        {settingsError && (
+          <p role="status" className="mb-3 text-sm font-medium text-amber-900">
+            Receipt settings unavailable; showing safe defaults.
+          </p>
+        )}
         {loading ? (
           <div className="flex items-center justify-center h-40">
             <div className="w-8 h-8 border-4 border-kot-dark border-t-transparent rounded-full animate-spin" />

@@ -118,12 +118,9 @@ export default function App() {
             onMenuToggle={() => setSidebarOpen((prev) => !prev)}
           />
 
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex min-h-0 flex-1 overflow-hidden">
             {/* Sidebar — receives open state + close handler */}
-            <Sidebar
-              isOpen={sidebarOpen}
-              onClose={handleSidebarClose}
-            />
+            <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
 
             {/* Main content */}
             <main className="flex-1 overflow-y-auto bg-kot-primary">

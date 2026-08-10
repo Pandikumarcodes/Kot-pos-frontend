@@ -84,7 +84,8 @@ export function SignInPresenter({
                   Forgot Password?
                 </h2>
               </div>
-              <button type="button"
+              <button
+                type="button"
                 onClick={onCloseForgotModal}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-kot-text hover:bg-kot-light hover:text-kot-darker transition-colors"
               >
@@ -149,7 +150,8 @@ export function SignInPresenter({
             </div>
 
             {/* Close button */}
-            <button type="button"
+            <button
+              type="button"
               onClick={onCloseForgotModal}
               className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-kot-dark hover:bg-kot-darker transition-all"
             >
@@ -243,7 +245,8 @@ export function SignInPresenter({
             <span className="font-bold text-lg text-kot-darker">KOT POS</span>
           </div>
 
-          <button type="button"
+          <button
+            type="button"
             onClick={onBack}
             className="flex items-center gap-1.5 mb-6 text-sm font-medium text-kot-text hover:text-kot-darker transition-colors"
           >
@@ -281,13 +284,18 @@ export function SignInPresenter({
           <form onSubmit={onSubmit} className="space-y-4">
             {/* Username */}
             <div>
-              <label htmlFor="signin-username" className="block text-sm font-medium mb-1.5 text-kot-darker">
+              <label
+                htmlFor="signin-username"
+                className="block text-sm font-medium mb-1.5 text-kot-darker"
+              >
                 Username
               </label>
               <input
                 id="signin-username"
                 aria-invalid={Boolean(errors.username)}
-                aria-describedby={errors.username ? "signin-username-error" : undefined}
+                aria-describedby={
+                  errors.username ? "signin-username-error" : undefined
+                }
                 type="text"
                 value={formData.username}
                 onChange={(e) => onFieldChange("username", e.target.value)}
@@ -296,20 +304,31 @@ export function SignInPresenter({
                 autoComplete="username"
               />
               {errors.username && (
-                <p id="signin-username-error" className="mt-1 text-xs text-red-500" role="alert">{errors.username}</p>
+                <p
+                  id="signin-username-error"
+                  className="mt-1 text-xs text-red-500"
+                  role="alert"
+                >
+                  {errors.username}
+                </p>
               )}
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="signin-password" className="block text-sm font-medium mb-1.5 text-kot-darker">
+              <label
+                htmlFor="signin-password"
+                className="block text-sm font-medium mb-1.5 text-kot-darker"
+              >
                 Password
               </label>
               <div className="relative">
                 <input
                   id="signin-password"
                   aria-invalid={Boolean(errors.password)}
-                  aria-describedby={errors.password ? "signin-password-error" : undefined}
+                  aria-describedby={
+                    errors.password ? "signin-password-error" : undefined
+                  }
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) => onFieldChange("password", e.target.value)}
@@ -327,7 +346,13 @@ export function SignInPresenter({
                 </button>
               </div>
               {errors.password && (
-                <p id="signin-password-error" className="mt-1 text-xs text-red-500" role="alert">{errors.password}</p>
+                <p
+                  id="signin-password-error"
+                  className="mt-1 text-xs text-red-500"
+                  role="alert"
+                >
+                  {errors.password}
+                </p>
               )}
             </div>
 
@@ -388,7 +413,8 @@ export function SignInPresenter({
 
           <p className="text-center text-sm mt-5 text-kot-text">
             Don't have an account?{" "}
-            <button type="button"
+            <button
+              type="button"
               onClick={onSignUp}
               className="font-semibold text-kot-dark hover:text-kot-darker transition-colors"
             >

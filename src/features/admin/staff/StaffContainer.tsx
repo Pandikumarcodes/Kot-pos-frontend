@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppSelector } from "../../../state/hooks";
 import {
   getUsersApi,
@@ -9,6 +9,7 @@ import {
 import type {
   StaffUser,
   CreateUserPayload,
+  StaffQuery,
 } from "../../../services/admin/staff.api";
 import { useToast } from "../../../contexts/toastContext";
 import {
@@ -18,6 +19,29 @@ import {
 } from "../../../utils/validation";
 import { StaffPresenter as StaffManagementPresenter } from "./StaffPresenter";
 import { ALLOWED_ROLES } from "./staff.types";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
+import type { PaginationMeta } from "../../../types/query";
+
+const DEFAULT_QUERY: StaffQuery = { page: 1, limit: 20, search: "" };
+
+const EMPTY_PAGINATION: PaginationMeta = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  pages: 0,
+  hasNext: false,
+  hasPrev: false,
+};
+
+const isNoUsersResponse = (error: unknown): boolean => {
+  const apiError = error as {
+    response?: { status?: number; data?: { error?: string } };
+  };
+  return (
+    apiError.response?.status === 404 &&
+    apiError.response.data?.error === "No users found"
+  );
+};
 
 export default function StaffManagementContainer() {
   const toast = useToast();
@@ -25,9 +49,13 @@ export default function StaffManagementContainer() {
   const isAdmin = user?.role === "admin";
 
   const [users, setUsers] = useState<StaffUser[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [query, setQuery] = useState<StaffQuery>(DEFAULT_QUERY);
+  const [pagination, setPagination] = useState(EMPTY_PAGINATION);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const activeRequest = useRef<AbortController | null>(null);
+  const debouncedSearch = useDebouncedValue(query.search ?? "");
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
   const [formErrors, setFormErrors] = useState<ValidationErrors>({});
@@ -38,51 +66,100 @@ export default function StaffManagementContainer() {
     status: "active",
   });
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      const { data } = await getUsersApi();
-      setUsers(data.users);
-    } catch (err) {
-      const e = err as { response?: { data?: { error?: string } } };
-      setError(e?.response?.data?.error || "Failed to load staff");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    let ignore = false;
-    getUsersApi()
+    if ((query.search ?? "").trim() !== debouncedSearch.trim()) {
+      activeRequest.current?.abort();
+      return;
+    }
+
+    const controller = new AbortController();
+    activeRequest.current?.abort();
+    activeRequest.current = controller;
+    let redirectingToValidPage = false;
+    const requestQuery: StaffQuery = {
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
+      search: debouncedSearch.trim() || undefined,
+      role: query.role,
+      status: query.status,
+      sort: query.sort,
+      order: query.order,
+    };
+
+    void getUsersApi(requestQuery, controller.signal)
       .then(({ data }) => {
-        if (!ignore) setUsers(data.users);
+        if (controller.signal.aborted) return;
+        if (!data.pagination) {
+          throw new Error("Paginated staff response did not include metadata");
+        }
+        const lastValidPage = Math.max(1, data.pagination.pages);
+        if (data.pagination.page > lastValidPage) {
+          redirectingToValidPage = true;
+          setQuery((previous) => ({ ...previous, page: lastValidPage }));
+          return;
+        }
+        setUsers(data.users);
+        setPagination(data.pagination);
+        setError(null);
       })
       .catch((err) => {
-        if (ignore) return;
+        if (controller.signal.aborted) return;
+        if (isNoUsersResponse(err)) {
+          if ((query.page ?? 1) > 1) {
+            redirectingToValidPage = true;
+            setQuery((previous) => ({ ...previous, page: 1 }));
+            return;
+          }
+          setUsers([]);
+          setPagination({
+            ...EMPTY_PAGINATION,
+            limit: query.limit ?? 20,
+          });
+          setError(null);
+          return;
+        }
         const e = err as { response?: { data?: { error?: string } } };
         setError(e?.response?.data?.error || "Failed to load staff");
       })
       .finally(() => {
-        if (!ignore) setLoading(false);
+        if (!controller.signal.aborted && !redirectingToValidPage) {
+          setLoading(false);
+        }
       });
-    return () => {
-      ignore = true;
-    };
-  }, []);
+    return () => controller.abort();
+  }, [
+    debouncedSearch,
+    query.limit,
+    query.order,
+    query.page,
+    query.role,
+    query.search,
+    query.sort,
+    query.status,
+    refreshKey,
+  ]);
 
-  const handleRetry = () => {
+  const refreshUsers = () => {
+    activeRequest.current?.abort();
     setLoading(true);
     setError(null);
-    void fetchUsers();
+    setRefreshKey((value) => value + 1);
   };
 
-  // Derived
-  const filteredUsers = searchQuery
-    ? users.filter(
-        (u) =>
-          u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          u.role.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : users;
+  const updateQueryAndResetPage = (updates: Partial<StaffQuery>) => {
+    activeRequest.current?.abort();
+    setLoading(true);
+    setError(null);
+    setQuery((previous) => ({ ...previous, ...updates, page: 1 }));
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page === query.page) return;
+    activeRequest.current?.abort();
+    setLoading(true);
+    setError(null);
+    setQuery((previous) => ({ ...previous, page }));
+  };
 
   const activeCount = users.filter((u) => u.status === "active").length;
   const lockedCount = users.filter((u) => u.status === "locked").length;
@@ -126,17 +203,12 @@ export default function StaffManagementContainer() {
     try {
       if (editingUser) {
         await updateUserRoleApi(editingUser._id, formData.role);
-        setUsers(
-          users.map((u) =>
-            u._id === editingUser._id ? { ...u, role: formData.role } : u,
-          ),
-        );
       } else {
-        const { data } = await createUserApi(formData);
-        setUsers([...users, data.user]);
+        await createUserApi(formData);
       }
       handleCloseModal();
       toast.success(editingUser ? "Role updated!" : "Staff added!");
+      refreshUsers();
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
       toast.error(e?.response?.data?.error || "Failed to save user");
@@ -147,8 +219,8 @@ export default function StaffManagementContainer() {
     if (!window.confirm(`Delete "${u.username}"?`)) return;
     try {
       await deleteUserApi(u._id);
-      setUsers(users.filter((x) => x._id !== u._id));
       toast.success(`"${u.username}" deleted!`);
+      refreshUsers();
     } catch (err) {
       const e = err as { response?: { data?: { error?: string } } };
       toast.error(e?.response?.data?.error || "Failed to delete user");
@@ -158,25 +230,35 @@ export default function StaffManagementContainer() {
   return (
     <StaffManagementPresenter
       users={users}
-      filteredUsers={filteredUsers}
+      pagination={pagination}
       activeCount={activeCount}
       lockedCount={lockedCount}
       rolesActive={rolesActive}
       loading={loading}
       error={error}
-      searchQuery={searchQuery}
+      searchQuery={query.search ?? ""}
+      roleFilter={query.role ?? ""}
+      statusFilter={query.status ?? ""}
       showModal={showModal}
       editingUser={editingUser}
       formData={formData}
       formErrors={formErrors}
       isAdmin={isAdmin}
-      onSearchChange={setSearchQuery}
+      onSearchChange={(search) => updateQueryAndResetPage({ search })}
+      onRoleChange={(role) =>
+        updateQueryAndResetPage({ role: role || undefined })
+      }
+      onStatusChange={(status) =>
+        updateQueryAndResetPage({ status: status || undefined })
+      }
+      onPageChange={handlePageChange}
+      onLimitChange={(limit) => updateQueryAndResetPage({ limit })}
       onOpenModal={handleOpenModal}
       onCloseModal={handleCloseModal}
       onFieldChange={handleFieldChange}
       onSubmit={handleSubmit}
       onDelete={handleDelete}
-      onRetry={handleRetry}
+      onRetry={refreshUsers}
     />
   );
 }

@@ -1,10 +1,13 @@
 import type {
   MenuItem,
   CreateMenuPayload,
+  MenuQuery,
+  MenuSort,
 } from "../../../services/admin/menu.api";
+import type { PaginationMeta } from "../../../types/query";
 import type { ValidationErrors } from "../../../utils/validation";
 
-export type { MenuItem, CreateMenuPayload };
+export type { MenuItem, CreateMenuPayload, MenuQuery, MenuSort };
 
 export const CATEGORIES = [
   { key: "starter", label: "Starter" },
@@ -22,7 +25,7 @@ export const CATEGORIES = [
 export interface MenuPresenterProps {
   // data
   menuItems: MenuItem[];
-  filteredItems: MenuItem[];
+  pagination: PaginationMeta;
   // ui state
   loading: boolean;
   error: string | null;
@@ -36,6 +39,8 @@ export interface MenuPresenterProps {
   // actions
   onCategoryChange: (cat: string) => void;
   onSearchChange: (q: string) => void;
+  onPageChange: (page: number) => void;
+  onLimitChange: (limit: number) => void;
   onOpenModal: (item?: MenuItem) => void;
   onCloseModal: () => void;
   onFieldChange: (field: string, value: string | number | boolean) => void;

@@ -1,4 +1,5 @@
 import { RefreshCw, Clock, ChefHat, Wifi, WifiOff } from "lucide-react";
+import { ListError, Pagination } from "../../../components/ui";
 import type {
   KitchenPresenterProps,
   TabFilter,
@@ -118,15 +119,20 @@ const TABS: { value: TabFilter; label: string }[] = [
 ];
 
 export function KitchenPresenter({
-  sorted,
+  kots,
   counts,
+  pagination,
   loading,
   refreshing,
+  error,
   isConnected,
   activeTab,
   updatingId,
   onTabChange,
+  onPageChange,
+  onLimitChange,
   onRefresh,
+  onRetry,
   onStart,
   onReady,
   onCancel,
@@ -145,6 +151,7 @@ export function KitchenPresenter({
                 Kitchen Display
               </h1>
               <p className="text-[10px] sm:text-xs text-kot-text mt-0.5 truncate">
+                On this page: {" "}
                 {counts.pending} pending · {counts.preparing} preparing ·{" "}
                 {counts.ready} ready
                 {refreshing && (
@@ -185,19 +192,19 @@ export function KitchenPresenter({
         ) : (
           <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
             {[
-              { label: "Pending", count: counts.pending, dot: "bg-yellow-400" },
               {
-                label: "Preparing",
+                label: activeTab === "all" ? "Active total" : "Matching total",
+                count: pagination.total,
+                dot: "bg-kot-dark",
+              },
+              { label: "On this page", count: counts.page, dot: "bg-kot-chart" },
+              { label: "Pending here", count: counts.pending, dot: "bg-yellow-400" },
+              {
+                label: "Preparing here",
                 count: counts.preparing,
                 dot: "bg-orange-400",
               },
-              { label: "Ready", count: counts.ready, dot: "bg-emerald-500" },
-              { label: "Served", count: counts.served, dot: "bg-kot-dark" },
-              {
-                label: "Cancelled",
-                count: counts.cancelled,
-                dot: "bg-red-400",
-              },
+              { label: "Ready here", count: counts.ready, dot: "bg-emerald-500" },
             ].map((s) => (
               <div
                 key={s.label}
@@ -226,26 +233,38 @@ export function KitchenPresenter({
               <button type="button"
                 key={tab.value}
                 onClick={() => onTabChange(tab.value)}
+                disabled={tab.value === "served"}
+                title={tab.value === "served" ? "Served history is unavailable from the active Kitchen endpoint" : undefined}
                 className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.value
                     ? "bg-kot-dark text-white"
-                    : "text-kot-text hover:bg-kot-light"
+                    : "text-kot-text hover:bg-kot-light disabled:cursor-not-allowed disabled:opacity-50"
                 }`}
               >
-                {tab.label} ({counts[tab.value as keyof typeof counts]})
+                {tab.label}
               </button>
             ))}
           </div>
         </div>
+        <p className="text-[10px] sm:text-xs text-kot-text">
+          Served history is unavailable here because Kitchen only provides active KOTs.
+        </p>
 
         {/* ── KOT Cards ── */}
-        {loading ? (
+        {error ? (
+          <ListError
+            onRetry={onRetry}
+            retrying={loading || refreshing}
+            title="Unable to load Kitchen orders"
+            message={error}
+          />
+        ) : loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
-        ) : sorted.length === 0 ? (
+        ) : kots.length === 0 ? (
           <div className="bg-kot-white rounded-2xl p-10 sm:p-16 text-center shadow-kot">
             <p className="text-4xl sm:text-5xl mb-3">🍳</p>
             <p className="text-lg sm:text-xl font-bold text-kot-darker">
@@ -257,7 +276,7 @@ export function KitchenPresenter({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
-            {sorted.map((kot) => {
+            {kots.map((kot) => {
               const cfg = STATUS_CONFIG[kot.status];
               const urgent =
                 isUrgent(kot.createdAt) && kot.status === "pending";
@@ -368,6 +387,32 @@ export function KitchenPresenter({
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {!loading && !error && pagination.pages > 0 && (
+          <div className="space-y-2">
+            <div className="flex justify-end">
+              <label className="flex items-center gap-2 text-xs sm:text-sm text-kot-text">
+                Orders per page
+                <select
+                  value={pagination.limit}
+                  onChange={(event) => onLimitChange(Number(event.target.value))}
+                  className="rounded-lg border-2 border-kot-chart bg-kot-white px-2 py-1.5 text-kot-darker"
+                >
+                  {[20, 50, 100].map((limit) => (
+                    <option key={limit} value={limit}>
+                      {limit}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <Pagination
+              pagination={pagination}
+              onPageChange={onPageChange}
+              showSummary
+            />
           </div>
         )}
       </div>

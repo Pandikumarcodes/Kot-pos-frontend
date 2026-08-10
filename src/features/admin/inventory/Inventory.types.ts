@@ -5,7 +5,11 @@ import type {
   CreateInventoryPayload,
   InventoryUnit,
   InventoryCategory,
+  InventoryQuery,
+  InventoryResponse,
+  InventorySort,
 } from "../../../services/admin/inventory.api";
+import type { PaginationMeta } from "../../../types/query";
 
 export type {
   InventoryItem,
@@ -13,6 +17,9 @@ export type {
   CreateInventoryPayload,
   InventoryUnit,
   InventoryCategory,
+  InventoryQuery,
+  InventoryResponse,
+  InventorySort,
 };
 
 // ── Constants ─────────────────────────────────────────────────
@@ -60,6 +67,9 @@ export interface InventoryPresenterProps {
   items: InventoryItem[];
   loading: boolean;
   lowStockCount: number;
+  pagination: PaginationMeta;
+  error: string | null;
+  hasActiveFilters: boolean;
 
   // Filters
   search: string;
@@ -69,6 +79,10 @@ export interface InventoryPresenterProps {
   onFilterLowToggle: () => void;
   onFilterCatChange: (v: InventoryCategory | "") => void;
   onRefresh: () => void;
+  onRetry: () => void;
+  onClearFilters: () => void;
+  onPageChange: (page: number) => void;
+  onLimitChange: (limit: number) => void;
 
   // Create / Edit modal
   showModal: boolean;

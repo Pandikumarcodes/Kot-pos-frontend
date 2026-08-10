@@ -1,5 +1,6 @@
 // src/api/menuApi.ts
 import api from "../apiClient";
+import type { BaseListQuery, PaginationMeta } from "../../types/query";
 
 // ── Types matching MongoDB schema exactly ──
 export interface MenuItem {
@@ -22,9 +23,28 @@ export interface UpdateMenuPayload {
   available?: boolean;
 }
 
+export type MenuSort = "name" | "price" | "category";
+
+export interface MenuQuery extends BaseListQuery {
+  search?: string;
+  category?: string;
+  availability?: boolean;
+  sort?: MenuSort;
+}
+
+export interface MenuResponse {
+  menuItems: MenuItem[];
+  pagination?: PaginationMeta;
+}
+
 // GET /admin/menuItems
-export const getMenuItemsApi = () =>
-  api.get<{ menuItems: MenuItem[] }>("/admin/menuItems");
+export const getMenuItemsApi = (query?: MenuQuery, signal?: AbortSignal) => {
+  if (!query && !signal) return api.get<MenuResponse>("/admin/menuItems");
+  return api.get<MenuResponse>("/admin/menuItems", {
+    params: query,
+    signal,
+  });
+};
 
 // POST /admin/menu
 export const createMenuItemApi = (data: CreateMenuPayload) =>
