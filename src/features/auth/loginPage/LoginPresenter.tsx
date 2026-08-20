@@ -160,54 +160,6 @@ export function LoginPresenter({ onNavigate }: LoginPresenterProps) {
             </div>
           </button>
 
-          {/* Sign Up Card */}
-          <button
-            type="button"
-            onClick={() => onNavigate("signup")}
-            className="group w-full text-left bg-kot-white rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-200 border-2 border-transparent hover:border-kot-dark shadow-kot hover:shadow-kot-lg active:scale-[0.99]"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-kot-stats flex-shrink-0">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="#4A5F52"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-semibold text-sm text-kot-darker">
-                    Create Account
-                  </p>
-                  <p className="text-xs mt-0.5 text-kot-text">
-                    New staff registration
-                  </p>
-                </div>
-              </div>
-              <svg
-                className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1 flex-shrink-0"
-                fill="none"
-                stroke="#C1D9CD"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
-          </button>
-
           <p className="text-center text-xs mt-6 sm:mt-8 text-kot-text">
             © 2026 KOT POS · All rights reserved
           </p>

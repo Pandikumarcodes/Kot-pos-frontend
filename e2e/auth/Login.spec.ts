@@ -9,9 +9,10 @@ test.describe("Login landing page", () => {
     await page.goto("/login");
   });
 
-  test("shows Sign In and Create Account cards", async ({ page }) => {
+  test("shows Sign In without the Create Account card", async ({ page }) => {
     await expect(page.getByText("Sign In").first()).toBeVisible();
-    await expect(page.getByText("Create Account")).toBeVisible();
+    await expect(page.getByText("Create Account")).not.toBeVisible();
+    await expect(page.getByText("New staff registration")).not.toBeVisible();
   });
 
   test("clicking Sign In navigates to /signin", async ({ page }) => {
@@ -20,12 +21,9 @@ test.describe("Login landing page", () => {
     expect(page.url()).toContain("/signin");
   });
 
-  test("clicking Create Account navigates to signup", async ({ page }) => {
-    await page.getByText("Create Account").click();
-    await page.waitForURL((url) => !url.pathname.includes("/login"), {
-      timeout: 5_000,
-    });
-    expect(page.url()).not.toContain("/login");
+  test("signup route remains available", async ({ page }) => {
+    await page.goto("/signup");
+    await expect(page.getByRole("heading", { name: "Create Account" })).toBeVisible();
   });
 });
 
