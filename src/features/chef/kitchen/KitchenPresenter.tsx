@@ -115,7 +115,7 @@ const TABS: { value: TabFilter; label: string }[] = [
   { value: "pending", label: "Pending" },
   { value: "preparing", label: "Preparing" },
   { value: "ready", label: "Ready" },
-  { value: "served", label: "Served" },
+  // { value: "served", label: "Served" },
 ];
 
 export function KitchenPresenter({
@@ -151,9 +151,8 @@ export function KitchenPresenter({
                 Kitchen Display
               </h1>
               <p className="text-[10px] sm:text-xs text-kot-text mt-0.5 truncate">
-                On this page: {" "}
-                {counts.pending} pending · {counts.preparing} preparing ·{" "}
-                {counts.ready} ready
+                On this page: {counts.pending} pending · {counts.preparing}{" "}
+                preparing · {counts.ready} ready
                 {refreshing && (
                   <span className="ml-1 text-kot-dark"> · Refreshing...</span>
                 )}
@@ -172,7 +171,8 @@ export function KitchenPresenter({
               </span>
             </div>
             {/* Refresh */}
-            <button type="button"
+            <button
+              type="button"
               onClick={onRefresh}
               disabled={refreshing}
               className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl border-2 border-kot-chart text-kot-dark bg-kot-white hover:bg-kot-light transition-all disabled:opacity-50 text-xs sm:text-sm"
@@ -197,14 +197,26 @@ export function KitchenPresenter({
                 count: pagination.total,
                 dot: "bg-kot-dark",
               },
-              { label: "On this page", count: counts.page, dot: "bg-kot-chart" },
-              { label: "Pending here", count: counts.pending, dot: "bg-yellow-400" },
+              {
+                label: "On this page",
+                count: counts.page,
+                dot: "bg-kot-chart",
+              },
+              {
+                label: "Pending here",
+                count: counts.pending,
+                dot: "bg-yellow-400",
+              },
               {
                 label: "Preparing here",
                 count: counts.preparing,
                 dot: "bg-orange-400",
               },
-              { label: "Ready here", count: counts.ready, dot: "bg-emerald-500" },
+              {
+                label: "Ready here",
+                count: counts.ready,
+                dot: "bg-emerald-500",
+              },
             ].map((s) => (
               <div
                 key={s.label}
@@ -230,11 +242,16 @@ export function KitchenPresenter({
         <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-none">
           <div className="flex gap-1 bg-kot-white rounded-2xl p-1 sm:p-1.5 shadow-kot w-max sm:w-auto">
             {TABS.map((tab) => (
-              <button type="button"
+              <button
+                type="button"
                 key={tab.value}
                 onClick={() => onTabChange(tab.value)}
                 disabled={tab.value === "served"}
-                title={tab.value === "served" ? "Served history is unavailable from the active Kitchen endpoint" : undefined}
+                title={
+                  tab.value === "served"
+                    ? "Served history is unavailable from the active Kitchen endpoint"
+                    : undefined
+                }
                 className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.value
                     ? "bg-kot-dark text-white"
@@ -247,7 +264,8 @@ export function KitchenPresenter({
           </div>
         </div>
         <p className="text-[10px] sm:text-xs text-kot-text">
-          Served history is unavailable here because Kitchen only provides active KOTs.
+          Served history is unavailable here because Kitchen only provides
+          active KOTs.
         </p>
 
         {/* ── KOT Cards ── */}
@@ -349,7 +367,8 @@ export function KitchenPresenter({
                   {kot.status !== "served" && kot.status !== "cancelled" && (
                     <div className="px-3 pb-3 sm:px-4 sm:pb-4 flex gap-2">
                       {kot.status === "pending" && (
-                        <button type="button"
+                        <button
+                          type="button"
                           onClick={() => onStart(kot._id)}
                           disabled={isUpdating}
                           className="flex-1 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50"
@@ -358,7 +377,8 @@ export function KitchenPresenter({
                         </button>
                       )}
                       {kot.status === "preparing" && (
-                        <button type="button"
+                        <button
+                          type="button"
                           onClick={() => onReady(kot._id)}
                           disabled={isUpdating}
                           className="flex-1 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50"
@@ -374,7 +394,8 @@ export function KitchenPresenter({
                       {/* Only show cancel for pending/preparing */}
                       {(kot.status === "pending" ||
                         kot.status === "preparing") && (
-                        <button type="button"
+                        <button
+                          type="button"
                           onClick={() => onCancel(kot._id)}
                           disabled={isUpdating}
                           className="px-2.5 sm:px-3 py-2 rounded-xl border-2 border-red-200 text-red-500 hover:bg-red-50 text-sm transition-colors disabled:opacity-50"
@@ -397,7 +418,9 @@ export function KitchenPresenter({
                 Orders per page
                 <select
                   value={pagination.limit}
-                  onChange={(event) => onLimitChange(Number(event.target.value))}
+                  onChange={(event) =>
+                    onLimitChange(Number(event.target.value))
+                  }
                   className="rounded-lg border-2 border-kot-chart bg-kot-white px-2 py-1.5 text-kot-darker"
                 >
                   {[20, 50, 100].map((limit) => (
