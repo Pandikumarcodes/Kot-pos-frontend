@@ -38,26 +38,26 @@ Feature containers own fetching and interaction logic; presenters render typed p
 
 ## Tech stack
 
-| Area | Current implementation |
-| --- | --- |
-| UI | React 19, TypeScript 5.9, Tailwind CSS 4, Lucide React |
-| State | Redux Toolkit, React Redux, React hooks |
-| Routing | React Router 7 |
-| Data | Axios, Socket.IO Client |
-| Charts and QR | Chart.js, React Chart.js 2, QRCode React |
-| Testing | Vitest, jsdom, Testing Library, Playwright |
-| Build | Vite 7 via the `rolldown-vite` package alias |
+| Area          | Current implementation                                 |
+| ------------- | ------------------------------------------------------ |
+| UI            | React 19, TypeScript 5.9, Tailwind CSS 4, Lucide React |
+| State         | Redux Toolkit, React Redux, React hooks                |
+| Routing       | React Router 7                                         |
+| Data          | Axios, Socket.IO Client                                |
+| Charts and QR | Chart.js, React Chart.js 2, QRCode React               |
+| Testing       | Vitest, jsdom, Testing Library, Playwright             |
+| Build         | Vite 7 via the `rolldown-vite` package alias           |
 
 ## Roles
 
-| Role | Frontend scope |
-| --- | --- |
-| `superadmin` | Global branch management only |
-| `admin` | Branch administration plus waiter, kitchen, and cashier workflows |
-| `manager` | Dashboard, menu, inventory, tables/orders, customers, reports, and AI insights |
-| `waiter` | Tables, order entry, and order history |
-| `chef` | Kitchen KOT board |
-| `cashier` | Takeaway and billing workflow |
+| Role         | Frontend scope                                                                 |
+| ------------ | ------------------------------------------------------------------------------ |
+| `superadmin` | Global branch management only                                                  |
+| `admin`      | Branch administration plus waiter, kitchen, and cashier workflows              |
+| `manager`    | Dashboard, menu, inventory, tables/orders, customers, reports, and AI insights |
+| `waiter`     | Tables, order entry, and order history                                         |
+| `chef`       | Kitchen KOT board                                                              |
+| `cashier`    | Takeaway and billing workflow                                                  |
 
 `superadmin` is not a branch `admin` and does not inherit operational routes. The exact route and action matrices are in [Authentication and RBAC](docs/AUTH-RBAC.md).
 
@@ -129,35 +129,22 @@ npm run dev
 
 In PowerShell, `Copy-Item .env.example .env` is equivalent. Vite uses `http://localhost:5173` by default.
 
-## Environment variables
-
-| Variable | Used by | Purpose |
-| --- | --- | --- |
-| `VITE_API_URL` | Browser app | Backend origin only; do not include `/api/v1` |
-| `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` | Playwright | Seeded admin account |
-| `E2E_MANAGER_USERNAME` / `E2E_MANAGER_PASSWORD` | Playwright | Seeded manager account |
-| `E2E_WAITER_USERNAME` / `E2E_WAITER_PASSWORD` | Playwright | Seeded waiter account |
-| `E2E_CHEF_USERNAME` / `E2E_CHEF_PASSWORD` | Playwright | Seeded chef account |
-| `E2E_CASHIER_USERNAME` / `E2E_CASHIER_PASSWORD` | Playwright | Seeded cashier account |
-
-Values prefixed with `VITE_` are compiled into browser assets and must never contain secrets. Playwright credentials belong in the launching environment or CI secrets; the configuration does not load `.env` itself.
-
 ## Development scripts
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start the Vite development server |
-| `npm run build` | Create the production bundle in `dist/` |
-| `npm run preview` | Preview the production bundle locally |
-| `npm run typecheck` | Run TypeScript project checks without emit |
-| `npm run lint` | Run ESLint across the repository |
-| `npm test` | Run Vitest once |
-| `npm run test:watch` | Run Vitest in watch mode |
-| `npm run e2e` | Run Playwright setup and Chromium tests |
-| `npm run e2e:ui` | Open Playwright UI mode |
-| `npm run e2e:debug` | Start Playwright debug mode |
-| `npm run e2e:headed` | Run Playwright headed |
-| `npm run e2e:report` | Open the last HTML report |
+| Command              | Purpose                                    |
+| -------------------- | ------------------------------------------ |
+| `npm run dev`        | Start the Vite development server          |
+| `npm run build`      | Create the production bundle in `dist/`    |
+| `npm run preview`    | Preview the production bundle locally      |
+| `npm run typecheck`  | Run TypeScript project checks without emit |
+| `npm run lint`       | Run ESLint across the repository           |
+| `npm test`           | Run Vitest once                            |
+| `npm run test:watch` | Run Vitest in watch mode                   |
+| `npm run e2e`        | Run Playwright setup and Chromium tests    |
+| `npm run e2e:ui`     | Open Playwright UI mode                    |
+| `npm run e2e:debug`  | Start Playwright debug mode                |
+| `npm run e2e:headed` | Run Playwright headed                      |
+| `npm run e2e:report` | Open the last HTML report                  |
 
 ## Testing
 
